@@ -1,12 +1,14 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { siteConfig } from '../config';
+import { SUPABASE_URL } from './url';
 
 const PROTECTED_PREFIXES = ['/konto', '/admin', '/zamowienie'];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+  const supabase = createServerClient(SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -27,8 +29,8 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   if (!user && PROTECTED_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`))) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/logowanie';
+    // Adres sklepu z konfiguracji — za proxy (Railway) adres z żądania to wewnętrzny localhost:8080.
+    const url = new URL('/logowanie', siteConfig.url);
     url.search = `?next=${encodeURIComponent(path + request.nextUrl.search)}`;
     return NextResponse.redirect(url);
   }

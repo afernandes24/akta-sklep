@@ -24,7 +24,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ fileId: 
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.redirect(new URL(`/logowanie?next=${encodeURIComponent('/konto/sprawy')}`, req.url));
+    return NextResponse.redirect(new URL(`/logowanie?next=${encodeURIComponent('/konto/sprawy')}`, siteConfig.url));
   }
 
   const db = createAdminClient();

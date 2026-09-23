@@ -8,7 +8,12 @@ import { createClient } from '@/lib/supabase/server';
 export type AuthState = { error?: string; info?: string };
 
 function translate(message: string): string {
+  console.error('[auth]', message);
   const m = message.toLowerCase();
+  if (m.includes('invalid api key') || m.includes('no api key')) return 'Błędny klucz Supabase — sprawdź NEXT_PUBLIC_SUPABASE_ANON_KEY w .env.local.';
+  if (m.includes('fetch failed') || m.includes('enotfound')) return 'Brak połączenia z Supabase — sprawdź NEXT_PUBLIC_SUPABASE_URL w .env.local.';
+  if (m.includes('sending confirmation') || m.includes('sending email')) return 'Nie udało się wysłać maila z potwierdzeniem. Spróbuj za godzinę albo podepnij własny SMTP.';
+  if (m.includes('database error')) return 'Błąd bazy przy tworzeniu konta — czy uruchomiono supabase/schema.sql?';
   if (m.includes('invalid login credentials')) return 'Nieprawidłowy e-mail lub hasło.';
   if (m.includes('email not confirmed')) return 'Najpierw potwierdź adres e-mail — link wysłaliśmy na twoją skrzynkę.';
   if (m.includes('already registered') || m.includes('already been registered')) return 'Konto z tym adresem już istnieje. Zaloguj się.';

@@ -1,3 +1,4 @@
+import { SUPABASE_URL } from './supabase/url';
 export const siteConfig = {
   name: process.env.NEXT_PUBLIC_SITE_NAME || 'Akta Detektywa',
   url: (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, ''),
@@ -18,7 +19,7 @@ export function isServiceRoleConfigured(): boolean {
 export function publicStorageUrl(bucket: 'covers' | 'previews', path: string | null | undefined): string | null {
   if (!path) return null;
   if (/^https?:\/\//.test(path) || path.startsWith('/')) return path;
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const base = SUPABASE_URL;
   if (!base) return null;
   return `${base.replace(/\/$/, '')}/storage/v1/object/public/${bucket}/${path}`;
 }

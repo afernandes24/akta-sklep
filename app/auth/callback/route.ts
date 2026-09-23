@@ -1,5 +1,6 @@
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { siteConfig } from '@/lib/config';
 import { safeNext } from '@/lib/safe-redirect';
 import { createClient } from '@/lib/supabase/server';
 
@@ -19,5 +20,6 @@ export async function GET(request: Request) {
     ok = !(await supabase.auth.verifyOtp({ token_hash: tokenHash, type })).error;
   }
 
-  return NextResponse.redirect(new URL(ok ? next : '/logowanie?blad=link', url.origin));
+  // Adres sklepu z konfiguracji, nie z żądania — za proxy (Railway) request.url to wewnętrzny localhost:8080.
+  return NextResponse.redirect(new URL(ok ? next : '/logowanie?blad=link', siteConfig.url));
 }
