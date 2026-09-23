@@ -3,12 +3,16 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AccountLink } from './AccountLink';
 import { mainNav } from './nav';
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
@@ -32,8 +36,11 @@ export function MobileNav() {
           {open ? <path d="M6 6l12 12M18 6 6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
         </svg>
       </button>
-      {open && (
-        <div id="menu-mobilne" className="fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto border-t border-ink-700 bg-ink-950/98 backdrop-blur">
+      {/* Portal do <body>: nagłówek ma backdrop-blur, który „więzi” elementy position:fixed w swoim obszarze. */}
+      {open &&
+        mounted &&
+        createPortal(
+        <div id="menu-mobilne" className="fixed inset-x-0 bottom-0 top-16 z-50 overflow-y-auto border-t border-ink-700 bg-ink-950 lg:hidden">
           <nav className="container-page flex flex-col py-6" aria-label="Menu główne">
             {mainNav.map((item) => (
               <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className="border-b border-ink-800 py-4 font-serif text-xl text-paper-50">
@@ -44,8 +51,9 @@ export function MobileNav() {
               <AccountLink onNavigate={() => setOpen(false)} />
             </div>
           </nav>
-        </div>
-      )}
+        </div>,
+          document.body,
+        )}
     </div>
   );
 }
