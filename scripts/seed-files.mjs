@@ -31,7 +31,7 @@ for (const name of ['.env.local', '.env']) {
   }
 }
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const url = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').trim().replace(/\/+$/, '').replace(/\/(rest|auth|storage)\/v1$/, '');
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!url || !key) {
   console.error('✗ Brak NEXT_PUBLIC_SUPABASE_URL lub SUPABASE_SERVICE_ROLE_KEY w .env.local');
@@ -47,7 +47,7 @@ const only = arg('--only');
 const update = process.argv.includes('--update');
 
 const SHOP_KEYS = [
-  'tags', 'slug', 'case_number', 'title', 'tagline', 'description', 'highlights', 'contents', 'excerpts', 'difficulty',
+  'tags', 'city', 'slug', 'case_number', 'title', 'tagline', 'description', 'highlights', 'contents', 'excerpts', 'difficulty',
   'play_time_minutes', 'page_count', 'suspect_count', 'price_grosze', 'sort_order', 'seo_title', 'seo_description',
 ];
 
@@ -151,6 +151,7 @@ for (const dir of caseDirs) {
     if (!existing) await db.from('case_images').insert({ case_id: c.id, path, caption: p.caption ?? null, sort_order: i });
     console.log(`✓ Podgląd ${p.file}`);
   }
+
 }
 
 // ─── Admin ─────────────────────────────────────────────────────────

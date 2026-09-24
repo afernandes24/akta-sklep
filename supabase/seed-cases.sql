@@ -7,7 +7,7 @@
 insert into public.cases (
   slug, case_number, title, tagline, description, highlights, contents, excerpts,
   difficulty, play_time_minutes, page_count, suspect_count, price_grosze,
-  is_published, sort_order, seo_title, seo_description, tags
+  is_published, sort_order, seo_title, seo_description, tags, city
 ) values (
   'ostatni-lot-sp-krw',
   '002',
@@ -58,14 +58,15 @@ Sprawa o odpowiedzialności, strachu i jednym podpisie, który kosztował ludzki
   'Drukowana gra detektywistyczna: katastrofa samolotu pod Lęborkiem, sfałszowana książka techniczna i 5 podejrzanych. Pobierz PDF i rozwiąż sprawę w 75 minut.',
   array[
     'katastrofa'
-  ]
+  ],
+  'Lębork'
 )
 on conflict (slug) do nothing;
 
 insert into public.cases (
   slug, case_number, title, tagline, description, highlights, contents, excerpts,
   difficulty, play_time_minutes, page_count, suspect_count, price_grosze,
-  is_published, sort_order, seo_title, seo_description, tags
+  is_published, sort_order, seo_title, seo_description, tags, city
 ) values (
   'katastrofa-nad-sniardwami',
   '003',
@@ -116,15 +117,17 @@ Sprawa o katastrofie, która nie była tym, czym się wydawała.$txt$,
   'Drukowana gra detektywistyczna: samolot wpada do jeziora Śniardwy, ciała pilota nie ma. Radar, szyfry, kamery drogowe i 5 podejrzanych. Pobierz PDF i rozwiąż sprawę.',
   array[
     'katastrofa',
-    'zaginiecie'
-  ]
+    'zaginiecie',
+    'milosna'
+  ],
+  null
 )
 on conflict (slug) do nothing;
 
 insert into public.cases (
   slug, case_number, title, tagline, description, highlights, contents, excerpts,
   difficulty, play_time_minutes, page_count, suspect_count, price_grosze,
-  is_published, sort_order, seo_title, seo_description, tags
+  is_published, sort_order, seo_title, seo_description, tags, city
 ) values (
   'nocny-ekspres-baltyk',
   '004',
@@ -176,14 +179,15 @@ Klasyczna zagadka zamkniętego wagonu — z katastrofą w tle.$txt$,
   array[
     'katastrofa',
     'morderstwo'
-  ]
+  ],
+  null
 )
 on conflict (slug) do nothing;
 
 insert into public.cases (
   slug, case_number, title, tagline, description, highlights, contents, excerpts,
   difficulty, play_time_minutes, page_count, suspect_count, price_grosze,
-  is_published, sort_order, seo_title, seo_description, tags
+  is_published, sort_order, seo_title, seo_description, tags, city
 ) values (
   'lza-baltyku',
   '005',
@@ -235,14 +239,15 @@ Sprawa bez przemocy, idealna na rodzinny wieczór i na pierwsze śledztwo.$txt$,
   array[
     'kradziez',
     'rodzinna'
-  ]
+  ],
+  'Gdańsk'
 )
 on conflict (slug) do nothing;
 
 insert into public.cases (
   slug, case_number, title, tagline, description, highlights, contents, excerpts,
   difficulty, play_time_minutes, page_count, suspect_count, price_grosze,
-  is_published, sort_order, seo_title, seo_description, tags
+  is_published, sort_order, seo_title, seo_description, tags, city
 ) values (
   'latarnik',
   '006',
@@ -293,14 +298,15 @@ Kameralna, klimatyczna sprawa o rodzinie, spadku i jednym wyłączniku.$txt$,
   'Drukowana gra detektywistyczna: sztorm na Helu, zgaszona latarnia i śmierć latarnika. Ślady butów, szyfr Polibiusza i 5 podejrzanych. Pobierz PDF i rozwiąż sprawę.',
   array[
     'morderstwo'
-  ]
+  ],
+  'Hel'
 )
 on conflict (slug) do nothing;
 
 insert into public.cases (
   slug, case_number, title, tagline, description, highlights, contents, excerpts,
   difficulty, play_time_minutes, page_count, suspect_count, price_grosze,
-  is_published, sort_order, seo_title, seo_description, tags
+  is_published, sort_order, seo_title, seo_description, tags, city
 ) values (
   'ostatni-akord',
   '007',
@@ -352,14 +358,15 @@ Elegancka sprawa o muzyce, zazdrości i instrumencie wartym miliony — z szyfre
   array[
     'morderstwo',
     'kradziez'
-  ]
+  ],
+  'Wrocław'
 )
 on conflict (slug) do nothing;
 
 insert into public.cases (
   slug, case_number, title, tagline, description, highlights, contents, excerpts,
   difficulty, play_time_minutes, page_count, suspect_count, price_grosze,
-  is_published, sort_order, seo_title, seo_description, tags
+  is_published, sort_order, seo_title, seo_description, tags, city
 ) values (
   'zasypani',
   '008',
@@ -410,14 +417,15 @@ Klasyczna zagadka „zamkniętego kręgu” w zimowej scenerii Tatr.$txt$,
   'Drukowana gra detektywistyczna: śnieżyca odcina pensjonat w Kościelisku, właścicielka ginie w saunie. Lustrzane pismo, arkusz gry i 5 podejrzanych. Pobierz PDF.',
   array[
     'morderstwo'
-  ]
+  ],
+  'Kościelisko'
 )
 on conflict (slug) do nothing;
 
 insert into public.cases (
   slug, case_number, title, tagline, description, highlights, contents, excerpts,
   difficulty, play_time_minutes, page_count, suspect_count, price_grosze,
-  is_published, sort_order, seo_title, seo_description, tags
+  is_published, sort_order, seo_title, seo_description, tags, city
 ) values (
   'anonimy',
   '009',
@@ -467,14 +475,15 @@ Sprawa bez trupa, za to z tajemnicą sprzed 27 lat i trudnym pytaniem o winę.$t
   'Drukowana gra detektywistyczna: anonimy z wyciętych liter, szantaż prezydentki miasta i tajemnica z 1998 roku. Szyfr, rejestry i 5 podejrzanych. Pobierz PDF.',
   array[
     'szantaz'
-  ]
+  ],
+  'Toruń'
 )
 on conflict (slug) do nothing;
 
 insert into public.cases (
   slug, case_number, title, tagline, description, highlights, contents, excerpts,
   difficulty, play_time_minutes, page_count, suspect_count, price_grosze,
-  is_published, sort_order, seo_title, seo_description, tags
+  is_published, sort_order, seo_title, seo_description, tags, city
 ) values (
   'zaginiona-z-laboratorium',
   '010',
@@ -525,14 +534,15 @@ Sprawa bez trupa: szpiegostwo przemysłowe, zaginięcie i wyścig z czasem.$txt$
   array[
     'zaginiecie',
     'kradziez'
-  ]
+  ],
+  'Łódź'
 )
 on conflict (slug) do nothing;
 
 insert into public.cases (
   slug, case_number, title, tagline, description, highlights, contents, excerpts,
   difficulty, play_time_minutes, page_count, suspect_count, price_grosze,
-  is_published, sort_order, seo_title, seo_description, tags
+  is_published, sort_order, seo_title, seo_description, tags, city
 ) values (
   'czlowiek-za-burta',
   '011',
@@ -582,6 +592,7 @@ Najtrudniejsza sprawa w archiwum — dla doświadczonych detektywów.$txt$,
   'Drukowana gra detektywistyczna: nocne regaty na Mazurach, człowiek za burtą, mapa GPS, zapis tętna i szyfr z flag sygnałowych. Poziom 5/5. Pobierz PDF.',
   array[
     'zaginiecie'
-  ]
+  ],
+  null
 )
 on conflict (slug) do nothing;

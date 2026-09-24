@@ -2,6 +2,8 @@
 
 Wklej w **Supabase → Authentication → Emails → Templates**.
 
+**Wersje graficzne** (zalecane): pliki w `supabase/email-templates/` — `confirm.html` (Confirm sign up), `reset.html` (Reset password), `email-change.html` (Change email address). Otwórz plik w Notatniku, skopiuj całość i wklej jako Body. Poniżej wersje uproszczone.
+
 Linki prowadzą prosto do sklepu (`/auth/callback?token_hash=…`), dzięki czemu działają także wtedy,
 gdy klient otworzy maila na innym urządzeniu lub w innej przeglądarce niż ta, w której zakładał konto.
 Wymaga ustawienia **Site URL** na adres sklepu (Authentication → URL Configuration).

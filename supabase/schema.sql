@@ -375,3 +375,147 @@ create policy "reviews: admin" on public.reviews
   for all using (public.is_admin()) with check (public.is_admin());
 
 grant select on public.case_ratings to anon, authenticated;
+
+
+-- ═══════════════════════════════════════════════════════════════════
+--  WERSJA ONLINE SPRAW (wrzesień 2026)
+--  Każda sprawa może mieć osobny produkt „online” (akta do czytania w przeglądarce).
+--  Bezpieczne do ponownego uruchomienia.
+-- ═══════════════════════════════════════════════════════════════════
+
+alter table public.cases add column if not exists online_enabled boolean not null default false;
+alter table public.cases add column if not exists online_price_grosze integer check (online_price_grosze >= 0);
+
+alter table public.order_items add column if not exists format text not null default 'pdf';
+do $$ begin
+  alter table public.order_items add constraint order_items_format_chk check (format in ('pdf', 'online'));
+exception when duplicate_object then null; end $$;
+
+-- Uprawnienia per wersja: (użytkownik, sprawa, format)
+alter table public.entitlements add column if not exists format text not null default 'pdf';
+do $$ begin
+  alter table public.entitlements add constraint entitlements_format_chk check (format in ('pdf', 'online'));
+exception when duplicate_object then null; end $$;
+do $$
+begin
+  if exists (
+    select 1 from pg_constraint c
+    where c.conrelid = 'public.entitlements'::regclass and c.contype = 'p'
+      and array_length(c.conkey, 1) = 2
+  ) then
+    alter table public.entitlements drop constraint entitlements_pkey;
+    alter table public.entitlements add primary key (user_id, case_id, format);
+  end if;
+end $$;
+
+-- Pliki PDF widzi tylko posiadacz wersji PDF (lub admin)
+drop policy if exists "case_files: kupujący lub admin" on public.case_files;
+create policy "case_files: kupujący lub admin" on public.case_files
+  for select using (
+    public.is_admin()
+    or exists (
+      select 1 from public.entitlements e
+      where e.case_id = case_files.case_id and e.user_id = auth.uid() and e.format = 'pdf'
+    )
+  );
+
+-- Wersja online = te same akta do czytania w przeglądarce (strony PDF jako obrazy).
+-- Stare tabele z pierwszego projektu (gra z zadaniami) — usuwane, nie były używane.
+drop table if exists public.game_progress;
+drop table if exists public.case_games;
+
+-- Spis stron wersji online (generowany w panelu admina z plików PDF sprawy)
+create table if not exists public.case_online (
+  case_id       uuid primary key references public.cases (id) on delete cascade,
+  version       integer not null default 1,
+  manifest      jsonb not null,
+  is_published  boolean not null default false,
+  updated_at    timestamptz not null default now()
+);
+drop trigger if exists case_online_touch on public.case_online;
+create trigger case_online_touch before update on public.case_online
+  for each row execute function public.touch_updated_at();
+
+-- Notatki czytelnika i informacja, czy otworzył kopertę z rozwiązaniem
+create table if not exists public.online_reading (
+  user_id             uuid not null references auth.users (id) on delete cascade,
+  case_id             uuid not null references public.cases (id) on delete cascade,
+  notes               text not null default '' check (char_length(notes) <= 20000),
+  solution_opened_at  timestamptz,
+  updated_at          timestamptz not null default now(),
+  primary key (user_id, case_id)
+);
+drop trigger if exists online_reading_touch on public.online_reading;
+create trigger online_reading_touch before update on public.online_reading
+  for each row execute function public.touch_updated_at();
+
+alter table public.case_online     enable row level security;
+alter table public.online_reading  enable row level security;
+
+drop policy if exists "case_online: admin" on public.case_online;
+create policy "case_online: admin" on public.case_online
+  for all using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "online_reading: własne lub admin" on public.online_reading;
+create policy "online_reading: własne lub admin" on public.online_reading
+  for select using (user_id = auth.uid() or public.is_admin());
+
+-- Strony wersji online (prywatne — serwer wydaje krótko ważne linki)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('online-pages', 'online-pages', false, 10485760, array['image/webp', 'image/jpeg', 'image/png'])
+on conflict (id) do update
+  set public = excluded.public,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+-- ═══════════════════════════════════════════════════════════════════
+--  NAGRANIA Z PRZESŁUCHAŃ (AI) + MIASTO SPRAWY
+-- ═══════════════════════════════════════════════════════════════════
+alter table public.cases add column if not exists city text;
+alter table public.cases add column if not exists recordings_count integer not null default 0;
+
+create table if not exists public.case_recordings (
+  id                uuid primary key default gen_random_uuid(),
+  case_id           uuid not null references public.cases (id) on delete cascade,
+  title             text not null,
+  person            text,
+  description       text,
+  storage_path      text not null unique,
+  mime_type         text not null,
+  size_bytes        bigint,
+  duration_seconds  integer,
+  sort_order        integer not null default 0,
+  created_at        timestamptz not null default now()
+);
+create index if not exists case_recordings_case_idx on public.case_recordings (case_id, sort_order);
+
+alter table public.case_recordings enable row level security;
+drop policy if exists "case_recordings: admin" on public.case_recordings;
+create policy "case_recordings: admin" on public.case_recordings
+  for all using (public.is_admin()) with check (public.is_admin());
+
+-- Licznik nagrań w sprawie (do plakietki i filtra w katalogu)
+create or replace function public.sync_recordings_count()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare cid uuid := coalesce(new.case_id, old.case_id);
+begin
+  update public.cases set recordings_count = (select count(*) from public.case_recordings where case_id = cid) where id = cid;
+  return null;
+end $$;
+drop trigger if exists case_recordings_count on public.case_recordings;
+create trigger case_recordings_count after insert or delete on public.case_recordings
+  for each row execute function public.sync_recordings_count();
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('recordings', 'recordings', false, 52428800,
+        array['audio/mpeg', 'audio/mp4', 'audio/x-m4a', 'audio/aac', 'audio/wav', 'audio/x-wav', 'audio/ogg', 'audio/webm', 'video/mp4', 'video/webm'])
+on conflict (id) do update
+  set public = excluded.public,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "storage: admin zarządza plikami sklepu" on storage.objects;
+create policy "storage: admin zarządza plikami sklepu" on storage.objects
+  for all to authenticated
+  using (bucket_id in ('covers', 'previews', 'case-files', 'online-pages', 'recordings') and public.is_admin())
+  with check (bucket_id in ('covers', 'previews', 'case-files', 'online-pages', 'recordings') and public.is_admin());

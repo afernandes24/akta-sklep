@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pl">
+<body style="margin:0;padding:0;background:#f4efe3;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4efe3;padding:32px 12px;">
+  <tr><td align="center">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
+      <tr><td style="background:#1c1a17;border-radius:10px 10px 0 0;padding:22px 32px;">
+        <span style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:bold;letter-spacing:3px;color:#d4b06a;">AKTA DETEKTYWA</span>
+      </td></tr>
+      <tr><td style="background:#fffdf7;border:1px solid #e4d9bf;border-top:0;border-radius:0 0 10px 10px;padding:36px 32px 32px;">
+        <p style="margin:0 0 6px;font-family:'Courier New',Courier,monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#a07d3a;">Zmiana hasła</p>
+        <h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.25;color:#1c1a17;">Ustaw nowe hasło</h1>
+        <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#3b3731;">Otrzymaliśmy prośbę o zmianę hasła do twojego konta. Kliknij przycisk, aby ustawić nowe. Link jest ważny przez godzinę.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#1c1a17;border-radius:6px;">
+          <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/konto/nowe-haslo" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#f7f1e3;text-decoration:none;">Ustaw nowe hasło</a>
+        </td></tr></table>
+        <p style="margin:28px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#6b655b;">Przycisk nie działa? Skopiuj ten link do przeglądarki:<br><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/konto/nowe-haslo" style="color:#a07d3a;word-break:break-all;">{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/konto/nowe-haslo</a></p>
+        <hr style="border:0;border-top:1px dashed #e4d9bf;margin:28px 0 20px;">
+        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#6b655b;">Jeśli to nie ty prosiłeś o zmianę — zignoruj tę wiadomość. Twoje hasło pozostanie bez zmian.</p>
+      </td></tr>
+      <tr><td align="center" style="padding:20px 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#8a8275;">
+        Akta Detektywa · gry detektywistyczne do druku<br><a href="https://aktadetektywa.pl" style="color:#8a8275;">aktadetektywa.pl</a>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

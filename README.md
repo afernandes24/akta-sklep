@@ -108,6 +108,11 @@ Admin → **Sprawy → Nowa sprawa** → wypełnij opis i cenę → Zapisz → w
 - Bez własnej okładki sklep rysuje teczkę z numerem i tytułem.
 - Sklep odświeża się w ciągu ~1 minuty.
 
+## Wersja online, nagrania i działy
+
+Wersja online (akta w przeglądarce), nagrania przesłuchań (AI), działy z nazwami, miasta i poziomy trudności:
+**[docs/WERSJA-ONLINE.md](docs/WERSJA-ONLINE.md)**.
+
 ---
 
 ## Bezpieczeństwo — jak to działa
