@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { AddToCartButtons } from '../cart/AddToCartButtons';
+import { CaseBadges } from './CaseBadges';
 import { CaseCover } from './CaseCover';
 import { CaseStats } from './CaseStats';
 import { RatingBadge } from './RatingBadge';
 import { formatPrice } from '@/lib/format';
-import { tagLabel } from '@/lib/tags';
 import type { CaseRating, CaseRecord } from '@/lib/types';
 
 export function CaseCard({ c, priority, rating }: { c: CaseRecord; priority?: boolean; rating?: CaseRating | null }) {
@@ -23,15 +23,7 @@ export function CaseCard({ c, priority, rating }: { c: CaseRecord; priority?: bo
         </h3>
         <RatingBadge rating={rating} className="mt-1" />
         <p className="mt-2 text-sm leading-relaxed text-muted">{c.tagline}</p>
-        {c.tags?.length > 0 && (
-          <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Tematy">
-            {c.tags.map((t) => (
-              <li key={t} className="rounded-full border border-ink-700 px-2 py-0.5 text-[11px] text-paper-200">
-                {tagLabel(t)}
-              </li>
-            ))}
-          </ul>
-        )}
+        <CaseBadges c={c} className="mt-3" />
         <div className="mt-4">
           <CaseStats difficulty={c.difficulty} minutes={c.play_time_minutes} suspects={c.suspect_count} pages={c.page_count} />
         </div>

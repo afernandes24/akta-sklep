@@ -30,6 +30,13 @@ export interface CaseRecord {
   seo_title: string | null;
   seo_description: string | null;
   tags: string[];
+  /** Wersja online (akta do czytania w przeglądarce) — osobny produkt z własną ceną. */
+  online_enabled?: boolean;
+  online_price_grosze?: number | null;
+  /** Miasto, w którym dzieje się sprawa (dział „Mapa zbrodni”). */
+  city?: string | null;
+  /** Liczba nagrań z przesłuchań (AI) — utrzymywana przez trigger w bazie. */
+  recordings_count?: number;
   created_at: string;
   updated_at: string;
 }
@@ -77,6 +84,7 @@ export interface OrderItem {
   title: string;
   price_grosze: number;
   list_price_grosze?: number | null;
+  format?: ProductFormat;
 }
 
 export interface Order {
@@ -106,9 +114,18 @@ export interface Profile {
   created_at: string;
 }
 
+/** Wersja produktu: PDF do druku albo akta online w przeglądarce. */
+export type ProductFormat = 'pdf' | 'online';
+
+export const FORMAT_LABEL: Record<ProductFormat, string> = { pdf: 'PDF do druku', online: 'Wersja online' };
+
+/** Klucz pozycji w koszyku: sprawa + wersja. */
+export const cartKey = (i: { id: string; format?: ProductFormat }) => `${i.id}:${i.format ?? 'pdf'}`;
+
 /** Minimalne dane sprawy przechowywane w koszyku (localStorage). */
 export interface CartItem {
   id: string;
+  format?: ProductFormat;
   slug: string;
   title: string;
   caseNumber: string;

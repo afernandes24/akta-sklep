@@ -3,6 +3,7 @@ import { CaseCover } from '../case/CaseCover';
 import { formatBytes } from '@/lib/format';
 import type { LibraryEntry } from '@/lib/library';
 import type { Review } from '@/lib/types';
+import { RecordingsList } from '../case/RecordingsList';
 import { ReviewForm } from './ReviewForm';
 
 export function CaseDownloads({ entry, review, defaultAuthor = '' }: { entry: LibraryEntry; review?: Review; defaultAuthor?: string }) {
@@ -19,7 +20,23 @@ export function CaseDownloads({ entry, review, defaultAuthor = '' }: { entry: Li
         <p className="eyebrow">Akta #{caseItem.case_number}</p>
         <h2 className="mt-1 text-2xl font-bold">{caseItem.title}</h2>
 
-        {files.length === 0 ? (
+        {entry.formats.includes('online') && (
+          <div className="mt-5 flex flex-col gap-3 rounded-lg border border-brass-500/40 bg-brass-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold text-paper-50">Wersja online</p>
+              <p className="text-xs text-muted">
+                {entry.onlineReady ? 'Czytaj akta w przeglądarce — notatki zapisują się na koncie.' : 'Wersja online jest w przygotowaniu — pojawi się tutaj automatycznie.'}
+              </p>
+            </div>
+            {entry.onlineReady && (
+              <Link href={`/online/${caseItem.slug}`} className="btn-primary shrink-0 py-2 text-sm">
+                ▶ Otwórz akta online
+              </Link>
+            )}
+          </div>
+        )}
+
+        {entry.formats.includes('pdf') && (files.length === 0 ? (
           <p className="mt-4 text-sm text-muted">Materiały są w przygotowaniu — pojawią się tutaj automatycznie, gdy będą gotowe.</p>
         ) : (
           <>
@@ -65,6 +82,23 @@ export function CaseDownloads({ entry, review, defaultAuthor = '' }: { entry: Li
               </details>
             )}
           </>
+        ))}
+        {entry.recordings.length > 0 && (
+          <details className="group mt-4 rounded-lg border border-ink-700">
+            <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 text-sm [&::-webkit-details-marker]:hidden">
+              <span aria-hidden>🎧</span>
+              <span className="flex-1">
+                <span className="font-semibold text-paper-50">Nagrania z przesłuchań ({entry.recordings.length})</span>
+                <span className="block text-xs text-muted">Odsłuchaj w przeglądarce — działa też na telefonie.</span>
+              </span>
+              <span aria-hidden className="text-muted transition group-open:rotate-180">
+                ▾
+              </span>
+            </summary>
+            <div className="border-t border-ink-800 p-3 sm:p-4">
+              <RecordingsList items={entry.recordings} compact />
+            </div>
+          </details>
         )}
         <ReviewForm caseId={caseItem.id} existing={review} defaultAuthor={defaultAuthor} />
       </div>

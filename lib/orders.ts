@@ -3,7 +3,7 @@ import { findValidCoupon } from './discounts';
 import { sendOrderConfirmation } from './email';
 import { allocateDiscount, type CouponRule, priceCart } from './pricing';
 import { createAdminClient } from './supabase/admin';
-import type { Order, OrderItem } from './types';
+import type { Order, OrderItem, ProductFormat } from './types';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v: string) => UUID_RE.test(v);
@@ -25,20 +25,40 @@ export async function createOrder(params: {
   provider: string;
   couponCode?: string | null;
 }): Promise<CreateOrderResult> {
-  const ids = Array.from(new Set(params.caseIds.filter(isUuid))).slice(0, 50);
+  // Pozycje w formacie "id:format" (starsze koszyki: samo id = PDF)
+  const wanted = Array.from(
+    new Map(
+      params.caseIds
+        .map((raw) => {
+          const [id, f] = String(raw).split(':');
+          return { id, format: (f === 'online' ? 'online' : 'pdf') as ProductFormat };
+        })
+        .filter((w) => isUuid(w.id))
+        .map((w) => [`${w.id}:${w.format}`, w] as const),
+    ).values(),
+  ).slice(0, 50);
+  const ids = Array.from(new Set(wanted.map((w) => w.id)));
   if (ids.length === 0) return { kind: 'empty' };
 
   const db = createAdminClient();
 
   const [{ data: cases, error: casesError }, { data: owned }] = await Promise.all([
-    db.from('cases').select('id, title, case_number, price_grosze, currency').in('id', ids).eq('is_published', true),
-    db.from('entitlements').select('case_id').eq('user_id', params.userId).in('case_id', ids),
+    db.from('cases').select('id, title, case_number, price_grosze, currency, online_enabled, online_price_grosze').in('id', ids).eq('is_published', true),
+    db.from('entitlements').select('case_id, format').eq('user_id', params.userId).in('case_id', ids),
   ]);
   if (casesError) throw new Error(casesError.message);
   if (!cases || cases.length === 0) return { kind: 'empty' };
 
-  const ownedIds = new Set((owned ?? []).map((o) => o.case_id as string));
-  const toBuy = cases.filter((c) => !ownedIds.has(c.id as string));
+  const ownedKeys = new Set((owned ?? []).map((o) => `${o.case_id}:${o.format ?? 'pdf'}`));
+  const toBuy = wanted
+    .map((w) => {
+      const c = cases.find((x) => x.id === w.id);
+      if (!c || ownedKeys.has(`${w.id}:${w.format}`)) return null;
+      if (w.format === 'online' && !c.online_enabled) return null;
+      const price = w.format === 'online' ? ((c.online_price_grosze as number | null) ?? (c.price_grosze as number)) : (c.price_grosze as number);
+      return { ...c, format: w.format, price_grosze: price };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
   if (toBuy.length === 0) return { kind: 'already_owned' };
 
   let coupon: CouponRule | null = null;
@@ -77,9 +97,10 @@ export async function createOrder(params: {
       toBuy.map((c, i) => ({
         order_id: order.id,
         case_id: c.id,
-        title: `AKTA #${c.case_number} — ${c.title}`,
+        title: `AKTA #${c.case_number} — ${c.title}${c.format === 'online' ? ' (wersja online)' : ''}`,
         price_grosze: itemPrices[i],
         list_price_grosze: c.price_grosze,
+        format: c.format,
       })),
     )
     .select('*');
@@ -130,12 +151,12 @@ export async function fulfillOrder(
     return { ok: true };
   }
 
-  const { data: items } = await db.from('order_items').select('case_id').eq('order_id', orderId);
+  const { data: items } = await db.from('order_items').select('case_id, format').eq('order_id', orderId);
   const rows = (items ?? [])
     .filter((i) => i.case_id)
-    .map((i) => ({ user_id: order.user_id, case_id: i.case_id, order_id: orderId }));
+    .map((i) => ({ user_id: order.user_id, case_id: i.case_id, order_id: orderId, format: i.format ?? 'pdf' }));
   if (rows.length) {
-    const { error } = await db.from('entitlements').upsert(rows, { onConflict: 'user_id,case_id', ignoreDuplicates: true });
+    const { error } = await db.from('entitlements').upsert(rows, { onConflict: 'user_id,case_id,format', ignoreDuplicates: true });
     if (error) return { ok: false, reason: error.message };
   }
 

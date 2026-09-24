@@ -68,3 +68,9 @@ export const statusLabels: Record<string, string> = {
   cancelled: 'Anulowane',
   refunded: 'Zwrócone',
 };
+
+/** 95 → „1:35” (długość nagrania). */
+export function formatDuration(s: number | null | undefined): string {
+  if (!s) return '';
+  return `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+}

@@ -6,6 +6,7 @@ export const generatedDemoCases: CaseRecord[] = [
     "tags": [
       "katastrofa"
     ],
+    "city": "Lębork",
     "slug": "ostatni-lot-sp-krw",
     "case_number": "002",
     "title": "Ostatni lot SP-KRW",
@@ -63,8 +64,10 @@ export const generatedDemoCases: CaseRecord[] = [
   {
     "tags": [
       "katastrofa",
-      "zaginiecie"
+      "zaginiecie",
+      "milosna"
     ],
+    "city": null,
     "slug": "katastrofa-nad-sniardwami",
     "case_number": "003",
     "title": "Katastrofa nad Śniardwami",
@@ -124,6 +127,7 @@ export const generatedDemoCases: CaseRecord[] = [
       "katastrofa",
       "morderstwo"
     ],
+    "city": null,
     "slug": "nocny-ekspres-baltyk",
     "case_number": "004",
     "title": "Nocny ekspres „Bałtyk”",
@@ -183,6 +187,7 @@ export const generatedDemoCases: CaseRecord[] = [
       "kradziez",
       "rodzinna"
     ],
+    "city": "Gdańsk",
     "slug": "lza-baltyku",
     "case_number": "005",
     "title": "Łza Bałtyku",
@@ -241,6 +246,7 @@ export const generatedDemoCases: CaseRecord[] = [
     "tags": [
       "morderstwo"
     ],
+    "city": "Hel",
     "slug": "latarnik",
     "case_number": "006",
     "title": "Latarnik",
@@ -300,6 +306,7 @@ export const generatedDemoCases: CaseRecord[] = [
       "morderstwo",
       "kradziez"
     ],
+    "city": "Wrocław",
     "slug": "ostatni-akord",
     "case_number": "007",
     "title": "Ostatni akord",
@@ -358,6 +365,7 @@ export const generatedDemoCases: CaseRecord[] = [
     "tags": [
       "morderstwo"
     ],
+    "city": "Kościelisko",
     "slug": "zasypani",
     "case_number": "008",
     "title": "Zasypani",
@@ -416,6 +424,7 @@ export const generatedDemoCases: CaseRecord[] = [
     "tags": [
       "szantaz"
     ],
+    "city": "Toruń",
     "slug": "anonimy",
     "case_number": "009",
     "title": "Anonimy",
@@ -474,6 +483,7 @@ export const generatedDemoCases: CaseRecord[] = [
       "zaginiecie",
       "kradziez"
     ],
+    "city": "Łódź",
     "slug": "zaginiona-z-laboratorium",
     "case_number": "010",
     "title": "Zaginiona z laboratorium",
@@ -531,6 +541,7 @@ export const generatedDemoCases: CaseRecord[] = [
     "tags": [
       "zaginiecie"
     ],
+    "city": null,
     "slug": "czlowiek-za-burta",
     "case_number": "011",
     "title": "Człowiek za burtą",

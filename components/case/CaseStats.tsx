@@ -1,16 +1,14 @@
 import { plural } from '@/lib/format';
+import { levelName } from '@/lib/tags';
+import { Skulls } from './Skull';
 
 export function DifficultyStars({ value, showLabel = true }: { value: number; showLabel?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-2" aria-label={`Trudność: ${value} z 5`}>
-      <span aria-hidden className="tracking-[0.1em]">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <span key={i} className={i <= value ? 'text-brass-400' : 'text-ink-600'}>
-            ★
-          </span>
-        ))}
+    <span className="inline-flex items-center gap-2" title={levelName(value)} aria-label={`Trudność: ${value} z 5 (${levelName(value)})`}>
+      <span aria-hidden>
+        <Skulls value={value} />
       </span>
-      {showLabel && <span aria-hidden>Trudność</span>}
+      {showLabel && <span aria-hidden>{levelName(value)}</span>}
     </span>
   );
 }
@@ -35,7 +33,7 @@ export function CaseStats({ difficulty, minutes, suspects, pages, layout = 'list
     return (
       <dl className="grid grid-cols-2 gap-3">
         {[
-          ['Trudność', <DifficultyStars key="d" value={difficulty} showLabel={false} />],
+          ['Trudność', <DifficultyStars key="d" value={difficulty} />],
           ['Czas gry', `${minutes} min`],
           ['Podejrzani', String(suspects)],
           ['Materiały', `${pages} ${plural(pages, 'strona', 'strony', 'stron')}`],

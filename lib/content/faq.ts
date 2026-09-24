@@ -17,7 +17,15 @@ export const faq: { q: string; a: string }[] = [
   },
   {
     q: 'Czy potrzebuję aplikacji lub internetu podczas gry?',
-    a: 'Nie. To gra na papierze. Internet jest potrzebny tylko do pobrania plików. Całe śledztwo prowadzisz przy stole z wydrukowanymi aktami.',
+    a: 'W wersji PDF — nie. To gra na papierze: internet jest potrzebny tylko do pobrania plików, a całe śledztwo prowadzisz przy stole z wydrukowanymi aktami.',
+  },
+  {
+    q: 'Czy mogę grać online, bez drukowania?',
+    a: 'Tak, jeśli sprawa ma wersję online — wybierzesz ją na stronie sprawy („Online w przeglądarce”). To te same akta co w PDF, tylko czytane na komputerze, tablecie lub telefonie. Notatki zapisują się na koncie, a rozwiązanie czeka w zapieczętowanej kopercie. Wersja PDF i online to osobne zakupy.',
+  },
+  {
+    q: 'Co to są nagrania z przesłuchań?',
+    a: 'Część spraw ma dodatkowo nagrania przesłuchań podejrzanych — słuchasz ich na koncie, w przeglądarce (także na telefonie). Nagrania dostajesz w obu wersjach: PDF i online. Głosy są wygenerowane przez sztuczną inteligencję, a postacie są fikcyjne. Sprawy z nagraniami mają oznaczenie 🎧.',
   },
   {
     q: 'Jak wydrukować materiały?',

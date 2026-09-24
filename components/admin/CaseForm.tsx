@@ -4,7 +4,7 @@ import { useActionState, useState } from 'react';
 import { type SaveCaseState, saveCase } from '@/app/admin/actions';
 import { Notice } from '@/components/ui/PageHeader';
 import { slugify } from '@/lib/format';
-import { CASE_TAGS } from '@/lib/tags';
+import { CASE_TAGS, LEVEL_NAMES } from '@/lib/tags';
 import type { CaseRecord } from '@/lib/types';
 import { ExcerptsEditor } from './ExcerptsEditor';
 
@@ -78,7 +78,7 @@ export function CaseForm({ c }: { c?: CaseRecord }) {
             <select name="difficulty" className="input" defaultValue={c?.difficulty ?? 3}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <option key={n} value={n}>
-                  {'★'.repeat(n)} ({n})
+                  {'💀'.repeat(n)} ({n} — {LEVEL_NAMES[n]})
                 </option>
               ))}
             </select>
@@ -96,21 +96,38 @@ export function CaseForm({ c }: { c?: CaseRecord }) {
             <input name="sort_order" type="number" className="input" defaultValue={c?.sort_order ?? 0} />
           </Field>
         </div>
+        <div className="grid gap-5 border-t border-ink-800 pt-5 sm:grid-cols-3">
+          <label className="flex items-center gap-3 text-sm text-paper-200 sm:col-span-2">
+            <input type="checkbox" name="online_enabled" defaultChecked={c?.online_enabled ?? false} className="h-5 w-5 accent-brass-400" />
+            <span>
+              <strong className="text-paper-50">Sprzedawaj wersję online</strong>
+              <span className="block text-xs text-muted">Włącz, gdy wersja online jest wygenerowana i opublikowana (sekcja „Wersja online” obok).</span>
+            </span>
+          </label>
+          <Field label="Cena wersji online (zł)" hint="Puste = jak PDF">
+            <input name="online_price" className="input" inputMode="decimal" defaultValue={c?.online_price_grosze != null ? (c.online_price_grosze / 100).toFixed(2).replace('.', ',') : ''} />
+          </Field>
+        </div>
       </section>
 
       <section className="card space-y-5 p-6">
         <h2 className="font-serif text-xl font-semibold">Treści na stronie produktu</h2>
         <fieldset>
-          <legend className="label">Tematy (filtry w katalogu)</legend>
+          <legend className="label">Działy (filtry w katalogu)</legend>
           <div className="flex flex-wrap gap-3">
             {CASE_TAGS.map((t) => (
               <label key={t.id} className="flex items-center gap-2 rounded-md border border-ink-700 px-3 py-2 text-sm text-paper-200">
                 <input type="checkbox" name="tags" value={t.id} defaultChecked={c?.tags?.includes(t.id)} className="h-4 w-4 accent-brass-400" />
-                {t.label}
+                <span>
+                  {t.label} <span className="text-xs text-muted">({t.hint})</span>
+                </span>
               </label>
             ))}
           </div>
         </fieldset>
+        <Field label="Miasto (dział „Mapa zbrodni”)" hint="Np. Gdańsk. Puste = sprawa nie trafia do działu miast.">
+          <input name="city" className="input" maxLength={60} defaultValue={c?.city ?? ''} />
+        </Field>
         <Field label="Czego można się spodziewać" hint="Jedna pozycja w linii.">
           <textarea name="highlights" className="input" rows={5} defaultValue={c?.highlights.join('\n') ?? ''} />
         </Field>

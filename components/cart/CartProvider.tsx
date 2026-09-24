@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import type { CartItem } from '@/lib/types';
+import { type CartItem, cartKey } from '@/lib/types';
 
 const STORAGE_KEY = 'akta-koszyk-v1';
 
@@ -9,9 +9,10 @@ interface CartContextValue {
   items: CartItem[];
   ready: boolean;
   add: (item: CartItem) => void;
-  remove: (id: string) => void;
+  /** Usuwa pozycję po kluczu (cartKey) albo wszystkie wersje sprawy po samym id. */
+  remove: (keyOrId: string) => void;
   clear: () => void;
-  has: (id: string) => boolean;
+  has: (key: string) => boolean;
   totalGrosze: number;
 }
 
@@ -21,7 +22,7 @@ function readStorage(): CartItem[] {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     const parsed = raw ? (JSON.parse(raw) as CartItem[]) : [];
-    return Array.isArray(parsed) ? parsed.filter((i) => i && typeof i.id === 'string') : [];
+    return Array.isArray(parsed) ? parsed.filter((i) => i && typeof i.id === 'string').map((i) => ({ ...i, format: i.format ?? 'pdf' })) : [];
   } catch {
     return [];
   }
@@ -57,10 +58,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     () => ({
       items,
       ready,
-      add: (item) => persist((prev) => (prev.some((i) => i.id === item.id) ? prev : [...prev, item])),
-      remove: (id) => persist((prev) => prev.filter((i) => i.id !== id)),
+      add: (item) => persist((prev) => (prev.some((i) => cartKey(i) === cartKey(item)) ? prev : [...prev, { ...item, format: item.format ?? 'pdf' }])),
+      remove: (keyOrId) => persist((prev) => prev.filter((i) => cartKey(i) !== keyOrId && i.id !== keyOrId)),
       clear: () => persist(() => []),
-      has: (id) => items.some((i) => i.id === id),
+      has: (key) => items.some((i) => cartKey(i) === key),
       totalGrosze: items.reduce((sum, i) => sum + i.priceGrosze, 0),
     }),
     [items, ready, persist],

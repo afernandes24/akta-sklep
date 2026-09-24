@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { trackAddToCart } from '@/lib/analytics';
 import { formatPrice } from '@/lib/format';
 import { priceCart } from '@/lib/pricing';
-import type { CartItem } from '@/lib/types';
+import { type CartItem, cartKey } from '@/lib/types';
 import { CaseCover } from '../case/CaseCover';
 import { useCart } from './CartProvider';
 
@@ -12,11 +12,11 @@ export function BundleCard({ title, description, items }: { title: string; descr
   const { add, has, ready } = useCart();
   const router = useRouter();
   const price = priceCart(items.map((i) => i.priceGrosze));
-  const allIn = ready && items.every((i) => has(i.id));
+  const allIn = ready && items.every((i) => has(cartKey(i)));
 
   const addAll = () => {
     items.forEach((i) => {
-      if (!has(i.id)) trackAddToCart({ id: i.id, title: i.title, priceGrosze: i.priceGrosze });
+      if (!has(cartKey(i))) trackAddToCart({ id: i.id, title: i.title, priceGrosze: i.priceGrosze });
       add(i);
     });
     router.push('/koszyk');

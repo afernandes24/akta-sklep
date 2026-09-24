@@ -59,7 +59,7 @@ export async function sendOrderConfirmation(orderId: string): Promise<void> {
     items
       .map(
         (i) =>
-          `<tr><td style="padding:6px 0;border-bottom:1px solid #eee">${esc(i.title)} (PDF)</td><td style="padding:6px 0;border-bottom:1px solid #eee;text-align:right">${formatPrice(discount ? (i.list_price_grosze ?? i.price_grosze) : i.price_grosze)}</td></tr>`,
+          `<tr><td style="padding:6px 0;border-bottom:1px solid #eee">${esc(i.title)}${/\(wersja online\)$/.test(i.title) ? '' : ' (PDF)'}</td><td style="padding:6px 0;border-bottom:1px solid #eee;text-align:right">${formatPrice(discount ? (i.list_price_grosze ?? i.price_grosze) : i.price_grosze)}</td></tr>`,
       )
       .join('') +
     (discount

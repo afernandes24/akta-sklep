@@ -6,7 +6,7 @@ import { createPublicClient } from './supabase/public';
 import type { CaseImage, CaseRecord, Excerpt } from './types';
 
 const CASE_COLUMNS =
-  'id, slug, case_number, title, tagline, description, highlights, contents, excerpts, difficulty, play_time_minutes, page_count, suspect_count, price_grosze, currency, cover_path, is_published, sort_order, seo_title, seo_description, tags, created_at, updated_at';
+  'id, slug, case_number, title, tagline, description, highlights, contents, excerpts, difficulty, play_time_minutes, page_count, suspect_count, price_grosze, currency, cover_path, is_published, sort_order, seo_title, seo_description, tags, online_enabled, online_price_grosze, city, recordings_count, created_at, updated_at';
 
 export function normalizeCase(row: Record<string, unknown>): CaseRecord {
   const r = row as unknown as CaseRecord;
@@ -16,6 +16,10 @@ export function normalizeCase(row: Record<string, unknown>): CaseRecord {
     contents: Array.isArray(r.contents) ? r.contents : [],
     excerpts: Array.isArray(r.excerpts) ? (r.excerpts as Excerpt[]) : [],
     tags: Array.isArray(r.tags) ? r.tags : [],
+    online_enabled: Boolean(r.online_enabled),
+    online_price_grosze: r.online_price_grosze ?? null,
+    city: r.city ?? null,
+    recordings_count: Number(r.recordings_count ?? 0),
   };
 }
 
