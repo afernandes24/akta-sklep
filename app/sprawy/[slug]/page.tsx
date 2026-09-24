@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AddToCartButtons } from '@/components/cart/AddToCartButtons';
 import { CaseCover } from '@/components/case/CaseCover';
+import { CaseBadges } from '@/components/case/CaseBadges';
 import { CaseStats } from '@/components/case/CaseStats';
 import { RatingBadge } from '@/components/case/RatingBadge';
 import { ReviewsSection } from '@/components/case/ReviewsSection';
@@ -52,7 +53,9 @@ export default async function CasePage({ params }: Params) {
 
   const [images, reviews, ratings] = await Promise.all([getCaseImages(c.id), getApprovedReviews(c.id), getCaseRatings()]);
   const rating = ratings[c.id] ?? null;
-  const cartItem = { id: c.id, slug: c.slug, title: c.title, caseNumber: c.case_number, priceGrosze: c.price_grosze };
+  const cartItem = { id: c.id, slug: c.slug, title: c.title, caseNumber: c.case_number, priceGrosze: c.price_grosze, format: 'pdf' as const };
+  const online = c.online_enabled ? { priceGrosze: c.online_price_grosze ?? c.price_grosze } : null;
+  const fromPrice = online ? Math.min(online.priceGrosze, c.price_grosze) : c.price_grosze;
   const url = `${siteConfig.url}/sprawy/${c.slug}`;
   const coverUrl = publicStorageUrl('covers', c.cover_path);
 
@@ -138,6 +141,7 @@ export default async function CasePage({ params }: Params) {
             </a>
           )}
           <p className="mt-4 text-lg leading-relaxed text-paper-200">{c.tagline}</p>
+          <CaseBadges c={c} className="mt-4" />
 
           <div className="mt-8">
             <CaseStats layout="grid" difficulty={c.difficulty} minutes={c.play_time_minutes} suspects={c.suspect_count} pages={c.page_count} />
@@ -145,14 +149,18 @@ export default async function CasePage({ params }: Params) {
 
           <div id="kup" className="card mt-8 p-6">
             <div className="flex items-baseline justify-between gap-4">
-              <p className="font-serif text-4xl font-bold text-paper-50">{formatPrice(c.price_grosze)}</p>
-              <p className="text-sm text-muted">produkt cyfrowy · PDF</p>
+              <p className="font-serif text-4xl font-bold text-paper-50">
+                {online && <span className="mr-2 text-lg font-normal text-muted">od</span>}
+                {formatPrice(fromPrice)}
+              </p>
+              <p className="text-sm text-muted">{online ? 'PDF do druku lub online' : 'produkt cyfrowy · PDF'}</p>
             </div>
-            <AddToCartButtons item={cartItem} className="mt-5" />
+            <AddToCartButtons item={cartItem} online={online} className="mt-5" />
             <ul className="mt-5 space-y-2 text-sm text-paper-200">
               <li>✓ Dostęp do plików od razu po potwierdzeniu płatności</li>
               <li>✓ Pliki zawsze dostępne na koncie — możesz pobrać je ponownie</li>
               <li>✓ Rozwiązanie w osobnym, wyraźnie oznaczonym pliku</li>
+              {(c.recordings_count ?? 0) > 0 && <li>🎧 W zestawie nagrania z przesłuchań — odsłuchasz je na koncie (w obu wersjach)</li>}
             </ul>
           </div>
 

@@ -82,6 +82,9 @@ export async function saveCase(_prev: SaveCaseState, formData: FormData): Promis
     seo_title: String(formData.get('seo_title') ?? '').trim() || null,
     seo_description: String(formData.get('seo_description') ?? '').trim() || null,
     tags: formData.getAll('tags').map(String).filter(isCaseTag),
+    online_enabled: formData.get('online_enabled') === 'on',
+    online_price_grosze: String(formData.get('online_price') ?? '').trim() ? parsePriceToGrosze(String(formData.get('online_price'))) : null,
+    city: String(formData.get('city') ?? '').trim().slice(0, 60) || null,
   };
 
   const db = createAdminClient();

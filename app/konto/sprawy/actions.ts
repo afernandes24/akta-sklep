@@ -24,8 +24,8 @@ export async function submitReview(_prev: ReviewState, formData: FormData): Prom
 
   const db = createAdminClient();
   // Opinię może dodać wyłącznie osoba, która kupiła sprawę (weryfikacja po zamówieniu).
-  const { data: ent } = await db.from('entitlements').select('case_id').eq('user_id', user.id).eq('case_id', caseId).maybeSingle();
-  if (!ent) return { error: 'Opinię mogą dodać tylko osoby, które kupiły tę sprawę.' };
+  const { data: ent } = await db.from('entitlements').select('case_id').eq('user_id', user.id).eq('case_id', caseId).limit(1);
+  if (!ent?.length) return { error: 'Opinię mogą dodać tylko osoby, które kupiły tę sprawę.' };
 
   const { error } = await db
     .from('reviews')

@@ -8,6 +8,7 @@ import { Notice } from '@/components/ui/PageHeader';
 import { formatPrice } from '@/lib/format';
 import { DIGITAL_CONSENT_TEXT } from '@/lib/legal/documents';
 import { type CouponRule, priceCart, VOLUME_TIERS } from '@/lib/pricing';
+import { cartKey } from '@/lib/types';
 import { type CheckoutState, checkCoupon, startCheckout } from './actions';
 
 interface Props {
@@ -62,18 +63,18 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
       <ul className="card min-w-0 divide-y divide-ink-800">
         {items.map((item) => (
-          <li key={item.id} className="flex items-center gap-4 p-5">
+          <li key={cartKey(item)} className="flex items-center gap-4 p-5">
             <CaseCover caseNumber={item.caseNumber} title={item.title} size="xs" className="w-14 shrink-0" />
             <div className="min-w-0 flex-1">
               <p className="eyebrow">Akta #{item.caseNumber}</p>
               <Link href={`/sprawy/${item.slug}`} className="block truncate font-serif text-lg text-paper-50 hover:text-brass-300">
                 {item.title}
               </Link>
-              <p className="text-xs text-muted">PDF do pobrania i druku</p>
+              <p className="text-xs text-muted">{item.format === 'online' ? 'Gra online w przeglądarce' : 'PDF do pobrania i druku'}</p>
             </div>
             <div className="text-right">
               <p className="font-semibold text-paper-50">{formatPrice(item.priceGrosze)}</p>
-              <button type="button" onClick={() => remove(item.id)} className="mt-1 text-xs text-muted underline-offset-2 hover:text-stamp-500 hover:underline">
+              <button type="button" onClick={() => remove(cartKey(item))} className="mt-1 text-xs text-muted underline-offset-2 hover:text-stamp-500 hover:underline">
                 Usuń
               </button>
             </div>
@@ -167,7 +168,7 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
         ) : (
           <form action={action} className="mt-6 space-y-4">
             {items.map((i) => (
-              <input key={i.id} type="hidden" name="caseId" value={i.id} />
+              <input key={cartKey(i)} type="hidden" name="caseId" value={cartKey(i)} />
             ))}
             {coupon && price.source === 'coupon' && <input type="hidden" name="coupon" value={coupon.code} />}
             {state.error && <Notice tone="error">{state.error}</Notice>}

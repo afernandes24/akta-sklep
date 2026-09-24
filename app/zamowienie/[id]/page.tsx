@@ -22,7 +22,7 @@ async function loadOrder(id: string): Promise<Order | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from('orders')
-    .select('id, order_number, user_id, email, status, total_grosze, currency, provider, provider_ref, created_at, paid_at, order_items(id, order_id, case_id, title, price_grosze)')
+    .select('id, order_number, user_id, email, status, total_grosze, currency, provider, provider_ref, created_at, paid_at, order_items(id, order_id, case_id, title, price_grosze, format)')
     .eq('id', id)
     .maybeSingle();
   return (data as Order | null) ?? null;
@@ -52,7 +52,7 @@ export default async function OrderPage({
     }
   }
 
-  const caseIds = (order.order_items ?? []).map((i) => i.case_id).filter((x): x is string => Boolean(x));
+  const caseIds = (order.order_items ?? []).filter((i) => i.case_id).map((i) => `${i.case_id}:${i.format ?? 'pdf'}`);
   const paid = order.status === 'paid';
   const library = paid && order.user_id === user.id ? await getUserLibrary(user.id, caseIds) : [];
 

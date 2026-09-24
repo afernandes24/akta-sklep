@@ -36,7 +36,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ fileId: 
   if (!file) return new NextResponse('Nie znaleziono pliku', { status: 404 });
 
   const [{ data: entitlement }, { data: profile }] = await Promise.all([
-    db.from('entitlements').select('case_id, orders(order_number)').eq('user_id', user.id).eq('case_id', file.case_id).maybeSingle(),
+    db.from('entitlements').select('case_id, orders(order_number)').eq('user_id', user.id).eq('case_id', file.case_id).eq('format', 'pdf').maybeSingle(),
     db.from('profiles').select('is_admin').eq('id', user.id).maybeSingle(),
   ]);
   if (!entitlement && !profile?.is_admin) {
