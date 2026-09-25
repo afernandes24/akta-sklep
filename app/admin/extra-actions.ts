@@ -74,3 +74,13 @@ export async function toggleDiscountCode(formData: FormData) {
   await createAdminClient().from('discount_codes').update({ is_active: active }).eq('code', code);
   revalidatePath('/admin/rabaty');
 }
+
+// ─── Darmowa sprawa (newsletter) ────────────────────────────────────
+export async function deleteFreeFile(formData: FormData) {
+  await requireAdmin();
+  const name = String(formData.get('name') ?? '');
+  if (!name || name.includes('/') || name.includes('..')) return;
+  const { FREE_CASE_FOLDER } = await import('@/lib/newsletter');
+  await createAdminClient().storage.from('case-files').remove([`${FREE_CASE_FOLDER}/${name}`]);
+  revalidatePath('/admin/darmowa-sprawa');
+}

@@ -5,7 +5,7 @@ import { FREE_CASE, NEWSLETTER_CONSENT_TEXT } from '@/lib/newsletter';
 
 export const metadata: Metadata = {
   title: 'Darmowa gra detektywistyczna PDF — sprawa próbna',
-  description: 'Pobierz za darmo krótką sprawę detektywistyczną do druku: kradzież w gdańskim antykwariacie, trzech podejrzanych i harcerski szyfr. 30–45 minut gry.',
+  description: FREE_CASE.seoDescription,
   alternates: { canonical: '/darmowa-sprawa' },
 };
 
@@ -19,11 +19,10 @@ export default function FreeCasePage() {
         <p className="eyebrow">Akta #{FREE_CASE.number} · za darmo</p>
         <h1 className="mt-2 text-4xl font-bold leading-tight sm:text-5xl">{FREE_CASE.title}</h1>
         <p className="mt-4 text-lg leading-relaxed text-paper-200">
-          Gdańsk, ulica Mariacka. Z zamkniętej gabloty w antykwariacie znika srebrny zegarek kieszonkowy — pamiątka, której właściciel nigdy nie chciał
-          sprzedać. Zamek nieruszony. W sklepie były tylko trzy osoby.
+          {FREE_CASE.lead}
         </p>
         <ul className="mt-6 grid gap-2 text-paper-200 sm:grid-cols-2">
-          {['3 etapy śledztwa', '3 podejrzanych', '9 dowodów i harcerski szyfr', '30–45 minut, 12+', 'Pełne rozwiązanie w osobnym pliku', 'PDF do wydrukowania w domu'].map((t) => (
+          {FREE_CASE.bullets.map((t) => (
             <li key={t} className="flex gap-2">
               <span aria-hidden className="text-brass-400">◆</span>
               {t}

@@ -83,7 +83,7 @@ export function CaseForm({ c }: { c?: CaseRecord }) {
               ))}
             </select>
           </Field>
-          <Field label="Czas gry (min)">
+          <Field label="Czas gry (min)" hint="Średnia, np. 165 dla 2–3,5 h">
             <input name="play_time_minutes" type="number" min={1} className="input" defaultValue={c?.play_time_minutes ?? 90} />
           </Field>
           <Field label="Liczba stron">
@@ -131,7 +131,7 @@ export function CaseForm({ c }: { c?: CaseRecord }) {
         <Field label="Czego można się spodziewać" hint="Jedna pozycja w linii.">
           <textarea name="highlights" className="input" rows={5} defaultValue={c?.highlights.join('\n') ?? ''} />
         </Field>
-        <Field label="Co otrzymasz (lista plików)" hint='Jedna pozycja w linii, np. „02_AKTA_SPRAWY.pdf — raporty i przesłuchania”.'>
+        <Field label="Co otrzymasz (lista plików)" hint='Jedna pozycja w linii, np. „Akta sprawy (45 stron) — raporty, przesłuchania, 5 celów”.'>
           <textarea name="contents" className="input font-mono" rows={5} defaultValue={c?.contents.join('\n') ?? ''} />
         </Field>
         <div>

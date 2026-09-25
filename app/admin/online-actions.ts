@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/auth';
 import { ONLINE_BUCKET, RECORDINGS_BUCKET, type OnlineDocument, type OnlineManifest } from '@/lib/online';
+import { fileKind } from '@/lib/files';
 import { isUuid } from '@/lib/orders';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -22,6 +23,7 @@ export interface OnlineSource {
   id: string;
   title: string;
   solution: boolean;
+  hint: boolean;
   url: string;
 }
 
@@ -41,7 +43,8 @@ export async function getOnlineSources(caseId: string): Promise<{ sources?: Onli
   const sources = files.map((f, i) => ({
     id: f.id as string,
     title: (f.label as string) || (f.file_name as string),
-    solution: Boolean(f.is_solution),
+    solution: fileKind(f.file_name as string, Boolean(f.is_solution)) === 'solution',
+    hint: fileKind(f.file_name as string, Boolean(f.is_solution)) === 'hint',
     url: signed?.[i]?.signedUrl ?? '',
   }));
   if (sources.some((s) => !s.url)) return { error: 'Nie udało się przygotować plików PDF do odczytu.' };
@@ -60,6 +63,7 @@ export async function saveOnlineManifest(caseId: string, version: number, docume
       id: `d${i + 1}`,
       title: String(d.title ?? `Dokument ${i + 1}`).slice(0, 120),
       solution: Boolean(d.solution),
+      hint: !d.solution && Boolean(d.hint),
       pages: pages.map((p) => ({ path: p.path, w: Math.round(Number(p.w) || 0), h: Math.round(Number(p.h) || 0) })),
     });
   }

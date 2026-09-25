@@ -1,4 +1,4 @@
-import { plural } from '@/lib/format';
+import { formatPlayTime, plural } from '@/lib/format';
 import { levelName } from '@/lib/tags';
 import { Skulls } from './Skull';
 
@@ -24,7 +24,7 @@ interface StatsProps {
 export function CaseStats({ difficulty, minutes, suspects, pages, layout = 'list' }: StatsProps) {
   const items = [
     { icon: null, content: <DifficultyStars value={difficulty} /> },
-    { icon: '⏱️', content: `${minutes} minut` },
+    { icon: '⏱️', content: formatPlayTime(minutes) },
     { icon: '👤', content: `${suspects} ${plural(suspects, 'podejrzany', 'podejrzanych', 'podejrzanych')}` },
     { icon: '📄', content: `${pages} ${plural(pages, 'strona', 'strony', 'stron')}` },
   ];
@@ -34,7 +34,7 @@ export function CaseStats({ difficulty, minutes, suspects, pages, layout = 'list
       <dl className="grid grid-cols-2 gap-3">
         {[
           ['Trudność', <DifficultyStars key="d" value={difficulty} />],
-          ['Czas gry', `${minutes} min`],
+          ['Czas gry', formatPlayTime(minutes)],
           ['Podejrzani', String(suspects)],
           ['Materiały', `${pages} ${plural(pages, 'strona', 'strony', 'stron')}`],
         ].map(([label, value]) => (

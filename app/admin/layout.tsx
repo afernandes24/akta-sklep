@@ -16,6 +16,7 @@ const nav = [
   ['/admin/opinie', 'Opinie'],
   ['/admin/rabaty', 'Rabaty'],
   ['/admin/newsletter', 'Newsletter'],
+  ['/admin/darmowa-sprawa', 'Darmowa sprawa'],
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

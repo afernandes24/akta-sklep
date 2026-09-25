@@ -105,7 +105,8 @@ export function OnlineReader({ slug, title, caseNumber, documents: initialDocs, 
   const regular = documents.filter((d) => !d.solution);
   const solutionDocs = documents.filter((d) => d.solution);
   const tabs = [
-    ...regular.map((d) => ({ id: d.id, label: d.title, meta: `${d.pageCount} str.` })),
+    ...regular.filter((d) => !d.hint).map((d) => ({ id: d.id, label: d.title, meta: `${d.pageCount} str.` })),
+    ...regular.filter((d) => d.hint).map((d) => ({ id: d.id, label: `💡 ${d.title}`, meta: `${d.pageCount} str.` })),
     ...(recordings.length ? [{ id: REC_TAB, label: 'Nagrania z przesłuchań', meta: `${recordings.length}` }] : []),
     ...solutionDocs.map((d) => ({ id: d.id, label: d.title, meta: d.locked ? '🔐' : `${d.pageCount} str.` })),
   ];
@@ -116,6 +117,7 @@ export function OnlineReader({ slug, title, caseNumber, documents: initialDocs, 
   const [notes, setNotes] = useState(initialNotes);
   const [notesStatus, setNotesStatus] = useState<'saved' | 'dirty' | 'saving' | 'error'>('saved');
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [hintsShown, setHintsShown] = useState<Record<string, boolean>>({});
   const [pending, startTransition] = useTransition();
   const refreshed = useRef(false);
   const topRef = useRef<HTMLDivElement>(null);
@@ -231,6 +233,19 @@ export function OnlineReader({ slug, title, caseNumber, documents: initialDocs, 
               <RecordingsList items={recordings} />
             </div>
           </section>
+        ) : doc?.hint && !hintsShown[doc.id] ? (
+          <section className="mx-auto max-w-xl py-10 text-center">
+            <div className="card border-brass-500/50 p-8">
+              <p className="text-5xl" aria-hidden>
+                💡
+              </p>
+              <h1 className="mt-4 text-3xl font-bold">{doc.title}</h1>
+              <p className="mt-3 text-paper-200">Wskazówki zdradzają część rozwiązania. Zaglądaj tylko do celu, na którym utknąłeś — i nie czytaj dalej.</p>
+              <button type="button" onClick={() => setHintsShown((h) => ({ ...h, [doc.id]: true }))} className="btn-primary mt-6">
+                Pokaż wskazówki
+              </button>
+            </div>
+          </section>
         ) : doc?.locked ? (
           <section className="mx-auto max-w-xl py-10 text-center">
             <div className="card border-stamp-500/50 p-8">
@@ -264,12 +279,33 @@ export function OnlineReader({ slug, title, caseNumber, documents: initialDocs, 
           <section className="mx-auto max-w-4xl">
             <div className="flex items-baseline justify-between gap-3">
               <h1 className="text-2xl font-bold sm:text-3xl">{doc.title}</h1>
-              <span className="shrink-0 font-mono text-xs text-muted">{doc.pageCount} str.</span>
+              {doc.pageCount > 3 ? (
+                <label className="flex shrink-0 items-center gap-2 text-xs text-muted">
+                  Strona
+                  <select
+                    className="input w-auto py-1 text-xs"
+                    value=""
+                    onChange={(e) => document.getElementById(`strona-${e.target.value}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                    aria-label="Przejdź do strony"
+                  >
+                    <option value="" disabled>
+                      skocz do…
+                    </option>
+                    {doc.pages.map((_, i) => (
+                      <option key={i} value={i + 1}>
+                        {i + 1} / {doc.pageCount}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <span className="shrink-0 font-mono text-xs text-muted">{doc.pageCount} str.</span>
+              )}
             </div>
-            <p className="mt-1 text-xs text-muted">Kliknij stronę, aby ją powiększyć.</p>
+            <p className="mt-1 text-xs text-muted">Kliknij stronę, aby ją powiększyć. Czytaj po kolei — nie zaglądaj do przodu.</p>
             <ol className="mt-5 space-y-6">
               {doc.pages.map((p, i) => (
-                <li key={p.url || i}>
+                <li key={p.url || i} id={`strona-${i + 1}`} className="scroll-mt-44">
                   <button type="button" onClick={() => setLightbox(i)} className="relative block w-full cursor-zoom-in overflow-hidden rounded-md bg-white shadow-lg shadow-black/40" aria-label={`Powiększ stronę ${i + 1}`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={p.url} alt={`${doc.title} — strona ${i + 1}`} width={p.w} height={p.h} loading={i < 2 ? 'eager' : 'lazy'} onError={onImgError} className="h-auto w-full" />

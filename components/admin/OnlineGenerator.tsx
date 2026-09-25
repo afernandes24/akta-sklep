@@ -25,7 +25,7 @@ export function OnlineGenerator({ caseId, hasExisting }: { caseId: string; hasEx
       const version = src.version;
       const documents: OnlineDocument[] = [];
       for (const [di, s] of src.sources.entries()) {
-        const doc: OnlineDocument = { id: `d${di + 1}`, title: s.title, solution: s.solution, pages: [] };
+        const doc: OnlineDocument = { id: `d${di + 1}`, title: s.title, solution: s.solution, hint: s.hint, pages: [] };
         await renderPdf(s.url, async (page, pi, total) => {
           setStatus({ text: `${s.title}: strona ${pi + 1} z ${total} (plik ${di + 1} z ${src.sources!.length})`, tone: 'info' });
           const path = `${caseId}/v${version}/${String(di + 1).padStart(2, '0')}-${String(pi + 1).padStart(3, '0')}.${page.ext}`;

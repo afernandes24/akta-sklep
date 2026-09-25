@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CaseCover } from '../case/CaseCover';
+import { fileKind } from '@/lib/files';
 import { formatBytes } from '@/lib/format';
 import type { LibraryEntry } from '@/lib/library';
 import type { Review } from '@/lib/types';
@@ -8,8 +9,10 @@ import { ReviewForm } from './ReviewForm';
 
 export function CaseDownloads({ entry, review, defaultAuthor = '' }: { entry: LibraryEntry; review?: Review; defaultAuthor?: string }) {
   const { caseItem, files } = entry;
-  const regular = files.filter((f) => !f.is_solution);
-  const solution = files.filter((f) => f.is_solution);
+  const kind = (f: (typeof files)[number]) => fileKind(f.file_name, f.is_solution);
+  const regular = files.filter((f) => kind(f) === 'material');
+  const hints = files.filter((f) => kind(f) === 'hint');
+  const solution = files.filter((f) => kind(f) === 'solution');
 
   return (
     <article className="card grid gap-6 p-5 sm:grid-cols-[140px_1fr] sm:p-6">
@@ -57,12 +60,37 @@ export function CaseDownloads({ entry, review, defaultAuthor = '' }: { entry: Li
               ))}
             </ul>
 
+            {hints.length > 0 && (
+              <details className="group mt-4 rounded-lg border border-brass-500/40 bg-brass-500/5">
+                <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 text-sm [&::-webkit-details-marker]:hidden">
+                  <span aria-hidden>💡</span>
+                  <span className="flex-1">
+                    <span className="font-semibold text-paper-50">Wskazówki</span>
+                    <span className="block text-xs text-muted">Zajrzyj tylko przy celu, na którym utknąłeś.</span>
+                  </span>
+                  <span aria-hidden className="text-muted transition group-open:rotate-180">
+                    ▾
+                  </span>
+                </summary>
+                <ul className="divide-y divide-ink-800 border-t border-brass-500/30">
+                  {hints.map((f) => (
+                    <li key={f.id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="truncate font-mono text-sm text-brass-300">{f.file_name}</p>
+                      <a href={`/api/pobierz/${f.id}`} className="btn-secondary shrink-0 py-2 text-xs" download>
+                        ↓ Pobierz wskazówki
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+
             {solution.length > 0 && (
               <details className="group mt-4 rounded-lg border border-stamp-500/50 bg-stamp-600/10">
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 text-sm [&::-webkit-details-marker]:hidden">
                   <span aria-hidden>🔐</span>
                   <span className="flex-1">
-                    <span className="font-semibold text-paper-50">Rozwiązanie sprawy</span>
+                    <span className="font-semibold text-paper-50">Odpowiedzi i rozwiązanie</span>
                     <span className="block text-xs text-muted">Otwórz dopiero po wskazaniu winnego. Kliknij, aby odsłonić.</span>
                   </span>
                   <span aria-hidden className="text-muted transition group-open:rotate-180">
@@ -74,7 +102,7 @@ export function CaseDownloads({ entry, review, defaultAuthor = '' }: { entry: Li
                     <li key={f.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <p className="font-mono text-sm text-stamp-500">{f.file_name}</p>
                       <a href={`/api/pobierz/${f.id}`} className="btn-danger shrink-0 py-2 text-xs" download>
-                        Pobierz rozwiązanie
+                        Pobierz
                       </a>
                     </li>
                   ))}

@@ -8,8 +8,8 @@ import { watermarkPdf } from '@/lib/watermark';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/** Vercel przyjmuje odpowiedź funkcji do ok. 4,5 MB — większe pliki idą bez znaku wodnego przez jednorazowy link. */
-const MAX_WATERMARK_BYTES = 4 * 1024 * 1024;
+/** Pliki do 60 MB dostają znak wodny (Railway nie ma limitu odpowiedzi); większe idą przez jednorazowy link bez znaku. */
+const MAX_WATERMARK_BYTES = 60 * 1024 * 1024;
 
 /**
  * Bezpieczne pobieranie: sprawdzamy zalogowanie i prawo do sprawy,

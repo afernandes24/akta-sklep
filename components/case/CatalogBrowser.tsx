@@ -14,9 +14,9 @@ const EXTRAS = [
 ];
 const TIMES = [
   { id: '', label: 'Dowolny' },
-  { id: 'krotkie', label: 'do 75 min', test: (m: number) => m <= 75 },
-  { id: 'srednie', label: '76–100 min', test: (m: number) => m > 75 && m <= 100 },
-  { id: 'dlugie', label: 'ponad 100 min', test: (m: number) => m > 100 },
+  { id: 'krotkie', label: 'do 1,5 h', test: (m: number) => m <= 90 },
+  { id: 'srednie', label: '1,5–2,5 h', test: (m: number) => m > 90 && m <= 150 },
+  { id: 'dlugie', label: 'ponad 2,5 h', test: (m: number) => m > 150 },
 ];
 const SORTS = [
   { id: '', label: 'Polecane' },

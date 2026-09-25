@@ -3,9 +3,9 @@ const steps = [
   { icon: '💳', title: 'Kup i pobierz akta', text: 'Po płatności pliki PDF od razu czekają na twoim koncie.' },
   { icon: '🖨️', title: 'Wydrukuj materiały', text: 'Zwykła drukarka i papier A4 wystarczą. Rozłóż akta na stole.' },
   { icon: '🔎', title: 'Prowadź śledztwo', text: 'Czytaj raporty, porównuj zeznania, szukaj sprzeczności.' },
-  { icon: '🧩', title: 'Rozwiązuj zagadki', text: 'Szyfry i łamigłówki wynikają z fabuły i odsłaniają kolejne tropy.' },
+  { icon: '🧩', title: 'Rozwiązuj cele', text: 'Idź cel po celu, nie czytaj do przodu. Szyfry i łamigłówki odsłaniają kolejne tropy.' },
   { icon: '🧠', title: 'Znajdź winnego', text: 'Połącz fakty: kto, dlaczego, jak — i jakie dowody to potwierdzają.' },
-  { icon: '🔐', title: 'Sprawdź rozwiązanie', text: 'Otwórz zapieczętowany plik z rozwiązaniem dopiero na końcu.' },
+  { icon: '🔐', title: 'Sprawdź odpowiedzi', text: 'Wskazówki, gdy utkniesz. Odpowiedzi i nazwisko zabójcy — dopiero na końcu.' },
 ];
 
 export function HowItWorks() {

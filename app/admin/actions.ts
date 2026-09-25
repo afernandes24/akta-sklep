@@ -6,6 +6,7 @@ import { requireAdmin } from '@/lib/auth';
 import { parsePriceToGrosze, slugify } from '@/lib/format';
 import { fulfillOrder, isUuid } from '@/lib/orders';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isSolutionName } from '@/lib/files';
 import { isCaseTag } from '@/lib/tags';
 import type { Excerpt, ExcerptType } from '@/lib/types';
 
@@ -167,7 +168,7 @@ export async function registerUpload(input: {
       file_name: fileName.slice(0, 200),
       storage_path: path,
       size_bytes: size,
-      is_solution: /rozwi[aą]zanie/i.test(fileName),
+      is_solution: isSolutionName(fileName),
       sort_order: count ?? 0,
     });
     if (error) return { error: error.message };

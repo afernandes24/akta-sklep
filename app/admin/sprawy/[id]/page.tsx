@@ -92,7 +92,7 @@ export default async function EditCasePage({
         {/* PLIKI PDF */}
         <section className="card p-5">
           <h2 className="font-serif text-lg font-semibold">Pliki PDF dla kupujących</h2>
-          <p className="mt-1 text-xs text-muted">Prywatne — dostępne tylko po zakupie. Plik z „rozwiązanie” w nazwie zostanie automatycznie oznaczony.</p>
+          <p className="mt-1 text-xs text-muted">Prywatne — dostępne tylko po zakupie. Pliki z „odpowiedzi”/„rozwiązanie” i „wskazówki” w nazwie są oznaczane automatycznie.</p>
           <ul className="mt-4 space-y-3">
             {((files ?? []) as CaseFile[]).map((f) => (
               <li key={f.id} className={`rounded-lg border p-3 ${f.is_solution ? 'border-stamp-500/50' : 'border-ink-700'}`}>
@@ -128,7 +128,7 @@ export default async function EditCasePage({
             ))}
           </ul>
           <div className="mt-4">
-            <Uploader caseId={c.id} kind="file" accept="application/pdf" multiple label="Dodaj pliki PDF" hint="Możesz zaznaczyć wszystkie 5 plików naraz" />
+            <Uploader caseId={c.id} kind="file" accept="application/pdf" multiple label="Dodaj pliki PDF" hint="Zaznacz wszystkie pliki naraz. W nazwie: „Odpowiedzi”/„Rozwiązanie” → ukryte jako odpowiedzi, „Wskazówki” → schowane jako wskazówki." />
           </div>
         </section>
 

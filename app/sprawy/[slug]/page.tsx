@@ -159,7 +159,7 @@ export default async function CasePage({ params }: Params) {
             <ul className="mt-5 space-y-2 text-sm text-paper-200">
               <li>✓ Dostęp do plików od razu po potwierdzeniu płatności</li>
               <li>✓ Pliki zawsze dostępne na koncie — możesz pobrać je ponownie</li>
-              <li>✓ Rozwiązanie w osobnym, wyraźnie oznaczonym pliku</li>
+              <li>✓ Wskazówki i odpowiedzi w osobnych, wyraźnie oznaczonych plikach</li>
               {(c.recordings_count ?? 0) > 0 && <li>🎧 W zestawie nagrania z przesłuchań — odsłuchasz je na koncie (w obu wersjach)</li>}
             </ul>
           </div>
@@ -251,9 +251,9 @@ export default async function CasePage({ params }: Params) {
         <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             ['Pobierz', 'Po zakupie pliki PDF znajdziesz w zakładce „Moje sprawy”.'],
-            ['Wydrukuj', 'Wydrukuj akta, dowody i notatnik. Rozwiązania nie drukuj od razu.'],
-            ['Prowadź śledztwo', 'Zacznij od instrukcji i idź za tropami. Notuj wnioski.'],
-            ['Wskaż winnego', 'Odpowiedz na pytania końcowe, a potem otwórz rozwiązanie.'],
+            ['Wydrukuj', 'Wydrukuj akta sprawy i trzymaj strony po kolei. Wskazówek i odpowiedzi nie drukuj od razu.'],
+            ['Rozwiązuj cele', 'Zacznij od instrukcji i idź cel po celu — nie czytaj do przodu. Utknąłeś? Zajrzyj do wskazówek.'],
+            ['Wskaż winnego', 'Po każdym celu sprawdź odpowiedź. Kto zabił — dowiesz się na końcu pliku z odpowiedziami.'],
           ].map(([title, text], i) => (
             <li key={title} className="card p-6">
               <span className="font-mono text-sm text-brass-400">{String(i + 1).padStart(2, '0')}</span>
