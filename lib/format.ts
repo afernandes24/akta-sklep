@@ -74,3 +74,11 @@ export function formatDuration(s: number | null | undefined): string {
   if (!s) return '';
   return `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
 }
+
+/** Czas gry: do 2 h w minutach („90 min”), dłużej w godzinach („ok. 2,5 h”). */
+export function formatPlayTime(minutes: number): string {
+  if (!minutes) return '';
+  if (minutes < 120) return `${minutes} min`;
+  const h = Math.round((minutes / 60) * 2) / 2;
+  return `ok. ${String(h).replace('.', ',')} h`;
+}

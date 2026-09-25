@@ -118,7 +118,7 @@ for (const dir of caseDirs) {
       file_name: fileName,
       storage_path: storagePath,
       size_bytes: statSync(join(pdfDir, fileName)).size,
-      is_solution: /ROZWIAZANIE/.test(fileName),
+      is_solution: /ROZWIAZAN|ODPOWIEDZ|ANSWER/i.test(fileName),
       sort_order: i,
     };
     const { data: existing } = await db.from('case_files').select('id').eq('storage_path', storagePath).maybeSingle();

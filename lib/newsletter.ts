@@ -1,5 +1,6 @@
 import 'server-only';
 import { siteConfig } from './config';
+import { byKindThenName, fileKind, labelFromFileName, type FileKind } from './files';
 import { sendEmail } from './email';
 import { seller, sellerIdentity } from './legal/seller';
 import { createAdminClient } from './supabase/admin';
@@ -7,18 +8,37 @@ import { createAdminClient } from './supabase/admin';
 export const NEWSLETTER_CONSENT_TEXT =
   'Chcę otrzymywać newsletter z informacjami o nowych sprawach, promocjach i kodach rabatowych na podany adres e-mail. Mogę wypisać się w każdej chwili.';
 
-/** Darmowa sprawa próbna — pliki w buckecie case-files pod free/000/ (wgrywa je npm run seed:files). */
+/**
+ * Darmowa sprawa próbna (newsletter). Pliki PDF wgrywasz w panelu: Admin → Darmowa sprawa
+ * (bucket case-files, folder free/000/). Opis na stronie /darmowa-sprawa zmieniasz TUTAJ.
+ */
 export const FREE_CASE = {
   number: '000',
   title: 'Zegarek z Mariackiej',
-  files: [
-    { name: '01_INSTRUKCJA.pdf', label: 'Instrukcja' },
-    { name: '02_AKTA_SPRAWY.pdf', label: 'Akta sprawy — etapy 1–3' },
-    { name: '03_DOWODY.pdf', label: 'Dowody nr 1–9' },
-    { name: '04_NOTATNIK_DETEKTYWA.pdf', label: 'Notatnik detektywa' },
-    { name: '05_ROZWIAZANIE.pdf', label: 'Rozwiązanie — otwórz na końcu', solution: true },
-  ],
+  lead: 'Gdańsk, ulica Mariacka. Z zamkniętej gabloty w antykwariacie znika srebrny zegarek kieszonkowy — pamiątka, której właściciel nigdy nie chciał sprzedać. Zamek nieruszony. W sklepie były tylko trzy osoby.',
+  seoDescription: 'Pobierz za darmo krótką sprawę detektywistyczną do druku: kradzież w gdańskim antykwariacie, trzech podejrzanych i harcerski szyfr. 30–45 minut gry.',
+  bullets: ['3 cele śledztwa', '3 podejrzanych', '9 dowodów i harcerski szyfr', '30–45 minut, 12+', 'Wskazówki i odpowiedzi w osobnych plikach', 'PDF do wydrukowania w domu'],
 };
+
+export const FREE_CASE_FOLDER = `free/${FREE_CASE.number}`;
+
+export interface FreeFile {
+  name: string;
+  label: string;
+  kind: FileKind;
+  size?: number;
+}
+
+/** Pliki darmowej sprawy — czytane z magazynu, więc wystarczy je podmienić w panelu. */
+export async function listFreeFiles(): Promise<FreeFile[]> {
+  const { data } = await createAdminClient()
+    .storage.from('case-files')
+    .list(FREE_CASE_FOLDER, { limit: 100, sortBy: { column: 'name', order: 'asc' } });
+  return (data ?? [])
+    .filter((f) => f.name.toLowerCase().endsWith('.pdf'))
+    .map((f) => ({ name: f.name, label: labelFromFileName(f.name), kind: fileKind(f.name), size: (f.metadata as { size?: number } | null)?.size }))
+    .sort(byKindThenName);
+}
 
 export type Subscriber = { id: string; email: string; status: 'pending' | 'confirmed' | 'unsubscribed'; token: string };
 
@@ -67,7 +87,7 @@ export function sendFreeCaseEmail(email: string, token: string) {
     `Twoja darmowa sprawa: AKTA #${FREE_CASE.number}`,
     layout(
       'Akta czekają',
-      `<p>Dziękujemy za zapis! Pliki sprawy <strong>${esc(FREE_CASE.title)}</strong> pobierzesz w każdej chwili pod tym linkiem:</p>${button(url, 'Pobierz sprawę próbną')}<p style="font-family:Arial,sans-serif;font-size:13px;color:#555">Wydrukuj pliki 01–04, a rozwiązanie otwórz na końcu. Powodzenia, detektywie.</p>`,
+      `<p>Dziękujemy za zapis! Pliki sprawy <strong>${esc(FREE_CASE.title)}</strong> pobierzesz w każdej chwili pod tym linkiem:</p>${button(url, 'Pobierz sprawę próbną')}<p style="font-family:Arial,sans-serif;font-size:13px;color:#555">Wydrukuj akta i zacznij od instrukcji. Wskazówki i odpowiedzi otwieraj dopiero wtedy, gdy będą potrzebne. Powodzenia, detektywie.</p>`,
       token,
     ),
   );

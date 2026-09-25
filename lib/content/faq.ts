@@ -29,7 +29,7 @@ export const faq: { q: string; a: string }[] = [
   },
   {
     q: 'Jak wydrukować materiały?',
-    a: 'Wystarczy zwykła drukarka i papier A4. Polecamy druk w kolorze (zdjęcia i dowody wyglądają lepiej), ale czarno-biały też wystarczy do rozwiązania sprawy. Szczegóły znajdziesz w pliku 01_INSTRUKCJA.pdf.',
+    a: 'Wystarczy zwykła drukarka i papier A4. Polecamy druk w kolorze (zdjęcia i dowody wyglądają lepiej), ale czarno-biały też wystarczy do rozwiązania sprawy. Strony są ponumerowane — po wydruku trzymaj je po kolei. Szczegóły znajdziesz w pliku z instrukcją.',
   },
   {
     q: 'Ile osób może grać?',
@@ -37,15 +37,15 @@ export const faq: { q: string; a: string }[] = [
   },
   {
     q: 'Ile trwa rozwiązanie sprawy?',
-    a: 'Każda sprawa ma podany orientacyjny czas gry (np. 90 minut). Nie ma limitu — możesz przerwać śledztwo i wrócić do niego następnego dnia.',
+    a: 'Każda sprawa ma podany orientacyjny czas gry (od ok. 1 do nawet 3,5 godziny). Nie ma limitu — możesz przerwać śledztwo i wrócić do niego następnego dnia.',
   },
   {
     q: 'Co jeśli utknę?',
-    a: 'Każda informacja potrzebna do rozwiązania jest w aktach — nie musisz niczego zgadywać. Wróć do zeznań i porównaj godziny na osi czasu. Rozwiązanie jest w osobnym pliku, więc możesz je otworzyć w dowolnym momencie, ale polecamy zrobić to dopiero po wskazaniu winnego.',
+    a: 'Sprawa jest podzielona na cele — rozwiązujesz je po kolei. Do każdego celu masz osobny plik ze wskazówkami, a w pliku z odpowiedziami sprawdzisz wynik każdego celu. Kto zabił — dowiesz się dopiero na ostatnich stronach odpowiedzi.',
   },
   {
     q: 'Czy rozwiązanie jest widoczne od razu?',
-    a: 'Rozwiązanie jest w osobnym pliku 05_ROZWIAZANIE.pdf, wyraźnie oznaczonym na koncie. Nie musisz go drukować ani otwierać, dopóki nie skończysz śledztwa.',
+    a: 'Nie. Wskazówki i odpowiedzi są w osobnych plikach, schowanych na koncie pod wyraźnym ostrzeżeniem (a w wersji online — w zapieczętowanej kopercie). Nie musisz ich drukować ani otwierać, dopóki nie będziesz gotowy.',
   },
   {
     q: 'Czy mogę udostępnić pliki znajomym?',

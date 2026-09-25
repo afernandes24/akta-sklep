@@ -18,6 +18,7 @@ export interface OnlineDocument {
   id: string; // np. "d1"
   title: string; // etykieta pliku PDF, np. „Akta sprawy”
   solution: boolean; // koperta z rozwiązaniem — otwierana na żądanie
+  hint?: boolean; // wskazówki — ukryte za kliknięciem
   pages: OnlinePage[];
 }
 
@@ -136,6 +137,7 @@ export interface ViewerDocument {
   id: string;
   title: string;
   solution: boolean;
+  hint: boolean;
   locked: boolean;
   pageCount: number;
   pages: { url: string; w: number; h: number }[];
@@ -150,6 +152,7 @@ export async function buildDocuments(manifest: OnlineManifest, solutionOpen: boo
       id: d.id,
       title: d.title,
       solution: d.solution,
+      hint: Boolean(d.hint),
       locked,
       pageCount: d.pages.length,
       pages: locked ? [] : d.pages.map((p) => ({ url: urls[p.path] ?? '', w: p.w, h: p.h })),

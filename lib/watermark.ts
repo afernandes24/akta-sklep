@@ -20,14 +20,16 @@ export async function watermarkPdf(bytes: ArrayBuffer | Uint8Array, opts: { emai
   const who = ascii(opts.email).slice(0, 80);
   const order = opts.orderNumber ? ` - zamowienie nr ${opts.orderNumber}` : '';
   const line = `Licencja osobista: ${who}${order} - ${ascii(opts.siteName)} - kopiowanie i udostepnianie zabronione`;
-  const size = 6.5;
   const color = rgb(0.45, 0.43, 0.4);
 
   for (const page of pdf.getPages()) {
     const { width, height } = page.getSize();
+    // Skala względem A4 (595 pt) — strony z Canvy bywają ~3× większe; po wydruku napis ma wyglądać tak samo.
+    const k = Math.max(0.5, Math.min(width, height) / 595);
+    const size = 6.5 * k;
     const w = font.widthOfTextAtSize(line, size);
-    page.drawText(line, { x: Math.max(8, (width - w) / 2), y: 7, size, font, color, opacity: 0.85 });
-    page.drawText(line, { x: 9, y: Math.max(8, (height - w) / 2), size, font, color, opacity: 0.55, rotate: degrees(90) });
+    page.drawText(line, { x: Math.max(8 * k, (width - w) / 2), y: 7 * k, size, font, color, opacity: 0.85 });
+    page.drawText(line, { x: 9 * k + size, y: Math.max(8 * k, (height - w) / 2), size, font, color, opacity: 0.55, rotate: degrees(90) });
   }
 
   pdf.setSubject(`Licencja osobista: ${who}${order}`);

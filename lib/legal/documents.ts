@@ -488,7 +488,7 @@ export function notaPrawna(): LegalDoc {
         title: 'Fikcja',
         blocks: [
           'Wszystkie postacie, firmy, hotele, instytucje, miejsca i wydarzenia przedstawione w sprawach są fikcyjne. Jakiekolwiek podobieństwo do rzeczywistych osób, żywych lub zmarłych, podmiotów lub zdarzeń jest przypadkowe. Dokumenty w grach (raporty, protokoły, pieczęcie) są elementem rozrywki i nie są dokumentami urzędowymi.',
-          'Nagrania przesłuchań dołączone do niektórych spraw zostały wygenerowane z użyciem sztucznej inteligencji. Głosy są syntetyczne i nie należą do żadnych rzeczywistych osób.',
+          'Zdjęcia postaci oraz nagrania przesłuchań w sprawach zostały wygenerowane z użyciem sztucznej inteligencji. Przedstawione twarze i głosy są syntetyczne i nie należą do żadnych rzeczywistych osób.',
         ],
       },
       {
