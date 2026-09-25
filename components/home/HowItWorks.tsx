@@ -5,7 +5,7 @@ const steps = [
   { icon: '🔎', title: 'Prowadź śledztwo', text: 'Czytaj raporty, porównuj zeznania, szukaj sprzeczności.' },
   { icon: '🧩', title: 'Rozwiązuj cele', text: 'Idź cel po celu, nie czytaj do przodu. Szyfry i łamigłówki odsłaniają kolejne tropy.' },
   { icon: '🧠', title: 'Znajdź winnego', text: 'Połącz fakty: kto, dlaczego, jak — i jakie dowody to potwierdzają.' },
-  { icon: '🔐', title: 'Sprawdź odpowiedzi', text: 'Wskazówki, gdy utkniesz. Odpowiedzi i nazwisko zabójcy — dopiero na końcu.' },
+  { icon: '🔐', title: 'Sprawdź odpowiedzi', text: 'Po każdym celu sprawdź odpowiedź w osobnym pliku. Nazwisko zabójcy czeka na ostatnich stronach.' },
 ];
 
 export function HowItWorks() {
@@ -14,7 +14,7 @@ export function HowItWorks() {
       <div className="max-w-2xl">
         <p className="eyebrow">Procedura śledcza</p>
         <h2 className="mt-2 text-4xl font-bold sm:text-5xl">Jak to działa?</h2>
-        <p className="mt-4 text-lg text-paper-200">Siedem kroków od wyboru sprawy do wskazania winnego. Bez aplikacji, bez ekranu — tylko ty i akta.</p>
+        <p className="mt-4 text-lg text-paper-200">Siedem kroków od wyboru sprawy do wskazania winnego — na papierze przy stole albo w przeglądarce.</p>
       </div>
       <ol className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {steps.map((s, i) => (

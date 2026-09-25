@@ -12,7 +12,7 @@ const principles = [
   ['Historia na pierwszym miejscu', 'Każda zagadka wynika z fabuły. Nie rozwiązujesz łamigłówek — prowadzisz śledztwo, w którym każde odkrycie popycha sprawę do przodu.'],
   ['Uczciwa logika', 'Wszystko, czego potrzebujesz, jest w aktach. Fałszywe tropy są logiczne, a rozwiązanie jest jedno i da się do niego dojść bez zgadywania.'],
   ['Realistyczne akta', 'Raporty, protokoły, wiadomości, zdjęcia i pieczęcie wyglądają jak prawdziwe dokumenty — profesjonalnie, bez horrorowej przesady.'],
-  ['Papier, nie ekran', 'Drukujesz materiały i rozkładasz je na stole. Możesz je przekładać, podkreślać i przypinać — jak prawdziwy detektyw.'],
+  ['Papier albo ekran', 'Drukujesz akta i rozkładasz je na stole — możesz je przekładać, podkreślać i przypinać jak prawdziwy detektyw. Wolisz bez drukowania? Wybrane sprawy mają wersję online.'],
 ];
 
 export default function AboutPage() {
