@@ -47,7 +47,8 @@ export const seller = {
 
 /** Dostawcy techniczni wymieniani w polityce prywatności. */
 export const processors = [
-  { name: 'Vercel Inc.', role: 'hosting strony internetowej', location: 'USA (dane przekazywane na podstawie Data Privacy Framework / standardowych klauzul umownych)' },
+  { name: 'Railway Corporation', role: 'hosting strony internetowej (serwer aplikacji)', location: 'USA lub UE — zależnie od regionu serwera (dane przekazywane na podstawie standardowych klauzul umownych)' },
+  { name: 'Cloudflare, Inc.', role: 'obsługa domeny (DNS), szyfrowanie połączeń i ochrona przed atakami', location: 'globalna sieć serwerów; USA (Data Privacy Framework / standardowe klauzule umowne)' },
   { name: 'Supabase Inc.', role: 'baza danych, logowanie i przechowywanie plików', location: 'serwery w Unii Europejskiej (Frankfurt)' },
   { name: 'Stripe Payments Europe, Ltd.', role: 'obsługa płatności (działa jako odrębny administrator danych płatniczych)', location: 'Irlandia (UE)' },
   { name: 'Google Ireland Limited', role: 'statystyki odwiedzin (Google Analytics) — tylko po wyrażeniu zgody', location: 'Irlandia (UE); możliwy transfer do USA (Data Privacy Framework)' },
