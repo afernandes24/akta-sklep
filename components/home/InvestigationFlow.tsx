@@ -1,4 +1,4 @@
-const flow = ['Wydarzenie', 'Tropienie', 'Odkrycie', 'Zagadka', 'Nowa informacja', 'Kolejne wydarzenie'];
+const flow = ['Raport i podejrzani', 'Cel 1: kto kłamie?', 'Nowe dowody', 'Łamigłówka', 'Sprawdź odpowiedź', 'Cel 5: kto zabił?'];
 
 export function InvestigationFlow() {
   return (
@@ -15,7 +15,7 @@ export function InvestigationFlow() {
             <p>
               Odszyfrowujesz ją — i dostajesz nazwisko, którego jeszcze nie było w aktach. <span className="text-paper-50">Historia rusza dalej.</span>
             </p>
-            <p className="text-muted">Każda zagadka wynika z fabuły. Każde rozwiązanie otwiera kolejny etap sprawy.</p>
+            <p className="text-muted">Sprawa jest podzielona na 5 celów. Każdy kończy się pytaniem, a dobra odpowiedź odsłania kolejne dowody i następny rozdział historii.</p>
           </div>
         </div>
         <ol className="relative space-y-3" aria-label="Przebieg śledztwa">

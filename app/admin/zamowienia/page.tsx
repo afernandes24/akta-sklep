@@ -4,8 +4,10 @@ import { markOrderPaid } from '../actions';
 import { formatDate, formatPrice, statusLabels } from '@/lib/format';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { Order } from '@/lib/types';
+import { requireAdmin } from '@/lib/auth';
 
 export default async function AdminOrdersPage({ searchParams }: { searchParams: Promise<{ status?: string; q?: string }> }) {
+  await requireAdmin(); // każda strona panelu sprawdza uprawnienia sama (layout nie zawsze się wykonuje)
   const sp = await searchParams;
   const db = createAdminClient();
   let query = db

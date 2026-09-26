@@ -15,6 +15,7 @@ import { deleteRecording, setOnlinePublished, updateRecording } from '../../onli
 import { isUuid } from '@/lib/orders';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { CaseFile, CaseImage } from '@/lib/types';
+import { requireAdmin } from '@/lib/auth';
 
 export default async function EditCasePage({
   params,
@@ -23,6 +24,7 @@ export default async function EditCasePage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ nowa?: string; blad?: string }>;
 }) {
+  await requireAdmin(); // każda strona panelu sprawdza uprawnienia sama (layout nie zawsze się wykonuje)
   const { id } = await params;
   const sp = await searchParams;
   if (!isUuid(id)) notFound();

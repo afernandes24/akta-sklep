@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useState, useTransition } from 'react';
+import { useActionState, useState, useTransition, useEffect } from 'react';
 import { useCart } from '@/components/cart/CartProvider';
 import { CaseCover } from '@/components/case/CaseCover';
 import { Notice } from '@/components/ui/PageHeader';
@@ -9,7 +9,7 @@ import { formatPrice } from '@/lib/format';
 import { DIGITAL_CONSENT_TEXT } from '@/lib/legal/documents';
 import { type CouponRule, priceCart, VOLUME_TIERS } from '@/lib/pricing';
 import { cartKey } from '@/lib/types';
-import { type CheckoutState, checkCoupon, startCheckout } from './actions';
+import { type CheckoutState, checkCoupon, startCheckout, freshCartPrices } from './actions';
 
 interface Props {
   loggedIn: boolean;
@@ -20,7 +20,15 @@ interface Props {
 }
 
 export function CartView({ loggedIn, email, paymentsReady, testMode, providerLabel }: Props) {
-  const { items, ready, remove } = useCart();
+  const { items, ready, remove, sync } = useCart();
+  const [synced, setSynced] = useState(false);
+
+  // Ceny z serwera — koszyk w przeglądarce mógł zapamiętać starą cenę
+  useEffect(() => {
+    if (!ready || synced) return;
+    setSynced(true);
+    if (items.length) freshCartPrices(items.map((i) => cartKey(i))).then(sync).catch(() => undefined);
+  }, [ready, synced, items, sync]);
   const [state, action, pending] = useActionState<CheckoutState, FormData>(startCheckout, {});
   const [coupon, setCoupon] = useState<CouponRule | null>(null);
   const [codeInput, setCodeInput] = useState('');
@@ -70,7 +78,7 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
               <Link href={`/sprawy/${item.slug}`} className="block truncate font-serif text-lg text-paper-50 hover:text-brass-300">
                 {item.title}
               </Link>
-              <p className="text-xs text-muted">{item.format === 'online' ? 'Gra online w przeglądarce' : 'PDF do pobrania i druku'}</p>
+              <p className="text-xs text-muted">{item.format === 'online' ? 'Wersja online — akta w przeglądarce' : 'PDF do pobrania i druku'}</p>
             </div>
             <div className="text-right">
               <p className="font-semibold text-paper-50">{formatPrice(item.priceGrosze)}</p>
@@ -153,7 +161,7 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
           {codeError && !coupon && <p className="mt-2 text-xs text-stamp-500">{codeError}</p>}
           {coupon && price.couponIgnoredReason && <p className="mt-2 text-xs text-muted">{price.couponIgnoredReason}</p>}
         </div>
-        <p className="mt-2 text-xs text-muted">Ostateczna cena zostanie potwierdzona przy płatności.</p>
+        <p className="mt-2 text-xs text-muted">Cenę sprawdzamy jeszcze raz przed płatnością — jeśli się zmieni, zobaczysz komunikat, zanim zapłacisz.</p>
 
         {!loggedIn ? (
           <div className="mt-6 space-y-3">
@@ -171,6 +179,7 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
               <input key={cartKey(i)} type="hidden" name="caseId" value={cartKey(i)} />
             ))}
             {coupon && price.source === 'coupon' && <input type="hidden" name="coupon" value={coupon.code} />}
+            <input type="hidden" name="expectedTotal" value={price.total} />
             {state.error && <Notice tone="error">{state.error}</Notice>}
             {!paymentsReady && <Notice tone="warning">Płatności nie są jeszcze skonfigurowane.</Notice>}
             {testMode && <Notice tone="warning">Tryb testowy — żadne pieniądze nie zostaną pobrane.</Notice>}

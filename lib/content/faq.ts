@@ -41,7 +41,7 @@ export const faq: { q: string; a: string }[] = [
   },
   {
     q: 'Co jeśli utknę?',
-    a: 'Sprawa jest podzielona na cele — rozwiązujesz je po kolei. Do każdego celu masz osobny plik ze wskazówkami, a w pliku z odpowiedziami sprawdzisz wynik każdego celu. Kto zabił — dowiesz się dopiero na ostatnich stronach odpowiedzi.',
+    a: 'Sprawa jest podzielona na cele — rozwiązujesz je po kolei. W pliku Wskazówki znajdziesz podpowiedzi do każdego z 5 celów (od delikatnych po mocne), a w pliku z odpowiedziami sprawdzisz wynik każdego celu. Kto zabił — dowiesz się dopiero na ostatnich stronach odpowiedzi.',
   },
   {
     q: 'Czy rozwiązanie jest widoczne od razu?',

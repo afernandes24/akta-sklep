@@ -27,15 +27,6 @@ export function FreeCaseForm({ source = 'darmowa-sprawa', consentText, compact =
         </label>
       </div>
       {state.error && <Notice tone="error">{state.error}</Notice>}
-      <div className={`flex gap-2 ${compact ? 'flex-col sm:flex-row' : 'flex-col sm:flex-row'}`}>
-        <label className="sr-only" htmlFor={`nl-${source}`}>
-          Adres e-mail
-        </label>
-        <input id={`nl-${source}`} name="email" type="email" required autoComplete="email" placeholder="twoj@email.pl" className="input flex-1" />
-        <button className="btn-primary shrink-0" disabled={pending}>
-          {pending ? 'Wysyłam…' : 'Wyślij mi sprawę'}
-        </button>
-      </div>
       <label className="flex gap-3 text-xs leading-relaxed text-paper-200">
         <input type="checkbox" name="consent" required className="mt-0.5 h-4 w-4 shrink-0 accent-brass-400" />
         <span>
@@ -46,6 +37,15 @@ export function FreeCaseForm({ source = 'darmowa-sprawa', consentText, compact =
           .
         </span>
       </label>
+      <div className={`flex gap-2 ${compact ? 'flex-col sm:flex-row' : 'flex-col sm:flex-row'}`}>
+        <label className="sr-only" htmlFor={`nl-${source}`}>
+          Adres e-mail
+        </label>
+        <input id={`nl-${source}`} name="email" type="email" required autoComplete="email" placeholder="twoj@email.pl" className="input flex-1" />
+        <button className="btn-primary shrink-0" disabled={pending}>
+          {pending ? 'Wysyłam…' : 'Wyślij mi sprawę'}
+        </button>
+      </div>
     </form>
   );
 }

@@ -16,6 +16,7 @@ export const FREE_CASE = {
   number: '000',
   title: 'Zegarek z Mariackiej',
   lead: 'Gdańsk, ulica Mariacka. Z zamkniętej gabloty w antykwariacie znika srebrny zegarek kieszonkowy — pamiątka, której właściciel nigdy nie chciał sprzedać. Zamek nieruszony. W sklepie były tylko trzy osoby.',
+  teaser: 'Krótka sprawa na 30–45 minut: kradzież w gdańskim antykwariacie, trzech podejrzanych i harcerski szyfr.',
   seoDescription: 'Pobierz za darmo krótką sprawę detektywistyczną do druku: kradzież w gdańskim antykwariacie, trzech podejrzanych i harcerski szyfr. 30–45 minut gry.',
   bullets: ['3 cele śledztwa', '3 podejrzanych', '9 dowodów i harcerski szyfr', '30–45 minut, 12+', 'Wskazówki i odpowiedzi w osobnych plikach', 'PDF do wydrukowania w domu'],
 };

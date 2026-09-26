@@ -12,7 +12,8 @@ export type CreateOrderResult =
   | { kind: 'created'; order: Order; items: OrderItem[] }
   | { kind: 'already_owned' }
   | { kind: 'empty' }
-  | { kind: 'coupon_invalid'; error: string };
+  | { kind: 'coupon_invalid'; error: string }
+  | { kind: 'price_changed'; total: number };
 
 /**
  * Tworzy zamówienie ze sprawdzonymi po stronie serwera cenami.
@@ -24,6 +25,8 @@ export async function createOrder(params: {
   caseIds: string[];
   provider: string;
   couponCode?: string | null;
+  /** Kwota, którą klient widział na przycisku — jeśli się różni, nie tworzymy zamówienia. */
+  expectedTotal?: number | null;
 }): Promise<CreateOrderResult> {
   // Pozycje w formacie "id:format" (starsze koszyki: samo id = PDF)
   const wanted = Array.from(
@@ -71,6 +74,7 @@ export async function createOrder(params: {
   const listPrices = toBuy.map((c) => c.price_grosze as number);
   const price = priceCart(listPrices, coupon);
   const itemPrices = allocateDiscount(listPrices, price.discount);
+  if (typeof params.expectedTotal === 'number' && params.expectedTotal !== price.total) return { kind: 'price_changed', total: price.total };
 
   const { data: order, error: orderError } = await db
     .from('orders')
@@ -128,6 +132,8 @@ export async function fulfillOrder(
     .eq('id', orderId)
     .maybeSingle();
   if (!order) return { ok: false, reason: 'not_found' };
+  // Zwrócone zamówienie nie może się „odnowić” przez spóźniony lub powtórzony webhook.
+  if (order.status === 'refunded') return { ok: false, reason: 'refunded' };
 
   if (typeof opts.paidAmountGrosze === 'number' && opts.paidAmountGrosze !== order.total_grosze) {
     console.error(`[orders] Kwota się nie zgadza dla ${orderId}: ${opts.paidAmountGrosze} ≠ ${order.total_grosze}`);

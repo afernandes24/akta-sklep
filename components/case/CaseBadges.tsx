@@ -7,7 +7,7 @@ export function CaseBadges({ c, className = '' }: { c: CaseRecord; className?: s
   const items: { key: string; text: string; accent?: boolean }[] = [
     ...(c.city ? [{ key: 'city', text: `📍 ${c.city}` }] : []),
     ...(c.tags ?? []).map((t) => ({ key: t, text: tagLabel(t) })),
-    ...(recordings > 0 ? [{ key: 'rec', text: `🎧 Nagrania przesłuchań (${recordings})`, accent: true }] : []),
+    ...(recordings > 0 ? [{ key: 'rec', text: `🎧 Nagrania przesłuchań AI (${recordings})`, accent: true }] : []),
     ...(c.online_enabled ? [{ key: 'online', text: '💻 Wersja online', accent: true }] : []),
   ];
   if (!items.length) return null;

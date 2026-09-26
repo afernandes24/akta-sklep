@@ -16,7 +16,18 @@ export async function findValidCoupon(rawCode: string, userId?: string | null): 
     .maybeSingle();
   if (error || !c || !c.is_active) return { ok: false, error: 'Taki kod nie istnieje albo jest nieaktywny.' };
   if (c.valid_until && new Date(c.valid_until as string) < new Date()) return { ok: false, error: 'Ten kod wygasł.' };
-  if (c.max_uses && (c.used_count as number) >= (c.max_uses as number)) return { ok: false, error: 'Limit użyć tego kodu został wyczerpany.' };
+  if (c.max_uses) {
+    // Liczymy też trwające płatności innych klientów z ostatniej godziny — żeby limit nie „przeciekał” przy równoległych zakupach.
+    let pending = db
+      .from('orders')
+      .select('id', { count: 'exact', head: true })
+      .eq('discount_code', code)
+      .eq('status', 'pending')
+      .gt('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString());
+    if (userId) pending = pending.neq('user_id', userId);
+    const { count: inProgress } = await pending;
+    if ((c.used_count as number) + (inProgress ?? 0) >= (c.max_uses as number)) return { ok: false, error: 'Limit użyć tego kodu został wyczerpany.' };
+  }
   if (c.one_per_user && userId) {
     const { count } = await db
       .from('orders')

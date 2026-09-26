@@ -73,13 +73,23 @@ export default async function CasePage({ params }: Params) {
             brand: { '@type': 'Brand', name: siteConfig.name },
             image: coverUrl ?? `${siteConfig.url}/og.png`,
             url,
-            offers: {
-              '@type': 'Offer',
-              price: (c.price_grosze / 100).toFixed(2),
-              priceCurrency: 'PLN',
-              availability: 'https://schema.org/InStock',
-              url,
-            },
+            offers: online
+              ? {
+                  '@type': 'AggregateOffer',
+                  lowPrice: (fromPrice / 100).toFixed(2),
+                  highPrice: (Math.max(online.priceGrosze, c.price_grosze) / 100).toFixed(2),
+                  offerCount: 2,
+                  priceCurrency: 'PLN',
+                  availability: 'https://schema.org/InStock',
+                  url,
+                }
+              : {
+                  '@type': 'Offer',
+                  price: (c.price_grosze / 100).toFixed(2),
+                  priceCurrency: 'PLN',
+                  availability: 'https://schema.org/InStock',
+                  url,
+                },
             ...(rating && rating.count > 0
               ? {
                   aggregateRating: { '@type': 'AggregateRating', ratingValue: rating.avg, reviewCount: rating.count, bestRating: 5, worstRating: 1 },
@@ -162,6 +172,9 @@ export default async function CasePage({ params }: Params) {
               <li>✓ Wskazówki i odpowiedzi w osobnych, wyraźnie oznaczonych plikach</li>
               {(c.recordings_count ?? 0) > 0 && <li>🎧 W zestawie nagrania z przesłuchań — odsłuchasz je na koncie (w obu wersjach)</li>}
             </ul>
+            <p className="mt-4 text-xs text-muted">
+              🤖 Postacie są fikcyjne. Ich zdjęcia{(c.recordings_count ?? 0) > 0 ? ' i głosy w nagraniach' : ''} wygenerowano z użyciem sztucznej inteligencji.
+            </p>
           </div>
 
           {/* OPIS */}

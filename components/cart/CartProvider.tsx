@@ -6,6 +6,8 @@ import { type CartItem, cartKey } from '@/lib/types';
 const STORAGE_KEY = 'akta-koszyk-v1';
 
 interface CartContextValue {
+  /** Aktualne ceny z serwera: klucz → cena (null = sprawa niedostępna, usuń z koszyka). */
+  sync: (fresh: Record<string, number | null>) => void;
   items: CartItem[];
   ready: boolean;
   add: (item: CartItem) => void;
@@ -61,6 +63,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       add: (item) => persist((prev) => (prev.some((i) => cartKey(i) === cartKey(item)) ? prev : [...prev, { ...item, format: item.format ?? 'pdf' }])),
       remove: (keyOrId) => persist((prev) => prev.filter((i) => cartKey(i) !== keyOrId && i.id !== keyOrId)),
       clear: () => persist(() => []),
+      sync: (fresh) =>
+        persist((prev) =>
+          prev.flatMap((i) => {
+            const f = fresh[cartKey(i)];
+            if (f === undefined) return [i];
+            return f === null ? [] : [{ ...i, priceGrosze: f }];
+          }),
+        ),
       has: (key) => items.some((i) => cartKey(i) === key),
       totalGrosze: items.reduce((sum, i) => sum + i.priceGrosze, 0),
     }),

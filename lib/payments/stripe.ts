@@ -41,7 +41,7 @@ export const stripeProvider: PaymentProvider = {
       custom_text: {
         submit: {
           message:
-            'Kupujesz treść cyfrową (PDF). Zgodnie ze złożonym oświadczeniem pliki zostaną udostępnione natychmiast po płatności, a prawo odstąpienia od umowy wygaśnie.',
+            `Kupujesz treść cyfrową (${items.some((i) => i.format === 'online') ? (items.some((i) => i.format !== 'online') ? 'PDF i wersja online' : 'wersja online') : 'PDF'}). Zgodnie ze złożonym oświadczeniem dostęp otrzymasz natychmiast po płatności, a prawo odstąpienia od umowy wygaśnie.`,
         },
       },
       // Faktury z panelu Stripe (opcjonalnie — Stripe pobiera za to dodatkową opłatę)

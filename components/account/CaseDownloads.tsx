@@ -91,7 +91,7 @@ export function CaseDownloads({ entry, review, defaultAuthor = '' }: { entry: Li
                   <span aria-hidden>🔐</span>
                   <span className="flex-1">
                     <span className="font-semibold text-paper-50">Odpowiedzi i rozwiązanie</span>
-                    <span className="block text-xs text-muted">Otwórz dopiero po wskazaniu winnego. Kliknij, aby odsłonić.</span>
+                    <span className="block text-xs text-muted">Sprawdzaj po każdym celu (spis stron na początku). Zabójca — na ostatnich stronach.</span>
                   </span>
                   <span aria-hidden className="text-muted transition group-open:rotate-180">
                     ▾

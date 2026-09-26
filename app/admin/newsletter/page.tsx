@@ -1,9 +1,11 @@
 import { formatDate } from '@/lib/format';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/auth';
 
 type Row = { email: string; status: string; created_at: string; confirmed_at: string | null; source: string | null };
 
 export default async function AdminNewsletterPage() {
+  await requireAdmin(); // każda strona panelu sprawdza uprawnienia sama (layout nie zawsze się wykonuje)
   const { data, error } = await createAdminClient()
     .from('newsletter_subscribers')
     .select('email, status, created_at, confirmed_at, source')

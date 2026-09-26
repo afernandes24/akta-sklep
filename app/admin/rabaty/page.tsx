@@ -3,6 +3,7 @@ import { VOLUME_TIERS } from '@/lib/pricing';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { toggleDiscountCode } from '../extra-actions';
 import { DiscountCodeForm } from './DiscountCodeForm';
+import { requireAdmin } from '@/lib/auth';
 
 type Code = {
   code: string;
@@ -18,6 +19,7 @@ type Code = {
 };
 
 export default async function AdminDiscountsPage() {
+  await requireAdmin(); // każda strona panelu sprawdza uprawnienia sama (layout nie zawsze się wykonuje)
   const { data, error } = await createAdminClient().from('discount_codes').select('*').order('created_at', { ascending: false });
   const codes = (data ?? []) as Code[];
 

@@ -52,13 +52,15 @@ export default async function OrderPage({
     }
   }
 
-  const caseIds = (order.order_items ?? []).filter((i) => i.case_id).map((i) => `${i.case_id}:${i.format ?? 'pdf'}`);
+  const items = (order.order_items ?? []).filter((i) => i.case_id);
+  const caseIds = Array.from(new Set(items.map((i) => i.case_id as string)));
+  const cartKeys = items.map((i) => `${i.case_id}:${i.format ?? 'pdf'}`);
   const paid = order.status === 'paid';
   const library = paid && order.user_id === user.id ? await getUserLibrary(user.id, caseIds) : [];
 
   return (
     <section className="container-page max-w-4xl py-12 sm:py-16">
-      {paid && <ClearPurchasedFromCart caseIds={caseIds} />}
+      {paid && <ClearPurchasedFromCart caseIds={cartKeys} />}
       {paid && (
         <TrackPurchase
           id={order.id}
@@ -71,7 +73,7 @@ export default async function OrderPage({
       <div className="text-center">
         {paid ? <span className="stamp text-base">Opłacono</span> : <StatusBadge status={order.status} />}
         <h1 className="mt-6 text-4xl font-bold sm:text-5xl">
-          {paid ? 'Akta są twoje' : order.status === 'pending' ? 'Czekamy na potwierdzenie płatności' : 'Płatność nie powiodła się'}
+          {paid ? 'Akta są twoje' : order.status === 'pending' ? 'Czekamy na potwierdzenie płatności' : order.status === 'refunded' ? 'Zamówienie zwrócone' : 'Płatność nie powiodła się'}
         </h1>
         <p className="mt-4 text-paper-200">
           Zamówienie nr <span className="font-mono text-paper-50">{order.order_number}</span> · {formatDate(order.created_at)}
@@ -81,6 +83,9 @@ export default async function OrderPage({
       <div className="mt-10">
         {order.status === 'pending' && (
           <Notice>To zwykle trwa kilka sekund. Strona odświeży się sama. Jeśli płatność została pobrana, a status się nie zmienia — napisz do nas.</Notice>
+        )}
+        {order.status === 'refunded' && (
+          <Notice>Pieniądze za to zamówienie zostały zwrócone, a dostęp do materiałów wygasł. Zwrot pojawi się na koncie w ciągu kilku dni roboczych.</Notice>
         )}
         {(order.status === 'failed' || order.status === 'cancelled') && (
           <Notice tone="error">

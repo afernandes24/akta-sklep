@@ -8,7 +8,7 @@ export function Logo() {
         <circle cx="27" cy="27" r="14" fill="none" stroke="#d4b06a" strokeWidth="5" />
         <path d="M37 37 51 51" stroke="#d4b06a" strokeWidth="7" strokeLinecap="round" />
       </svg>
-      <span className="font-serif text-lg font-bold uppercase tracking-[0.12em] text-paper-50 transition group-hover:text-brass-300">
+      <span className="whitespace-nowrap font-serif text-base font-bold uppercase tracking-[0.08em] text-paper-50 transition group-hover:text-brass-300 sm:text-lg sm:tracking-[0.12em]">
         {siteConfig.name}
       </span>
     </Link>

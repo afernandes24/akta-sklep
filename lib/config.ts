@@ -4,7 +4,7 @@ export const siteConfig = {
   url: (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, ''),
   description:
     'Fabularne gry detektywistyczne do druku. Pobierz akta sprawy w PDF, wydrukuj dowody, przesłuchaj podejrzanych i sam wskaż winnego.',
-  contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || '',
+  contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'afernandes2004@icloud.com',
   locale: 'pl_PL',
 };
 

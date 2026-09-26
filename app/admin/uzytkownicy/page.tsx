@@ -1,8 +1,10 @@
 import { formatDate, formatPrice } from '@/lib/format';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { Profile } from '@/lib/types';
+import { requireAdmin } from '@/lib/auth';
 
 export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  await requireAdmin(); // każda strona panelu sprawdza uprawnienia sama (layout nie zawsze się wykonuje)
   const sp = await searchParams;
   const db = createAdminClient();
   let query = db.from('profiles').select('id, email, full_name, is_admin, created_at').order('created_at', { ascending: false }).limit(200);

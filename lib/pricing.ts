@@ -7,6 +7,9 @@ export const VOLUME_TIERS = [
   { minItems: 2, percent: 10 },
 ] as const;
 
+/** Minimalna kwota płatności u operatora (Stripe, PLN). */
+export const MIN_PAYMENT_GROSZE = 200;
+
 export interface CouponRule {
   code: string;
   percent_off: number | null;
@@ -52,7 +55,9 @@ export function priceCart(prices: number[], coupon?: CouponRule | null): PriceBr
   if (cp?.error) couponIgnoredReason = cp.error;
   else if (cp && best?.source === 'volume') couponIgnoredReason = 'Rabat ilościowy jest korzystniejszy niż kod — rabaty się nie łączą.';
 
-  const discount = Math.min(subtotal, best?.amount ?? 0);
+  let discount = Math.min(subtotal, best?.amount ?? 0);
+  // Stripe nie przyjmuje płatności poniżej 2 zł — rabat nie może zejść niżej (0 zł = zamówienie darmowe, OK).
+  if (subtotal - discount > 0 && subtotal - discount < MIN_PAYMENT_GROSZE && subtotal >= MIN_PAYMENT_GROSZE) discount = subtotal - MIN_PAYMENT_GROSZE;
   return { subtotal, discount, total: subtotal - discount, label: best?.label ?? null, source: best?.source ?? null, couponIgnoredReason };
 }
 

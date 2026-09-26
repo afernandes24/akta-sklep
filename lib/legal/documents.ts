@@ -54,7 +54,7 @@ export function regulamin(): LegalDoc {
               'Przedsiębiorca na prawach konsumenta — osoba fizyczna zawierająca umowę bezpośrednio związaną z jej działalnością gospodarczą, gdy z treści tej umowy wynika, że nie posiada ona dla niej charakteru zawodowego, wynikającego w szczególności z przedmiotu wykonywanej działalności, udostępnionego w CEIDG.',
               'Produkt — treść cyfrowa oferowana w Sklepie: fabularna gra detektywistyczna w jednej z dwóch wersji, wybieranej przy zakupie: (a) Wersja PDF — zestaw plików PDF przeznaczonych do pobrania i samodzielnego wydrukowania; (b) Wersja online — te same materiały sprawy udostępnione do przeglądania w przeglądarce, na Koncie Klienta, bez pobierania plików. Wersje są odrębnymi Produktami — zakup jednej nie obejmuje drugiej. Niektóre Produkty zawierają dodatkowo Nagrania.',
               'Nagrania — pliki audio lub wideo z fikcyjnymi przesłuchaniami postaci, dołączone do wybranych Produktów (w obu wersjach) i odtwarzane w przeglądarce na Koncie Klienta. Nagrania są wygenerowane z użyciem sztucznej inteligencji: głosy są syntetyczne, a postacie fikcyjne — informacja o tym jest podana przy Produkcie i przy odtwarzaczu.',
-              'Konto — bezpłatna usługa elektroniczna umożliwiająca Klientowi składanie zamówień, przeglądanie historii zakupów, ponowne pobieranie zakupionych Produktów w Wersji PDF przeglądanie zakupionych Produktów w Wersji online oraz odtwarzanie Nagrań.',
+              'Konto — bezpłatna usługa elektroniczna umożliwiająca Klientowi składanie zamówień, przeglądanie historii zakupów, ponowne pobieranie zakupionych Produktów w Wersji PDF, przeglądanie zakupionych Produktów w Wersji online oraz odtwarzanie Nagrań.',
               'Operator płatności — Stripe Payments Europe, Ltd. z siedzibą w Dublinie (Irlandia), obsługujący płatności w Sklepie.',
             ],
           },
@@ -495,7 +495,7 @@ export function notaPrawna(): LegalDoc {
         title: 'Odpowiedzialność',
         blocks: [
           'Dokładamy starań, aby informacje w serwisie były aktualne i poprawne. Serwis może zawierać odnośniki do stron zewnętrznych (np. operatora płatności), za których treść nie odpowiadamy.',
-          'Gry przeznaczone są dla osób dorosłych i młodzieży od 16 lat — dotyczą fikcyjnych przestępstw, bez drastycznych opisów.',
+          'Gry przeznaczone są dla osób dorosłych i młodzieży od 16 lat — dotyczą fikcyjnych przestępstw, bez drastycznych opisów. Wyjątkiem są sprawy z działu „Dla całej rodziny”, oznaczone jako odpowiednie od 12 lat (tak jak darmowa sprawa próbna).',
         ],
       },
     ],

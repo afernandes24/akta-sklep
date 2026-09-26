@@ -3,6 +3,7 @@
 import { headers } from 'next/headers';
 import { isServiceRoleConfigured } from '@/lib/config';
 import { NEWSLETTER_CONSENT_TEXT, sendConfirmationEmail, sendFreeCaseEmail } from '@/lib/newsletter';
+import { allow, clientIp } from '@/lib/rate-limit';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 export type SubscribeState = { error?: string; ok?: boolean };
@@ -18,8 +19,14 @@ export async function subscribe(_prev: SubscribeState, formData: FormData): Prom
   if (!EMAIL_RE.test(email) || email.length > 200) return { error: 'Podaj poprawny adres e-mail.' };
   if (formData.get('consent') !== 'on') return { error: 'Zaznacz zgodę na newsletter — bez niej nie możemy wysłać sprawy.' };
 
+  // Ochrona przed zasypywaniem cudzej skrzynki mailami: 1 wiadomość na adres na 10 min, 5 zapisów z jednego IP na godzinę.
+  if (!allow(`nl-ip:${await clientIp()}`, 5, 60 * 60 * 1000)) return { error: 'Zbyt wiele prób. Spróbuj ponownie za godzinę.' };
+  if (!allow(`nl-mail:${email}`, 1, 10 * 60 * 1000)) return { ok: true };
+
   const source = String(formData.get('source') ?? 'darmowa-sprawa').slice(0, 40);
   const db = createAdminClient();
+  // Niepotwierdzone zapisy starsze niż 30 dni usuwamy (tak obiecuje polityka prywatności).
+  await db.from('newsletter_subscribers').delete().eq('status', 'pending').lt('consent_at', new Date(Date.now() - 30 * 864e5).toISOString());
   const { data: existing } = await db.from('newsletter_subscribers').select('id, status, token').eq('email', email).maybeSingle();
 
   let token: string;

@@ -4,11 +4,14 @@ import { markMessageRead } from './actions';
 import { formatDate, formatPrice } from '@/lib/format';
 import { getSetupChecks } from '@/lib/setup-status';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/auth';
+import { seller } from '@/lib/legal/seller';
 
 export default async function AdminDashboard() {
+  await requireAdmin(); // każda strona panelu sprawdza uprawnienia sama (layout nie zawsze się wykonuje)
   const db = createAdminClient();
   const [paid, orders, users, cases, messages] = await Promise.all([
-    db.from('orders').select('total_grosze').eq('status', 'paid'),
+    db.from('orders').select('total_grosze, paid_at').eq('status', 'paid'),
     db.from('orders').select('id, order_number, email, status, total_grosze, created_at').order('created_at', { ascending: false }).limit(8),
     db.from('profiles').select('id', { count: 'exact', head: true }),
     db.from('cases').select('id, is_published'),
@@ -16,6 +19,14 @@ export default async function AdminDashboard() {
   ]);
 
   const revenue = (paid.data ?? []).reduce((s, o) => s + (o.total_grosze as number), 0);
+  // Limit działalności nierejestrowanej liczony kwartalnie (polski czas)
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }));
+  const qStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+  const quarter = (paid.data ?? [])
+    .filter((o) => o.paid_at && new Date(new Date(o.paid_at as string).toLocaleString('en-US', { timeZone: 'Europe/Warsaw' })) >= qStart)
+    .reduce((s, o) => s + (o.total_grosze as number), 0);
+  const limit = seller.businessType === 'nierejestrowana' ? seller.quarterlyRevenueLimitGrosze : 0;
+  const quarterShare = limit ? quarter / limit : 0;
   const stats = [
     ['Przychód (opłacone)', formatPrice(revenue)],
     ['Opłacone zamówienia', String(paid.data?.length ?? 0)],
@@ -49,6 +60,27 @@ export default async function AdminDashboard() {
           ))}
         </ul>
       </section>
+
+      {limit > 0 && (
+        <section className={`card p-6 ${quarterShare >= 0.8 ? 'border-stamp-500/60' : ''}`}>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="font-serif text-xl font-semibold">Limit działalności nierejestrowanej — ten kwartał</h2>
+            <span className="font-mono text-sm text-paper-100">
+              {formatPrice(quarter)} / {formatPrice(limit)}
+            </span>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded bg-ink-800" aria-hidden>
+            <div className={`h-full ${quarterShare >= 0.8 ? 'bg-stamp-500' : 'bg-brass-400'}`} style={{ width: `${Math.min(100, Math.round(quarterShare * 100))}%` }} />
+          </div>
+          <p className={`mt-2 text-xs ${quarterShare >= 0.8 ? 'text-stamp-500' : 'text-muted'}`}>
+            {quarterShare >= 1
+              ? 'Limit przekroczony — masz 7 dni na rejestrację działalności w CEIDG. Skonsultuj się z księgowym.'
+              : quarterShare >= 0.8
+                ? 'Zbliżasz się do limitu. Po przekroczeniu trzeba zarejestrować działalność (7 dni).'
+                : `Wykorzystano ${Math.round(quarterShare * 100)}% limitu (przychód z opłaconych zamówień od początku kwartału).`}
+          </p>
+        </section>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map(([label, value]) => (

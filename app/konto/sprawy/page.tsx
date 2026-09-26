@@ -41,7 +41,7 @@ export default async function MyCasesPage({ searchParams }: { searchParams: Prom
         ) : (
           <>
             <Notice>
-              Wskazówka: wydrukuj pliki 01–04. Plik z rozwiązaniem otwórz dopiero na końcu — jest schowany poniżej każdej sprawy.
+              Wskazówka: wydrukuj akta sprawy i idź cel po celu. Wskazówki i odpowiedzi są schowane pod każdą sprawą — otwieraj je dopiero, gdy będą potrzebne.
             </Notice>
             {library.map((entry) => (
               <CaseDownloads key={entry.caseItem.id} entry={entry} review={reviews[entry.caseItem.id]} defaultAuthor={defaultAuthor} />

@@ -3,8 +3,10 @@ import { CaseCover } from '@/components/case/CaseCover';
 import { togglePublish } from '../actions';
 import { formatPrice } from '@/lib/format';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/auth';
 
 export default async function AdminCasesPage() {
+  await requireAdmin(); // każda strona panelu sprawdza uprawnienia sama (layout nie zawsze się wykonuje)
   const db = createAdminClient();
   const [{ data: cases }, { data: ents }, { data: files }] = await Promise.all([
     db.from('cases').select('id, slug, case_number, title, price_grosze, is_published, cover_path, sort_order').order('sort_order').order('created_at'),

@@ -44,6 +44,13 @@ export function ContactForm() {
         <label htmlFor="website">Nie wypełniaj</label>
         <input id="website" name="website" tabIndex={-1} autoComplete="off" />
       </div>
+      <p className="text-xs text-muted">
+        Twoje imię, e-mail i wiadomość wykorzystamy tylko do odpowiedzi. Szczegóły:{' '}
+        <a href="/polityka-prywatnosci" className="underline underline-offset-2 hover:text-brass-300">
+          polityka prywatności
+        </a>
+        .
+      </p>
       <button type="submit" className="btn-primary w-full sm:w-auto" disabled={pending}>
         {pending ? 'Wysyłanie…' : 'Wyślij wiadomość'}
       </button>

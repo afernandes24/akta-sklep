@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { CaseForm } from '@/components/admin/CaseForm';
+import { requireAdmin } from '@/lib/auth';
 
-export default function NewCasePage() {
+export default async function NewCasePage() {
+  await requireAdmin(); // każda strona panelu sprawdza uprawnienia sama (layout nie zawsze się wykonuje)
   return (
     <div className="max-w-4xl">
       <Link href="/admin/sprawy" className="text-sm text-muted hover:text-brass-300">

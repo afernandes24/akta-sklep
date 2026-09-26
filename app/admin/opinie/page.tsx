@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { formatDate } from '@/lib/format';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { moderateReview } from '../extra-actions';
+import { requireAdmin } from '@/lib/auth';
 
 type Row = {
   id: string;
@@ -21,6 +22,7 @@ const TABS = [
 ] as const;
 
 export default async function AdminReviewsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+  await requireAdmin(); // każda strona panelu sprawdza uprawnienia sama (layout nie zawsze się wykonuje)
   const sp = await searchParams;
   const status = TABS.some(([s]) => s === sp.status) ? (sp.status as string) : 'pending';
   const { data, error } = await createAdminClient()

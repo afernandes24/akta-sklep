@@ -118,6 +118,8 @@ export function OnlineReader({ slug, title, caseNumber, documents: initialDocs, 
   const [notesStatus, setNotesStatus] = useState<'saved' | 'dirty' | 'saving' | 'error'>('saved');
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [hintsShown, setHintsShown] = useState<Record<string, boolean>>({});
+  // Wskazówki i odpowiedzi: po jednej stronie naraz (jak zasłanianie kartką w wersji papierowej)
+  const [pageAt, setPageAt] = useState<Record<string, number>>({});
   const [pending, startTransition] = useTransition();
   const refreshed = useRef(false);
   const topRef = useRef<HTMLDivElement>(null);
@@ -254,18 +256,18 @@ export function OnlineReader({ slug, title, caseNumber, documents: initialDocs, 
               </p>
               <h1 className="mt-4 text-3xl font-bold">{doc.title}</h1>
               <p className="mt-3 text-paper-200">
-                Koperta jest zapieczętowana ({doc.pageCount} str.). Otwórz ją dopiero, gdy wskażesz sprawcę i zapiszesz swoją wersję wydarzeń w notatkach.
+                Zapieczętowane ({doc.pageCount} str.). Odpowiedź do każdego celu sprawdzaj po jego rozwiązaniu — na 1. stronie jest spis, a „skocz do strony” zabierze cię od razu we właściwe miejsce. Nazwisko zabójcy jest na ostatnich stronach.
               </p>
               {!confirmOpen ? (
                 <button type="button" onClick={() => setConfirmOpen(true)} className="btn-danger mt-6">
-                  Otwórz kopertę
+                  Otwórz odpowiedzi
                 </button>
               ) : (
                 <div className="mt-6 space-y-3">
-                  <p className="text-sm font-semibold text-stamp-500">Na pewno? Po otwarciu zobaczysz pełne rozwiązanie.</p>
+                  <p className="text-sm font-semibold text-stamp-500">Na pewno? Zobaczysz odpowiedzi — przewijaj ostrożnie, żeby nie przeczytać za dużo.</p>
                   <div className="flex flex-wrap justify-center gap-3">
                     <button type="button" onClick={reveal} disabled={pending} className="btn-danger">
-                      {pending ? 'Otwieram…' : 'Tak, pokaż rozwiązanie'}
+                      {pending ? 'Otwieram…' : 'Tak, otwórz'}
                     </button>
                     <button type="button" onClick={() => setConfirmOpen(false)} className="btn-ghost">
                       Jeszcze nie
@@ -276,16 +278,29 @@ export function OnlineReader({ slug, title, caseNumber, documents: initialDocs, 
             </div>
           </section>
         ) : doc ? (
+          (() => {
+          const paged = doc.solution || doc.hint;
+          const cur = Math.min(pageAt[doc.id] ?? 0, Math.max(0, doc.pages.length - 1));
+          const goPage = (i: number) => {
+            setPageAt((m) => ({ ...m, [doc.id]: Math.max(0, Math.min(doc.pages.length - 1, i)) }));
+            topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          };
+          const shown = paged ? doc.pages.slice(cur, cur + 1).map((p) => ({ p, i: cur })) : doc.pages.map((p, i) => ({ p, i }));
+          return (
           <section className="mx-auto max-w-4xl">
             <div className="flex items-baseline justify-between gap-3">
               <h1 className="text-2xl font-bold sm:text-3xl">{doc.title}</h1>
-              {doc.pageCount > 3 ? (
+              {doc.pageCount > 3 || paged ? (
                 <label className="flex shrink-0 items-center gap-2 text-xs text-muted">
                   Strona
                   <select
                     className="input w-auto py-1 text-xs"
-                    value=""
-                    onChange={(e) => document.getElementById(`strona-${e.target.value}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                    value={paged ? String(cur + 1) : ''}
+                    onChange={(e) =>
+                      paged
+                        ? goPage(Number(e.target.value) - 1)
+                        : document.getElementById(`strona-${e.target.value}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }
                     aria-label="Przejdź do strony"
                   >
                     <option value="" disabled>
@@ -302,9 +317,13 @@ export function OnlineReader({ slug, title, caseNumber, documents: initialDocs, 
                 <span className="shrink-0 font-mono text-xs text-muted">{doc.pageCount} str.</span>
               )}
             </div>
-            <p className="mt-1 text-xs text-muted">Kliknij stronę, aby ją powiększyć. Czytaj po kolei — nie zaglądaj do przodu.</p>
+            <p className="mt-1 text-xs text-muted">
+              {paged
+                ? 'Pokazujemy jedną stronę naraz, żeby nie przeczytać za dużo. Numery stron znajdziesz w spisie na 1. stronie.'
+                : 'Kliknij stronę, aby ją powiększyć. Czytaj po kolei — nie zaglądaj do przodu.'}
+            </p>
             <ol className="mt-5 space-y-6">
-              {doc.pages.map((p, i) => (
+              {shown.map(({ p, i }) => (
                 <li key={p.url || i} id={`strona-${i + 1}`} className="scroll-mt-44">
                   <button type="button" onClick={() => setLightbox(i)} className="relative block w-full cursor-zoom-in overflow-hidden rounded-md bg-white shadow-lg shadow-black/40" aria-label={`Powiększ stronę ${i + 1}`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -317,7 +336,22 @@ export function OnlineReader({ slug, title, caseNumber, documents: initialDocs, 
                 </li>
               ))}
             </ol>
+            {paged && doc.pages.length > 1 && (
+              <div className="mt-4 flex items-center justify-between gap-3">
+                <button type="button" onClick={() => goPage(cur - 1)} disabled={cur === 0} className="btn-secondary py-2 text-sm">
+                  ← Poprzednia
+                </button>
+                <span className="font-mono text-xs text-muted">
+                  {cur + 1} / {doc.pageCount}
+                </span>
+                <button type="button" onClick={() => goPage(cur + 1)} disabled={cur >= doc.pages.length - 1} className="btn-secondary py-2 text-sm">
+                  Następna →
+                </button>
+              </div>
+            )}
           </section>
+          );
+          })()
         ) : (
           <p className="py-20 text-center text-paper-200">Brak dokumentów.</p>
         )}

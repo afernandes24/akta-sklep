@@ -1,3 +1,4 @@
+import { siteConfig } from '../config';
 /**
  * ════════════════════════════════════════════════════════════════════
  *  DANE SPRZEDAWCY — uzupełnij ten plik, a wszystkie dokumenty prawne
@@ -25,7 +26,7 @@ export const seller = {
   /** Kapitał zakładowy (tylko spółki z o.o.). */
   shareCapital: '',
 
-  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'afernandes2004@icloud.com',
+  email: siteConfig.contactEmail,
   /** Opcjonalnie. Zostaw pusty, jeśli nie chcesz podawać telefonu. */
   phone: '',
 
@@ -53,7 +54,7 @@ export const processors = [
   { name: 'Stripe Payments Europe, Ltd.', role: 'obsługa płatności (działa jako odrębny administrator danych płatniczych)', location: 'Irlandia (UE)' },
   { name: 'Google Ireland Limited', role: 'statystyki odwiedzin (Google Analytics) — tylko po wyrażeniu zgody', location: 'Irlandia (UE); możliwy transfer do USA (Data Privacy Framework)' },
   { name: 'Meta Platforms Ireland Limited', role: 'pomiar skuteczności reklam (Piksel Meta) — tylko po wyrażeniu zgody', location: 'Irlandia (UE); możliwy transfer do USA (Data Privacy Framework)' },
-  { name: 'Resend (Plus Five Five, Inc.)', role: 'wysyłka e-maili transakcyjnych (potwierdzenia zamówień, reset hasła)', location: 'USA (Data Privacy Framework / standardowe klauzule umowne)' },
+  { name: 'Resend (Plus Five Five, Inc.)', role: 'wysyłka e-maili (potwierdzenia zamówień, potwierdzenia zapisu do newslettera i wysyłka sprawy próbnej, e-maile logowania i resetu hasła)', location: 'USA (Data Privacy Framework / standardowe klauzule umowne)' },
 ];
 
 export function sellerIdentity(): string {

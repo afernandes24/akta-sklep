@@ -2,12 +2,14 @@ import { FreeCaseUploader } from '@/components/admin/FreeCaseUploader';
 import { formatBytes } from '@/lib/format';
 import { FREE_CASE, FREE_CASE_FOLDER, listFreeFiles } from '@/lib/newsletter';
 import { deleteFreeFile } from '../extra-actions';
+import { requireAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 const KIND = { material: 'materiał', hint: '💡 wskazówki', solution: '🔐 odpowiedzi' } as const;
 
 export default async function AdminFreeCasePage() {
+  await requireAdmin(); // każda strona panelu sprawdza uprawnienia sama (layout nie zawsze się wykonuje)
   const files = await listFreeFiles();
   return (
     <div className="max-w-3xl">

@@ -2,9 +2,9 @@ import { formatPlayTime, plural } from '@/lib/format';
 import { levelName } from '@/lib/tags';
 import { Skulls } from './Skull';
 
-export function DifficultyStars({ value, showLabel = true }: { value: number; showLabel?: boolean }) {
+export function DifficultyStars({ value, showLabel = true, stacked = false }: { value: number; showLabel?: boolean; stacked?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-2" title={levelName(value)} aria-label={`Trudność: ${value} z 5 (${levelName(value)})`}>
+    <span className={stacked ? 'flex flex-col gap-1' : 'inline-flex items-center gap-2'} title={levelName(value)} aria-label={`Trudność: ${value} z 5 (${levelName(value)})`}>
       <span aria-hidden>
         <Skulls value={value} />
       </span>
@@ -33,7 +33,7 @@ export function CaseStats({ difficulty, minutes, suspects, pages, layout = 'list
     return (
       <dl className="grid grid-cols-2 gap-3">
         {[
-          ['Trudność', <DifficultyStars key="d" value={difficulty} />],
+          ['Trudność', <DifficultyStars key="d" value={difficulty} stacked />],
           ['Czas gry', formatPlayTime(minutes)],
           ['Podejrzani', String(suspects)],
           ['Materiały', `${pages} ${plural(pages, 'strona', 'strony', 'stron')}`],
