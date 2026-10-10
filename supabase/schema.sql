@@ -519,3 +519,27 @@ create policy "storage: admin zarządza plikami sklepu" on storage.objects
   for all to authenticated
   using (bucket_id in ('covers', 'previews', 'case-files', 'online-pages', 'recordings') and public.is_admin())
   with check (bucket_id in ('covers', 'previews', 'case-files', 'online-pages', 'recordings') and public.is_admin());
+
+-- ═══════════════════════════════════════════════════════════════════
+--  TRYB „WKRÓTCE START” (sklep zamknięty dla gości, wejście na hasło)
+--  Przełącznik: Admin → Pulpit → Status sklepu. Domyślnie: ZAMKNIĘTY.
+-- ═══════════════════════════════════════════════════════════════════
+create table if not exists public.site_settings (
+  id             integer primary key default 1 check (id = 1),
+  is_open        boolean not null default false,
+  headline       text not null default 'Śledztwo wkrótce się zacznie',
+  message        text not null default 'Kończymy kompletować akta pierwszych spraw. Sklep ruszy już niedługo — zajrzyj do nas za kilka dni.',
+  launch_label   text,
+  preview_hash   text,           -- sól:sha256(sól+hasło) — nigdy samo hasło
+  updated_at     timestamptz not null default now()
+);
+insert into public.site_settings (id) values (1) on conflict (id) do nothing;
+
+drop trigger if exists site_settings_touch on public.site_settings;
+create trigger site_settings_touch before update on public.site_settings
+  for each row execute function public.touch_updated_at();
+
+alter table public.site_settings enable row level security;
+drop policy if exists "site_settings: admin" on public.site_settings;
+create policy "site_settings: admin" on public.site_settings
+  for all using (public.is_admin()) with check (public.is_admin());

@@ -84,3 +84,37 @@ export async function deleteFreeFile(formData: FormData) {
   await createAdminClient().storage.from('case-files').remove([`${FREE_CASE_FOLDER}/${name}`]);
   revalidatePath('/admin/darmowa-sprawa');
 }
+
+// ─── Status sklepu (tryb „Wkrótce start”) ───────────────────────────
+export async function setSiteOpen(formData: FormData) {
+  await requireAdmin();
+  const open = formData.get('open') === 'true';
+  await createAdminClient().from('site_settings').upsert({ id: 1, is_open: open }, { onConflict: 'id' });
+  const { forgetSiteStatus } = await import('@/lib/maintenance');
+  forgetSiteStatus();
+  revalidatePath('/admin');
+}
+
+export type SiteSettingsState = { error?: string; ok?: string };
+
+export async function saveSiteSettings(_prev: SiteSettingsState, formData: FormData): Promise<SiteSettingsState> {
+  await requireAdmin();
+  const headline = String(formData.get('headline') ?? '').trim().slice(0, 120);
+  const message = String(formData.get('message') ?? '').trim().slice(0, 1000);
+  const launchLabel = String(formData.get('launch_label') ?? '').trim().slice(0, 60) || null;
+  const password = String(formData.get('password') ?? '');
+  const removePassword = formData.get('remove_password') === 'on';
+  if (!headline || !message) return { error: 'Uzupełnij nagłówek i opis.' };
+  if (password && password.length < 6) return { error: 'Hasło musi mieć co najmniej 6 znaków.' };
+
+  const { hashPreviewPassword, forgetSiteStatus } = await import('@/lib/maintenance');
+  const update: Record<string, unknown> = { id: 1, headline, message, launch_label: launchLabel };
+  if (removePassword) update.preview_hash = null;
+  else if (password) update.preview_hash = await hashPreviewPassword(password);
+
+  const { error } = await createAdminClient().from('site_settings').upsert(update, { onConflict: 'id' });
+  if (error) return { error: error.message.includes('site_settings') ? 'Brak tabeli ustawień — uruchom supabase/schema.sql w Supabase.' : error.message };
+  forgetSiteStatus();
+  revalidatePath('/admin');
+  return { ok: password ? 'Zapisano. Nowe hasło działa — stare przestało działać.' : removePassword ? 'Zapisano. Wejście na hasło wyłączone.' : 'Zapisano.' };
+}

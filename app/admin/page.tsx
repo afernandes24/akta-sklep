@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { StatusBadge } from '@/components/account/StatusBadge';
+import { SiteStatusCard } from '@/components/admin/SiteStatusCard';
 import { markMessageRead } from './actions';
 import { formatDate, formatPrice } from '@/lib/format';
 import { getSetupChecks } from '@/lib/setup-status';
@@ -17,6 +18,14 @@ export default async function AdminDashboard() {
     db.from('cases').select('id, is_published'),
     db.from('contact_messages').select('*').eq('is_read', false).order('created_at', { ascending: false }).limit(10),
   ]);
+  const site = await db.from('site_settings').select('is_open, headline, message, launch_label, preview_hash').eq('id', 1).maybeSingle();
+  const siteView = {
+    is_open: site.data ? Boolean(site.data.is_open) : true,
+    headline: (site.data?.headline as string) ?? 'Śledztwo wkrótce się zacznie',
+    message: (site.data?.message as string) ?? '',
+    launch_label: (site.data?.launch_label as string | null) ?? null,
+    has_password: Boolean(site.data?.preview_hash),
+  };
 
   const revenue = (paid.data ?? []).reduce((s, o) => s + (o.total_grosze as number), 0);
   // Limit działalności nierejestrowanej liczony kwartalnie (polski czas)
@@ -39,6 +48,7 @@ export default async function AdminDashboard() {
 
   return (
     <div className="space-y-10">
+      <SiteStatusCard s={siteView} missingTable={Boolean(site.error)} />
       <section className="card p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-serif text-xl font-semibold">Gotowość do sprzedaży</h2>
