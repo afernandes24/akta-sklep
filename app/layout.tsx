@@ -14,6 +14,7 @@ import { Trackers } from '@/components/consent/Trackers';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { siteConfig } from '@/lib/config';
+import { PageBeacon } from '@/components/analytics/PageBeacon';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Footer />
           <CookieBanner />
           <Trackers />
+          <PageBeacon />
         </CartProvider>
       </body>
     </html>

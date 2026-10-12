@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth';
 import { ONLINE_BUCKET, RECORDINGS_BUCKET, type OnlineDocument, type OnlineManifest } from '@/lib/online';
 import { fileKind } from '@/lib/files';
@@ -154,4 +155,20 @@ export async function deleteRecording(formData: FormData) {
   if (data?.storage_path) await db.storage.from(RECORDINGS_BUCKET).remove([data.storage_path as string]);
   await db.from('case_recordings').delete().eq('id', id);
   await revalidateCase(caseId);
+}
+
+/** Tworzy (albo odświeża) kod QR do nagrania: <nr sprawy>-n<kolejność> → /n/<token> (bez logowania). */
+export async function createRecordingQr(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get('id') ?? '');
+  if (!isUuid(id)) return;
+  const db = createAdminClient();
+  const { data: rec } = await db.from('case_recordings').select('case_id, title, public_token, sort_order, cases(case_number)').eq('id', id).maybeSingle();
+  if (!rec?.public_token) return;
+  const { data: all } = await db.from('case_recordings').select('id').eq('case_id', rec.case_id).order('sort_order').order('created_at');
+  const n = (all ?? []).findIndex((r) => r.id === id) + 1;
+  const num = ((Array.isArray(rec.cases) ? rec.cases[0] : rec.cases) as { case_number?: string } | null)?.case_number ?? 'x';
+  await db.from('qr_codes').upsert({ code: `${num}-n${n}`.toLowerCase(), label: `#${num} — ${rec.title}`, target: `/n/${rec.public_token}` }, { onConflict: 'code' });
+  revalidatePath('/admin/qr');
+  redirect('/admin/qr');
 }

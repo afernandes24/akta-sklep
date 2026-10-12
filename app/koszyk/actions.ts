@@ -2,7 +2,9 @@
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { formatPrice } from '@/lib/format';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { geoFromHeaders } from '@/lib/stats-shared';
 import { getUser } from '@/lib/auth';
 import { isServiceRoleConfigured, siteConfig } from '@/lib/config';
 import { findValidCoupon } from '@/lib/discounts';
@@ -56,6 +58,9 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
       redirectTo = `/zamowienie/${result.order.id}`;
     } else {
       orderIdForCleanup = result.order.id;
+      // Przybliżona lokalizacja kupującego (kraj / województwo / miasto) — do mapy w statystykach
+      const geo = geoFromHeaders(await headers());
+      await createAdminClient().from('orders').update({ geo_country: geo.country, geo_region: geo.region, geo_city: geo.city }).eq('id', result.order.id);
       const { redirectUrl, providerRef } = await provider.createCheckout({
         order: result.order,
         items: result.items,

@@ -196,6 +196,11 @@ export function OnlineReader({ slug, title, caseNumber, documents: initialDocs, 
             </p>
             <p className="truncate font-serif text-lg text-paper-50">{title}</p>
           </div>
+          {recordings.length > 0 && (
+            <button type="button" onClick={() => go(REC_TAB)} className="btn-secondary shrink-0 px-3 py-2 text-sm" aria-pressed={active === REC_TAB}>
+              🎧<span className="hidden sm:inline"> Nagrania</span>
+            </button>
+          )}
           <button type="button" onClick={() => setNotesOpen((o) => !o)} className="btn-secondary shrink-0 px-3 py-2 text-sm" aria-pressed={notesOpen}>
             ✎ Notatki
           </button>

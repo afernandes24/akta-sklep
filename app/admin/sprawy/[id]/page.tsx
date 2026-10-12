@@ -11,7 +11,7 @@ import { CASE_COLUMNS, normalizeCase } from '@/lib/cases';
 import { publicStorageUrl } from '@/lib/config';
 import { formatBytes, formatDuration } from '@/lib/format';
 import type { OnlineManifest, Recording } from '@/lib/online';
-import { deleteRecording, setOnlinePublished, updateRecording } from '../../online-actions';
+import { createRecordingQr, deleteRecording, setOnlinePublished, updateRecording } from '../../online-actions';
 import { isUuid } from '@/lib/orders';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { CaseFile, CaseImage } from '@/lib/types';
@@ -201,6 +201,16 @@ export default async function EditCasePage({
                   )}
                   <button className="btn-secondary min-h-0 w-full py-1.5 text-xs">Zapisz</button>
                 </form>
+                {(r as Recording & { public_token?: string }).public_token && (
+                  <div className="mt-2 rounded-md bg-ink-900 p-2 text-xs">
+                    <p className="text-muted">Link bez logowania (do kodu QR w PDF):</p>
+                    <p className="break-all font-mono text-brass-300">/n/{(r as Recording & { public_token?: string }).public_token}</p>
+                    <form action={createRecordingQr} className="mt-1">
+                      <input type="hidden" name="id" value={r.id} />
+                      <button className="text-brass-300 underline-offset-2 hover:underline">▣ Utwórz kod QR do tego nagrania →</button>
+                    </form>
+                  </div>
+                )}
                 <form action={deleteRecording} className="mt-2 text-right">
                   <input type="hidden" name="id" value={r.id} />
                   <input type="hidden" name="caseId" value={c.id} />

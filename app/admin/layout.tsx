@@ -10,6 +10,7 @@ export const dynamic = 'force-dynamic';
 
 const nav = [
   ['/admin', 'Pulpit'],
+  ['/admin/statystyki', 'Statystyki'],
   ['/admin/sprawy', 'Sprawy'],
   ['/admin/zamowienia', 'Zamówienia'],
   ['/admin/uzytkownicy', 'Użytkownicy'],
@@ -17,6 +18,7 @@ const nav = [
   ['/admin/rabaty', 'Rabaty'],
   ['/admin/newsletter', 'Newsletter'],
   ['/admin/darmowa-sprawa', 'Darmowa sprawa'],
+  ['/admin/qr', 'Kody QR'],
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

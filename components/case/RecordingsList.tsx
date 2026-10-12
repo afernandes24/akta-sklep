@@ -18,7 +18,7 @@ export function RecordingsList({ items, compact = false }: { items: RecordingIte
     <div>
       <ul className="space-y-3">
         {items.map((r, i) => (
-          <li key={r.id} className="rounded-lg border border-ink-700 bg-ink-900/60 p-3 sm:p-4">
+          <li key={r.id} id={`n${i + 1}`} className="scroll-mt-24 rounded-lg border border-ink-700 bg-ink-900/60 p-3 sm:p-4">
             <div className="flex items-baseline justify-between gap-3">
               <p className="min-w-0 font-semibold text-paper-50">
                 <span className="mr-2 font-mono text-xs text-brass-400">N{i + 1}</span>

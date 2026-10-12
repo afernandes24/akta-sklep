@@ -118,3 +118,33 @@ export async function saveSiteSettings(_prev: SiteSettingsState, formData: FormD
   revalidatePath('/admin');
   return { ok: password ? 'Zapisano. Nowe hasło działa — stare przestało działać.' : removePassword ? 'Zapisano. Wejście na hasło wyłączone.' : 'Zapisano.' };
 }
+
+// ─── Kody QR ────────────────────────────────────────────────────────
+export type QrState = { error?: string; ok?: string };
+
+function cleanTarget(raw: string): string | null {
+  const t = raw.trim();
+  if (/^\/[^\s]*$/.test(t) && !t.startsWith('//')) return t.slice(0, 300);
+  if (/^https:\/\/[^\s]+$/.test(t)) return t.slice(0, 300);
+  return null;
+}
+
+export async function saveQrCode(_prev: QrState, formData: FormData): Promise<QrState> {
+  await requireAdmin();
+  const code = String(formData.get('code') ?? '').trim().toLowerCase();
+  const target = cleanTarget(String(formData.get('target') ?? ''));
+  const label = String(formData.get('label') ?? '').trim().slice(0, 120);
+  if (!/^[a-z0-9-]{2,40}$/.test(code)) return { error: 'Kod: 2–40 znaków, tylko małe litery, cyfry i myślnik (np. 006-n1).' };
+  if (!target) return { error: 'Cel: ścieżka w sklepie zaczynająca się od „/” albo pełny adres https://…' };
+  const { error } = await createAdminClient().from('qr_codes').upsert({ code, target, label }, { onConflict: 'code' });
+  if (error) return { error: error.message.includes('qr_codes') ? 'Brak tabeli — uruchom supabase/schema.sql w Supabase.' : error.message };
+  revalidatePath('/admin/qr');
+  return { ok: `Zapisano kod ${code}.` };
+}
+
+export async function deleteQrCode(formData: FormData) {
+  await requireAdmin();
+  const code = String(formData.get('code') ?? '');
+  await createAdminClient().from('qr_codes').delete().eq('code', code);
+  revalidatePath('/admin/qr');
+}

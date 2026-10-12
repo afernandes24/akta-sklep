@@ -110,6 +110,8 @@ export async function isAdminId(userId: string): Promise<boolean> {
 /** Ścieżki dostępne zawsze (logowanie admina, płatności, dokumenty prawne, strona „Wkrótce”). */
 const ALWAYS_OPEN = [
   '/wkrotce',
+  '/qr',
+  '/n',
   '/admin',
   '/logowanie',
   '/nie-pamietam-hasla',
