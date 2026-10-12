@@ -543,3 +543,63 @@ alter table public.site_settings enable row level security;
 drop policy if exists "site_settings: admin" on public.site_settings;
 create policy "site_settings: admin" on public.site_settings
   for all using (public.is_admin()) with check (public.is_admin());
+
+-- ═══════════════════════════════════════════════════════════════════
+--  KODY QR (krótkie adresy /qr/<kod> → dowolny cel, z licznikiem skanów)
+-- ═══════════════════════════════════════════════════════════════════
+create table if not exists public.qr_codes (
+  code          text primary key check (code ~ '^[a-z0-9-]{2,40}$'),
+  label         text not null default '',
+  target        text not null,
+  scans         integer not null default 0,
+  last_scan_at  timestamptz,
+  created_at    timestamptz not null default now()
+);
+alter table public.qr_codes enable row level security;
+drop policy if exists "qr_codes: admin" on public.qr_codes;
+create policy "qr_codes: admin" on public.qr_codes
+  for all using (public.is_admin()) with check (public.is_admin());
+
+create or replace function public.qr_hit(p_code text)
+returns text language sql security definer set search_path = public as $$
+  update public.qr_codes set scans = scans + 1, last_scan_at = now() where code = p_code returning target;
+$$;
+revoke all on function public.qr_hit(text) from public, anon, authenticated;
+grant execute on function public.qr_hit(text) to service_role;
+
+-- ═══════════════════════════════════════════════════════════════════
+--  STATYSTYKI ODWIEDZIN (bez cookies; bez adresów IP — tylko dzienny anonimowy skrót)
+-- ═══════════════════════════════════════════════════════════════════
+create table if not exists public.page_views (
+  id            bigint generated always as identity primary key,
+  at            timestamptz not null default now(),
+  path          text not null,
+  visitor       text not null,          -- skrót (IP+przeglądarka+dzień), zmienia się codziennie
+  source        text not null,          -- google / instagram / facebook / tiktok / bezpośrednio / inne domeny
+  referrer_host text,
+  utm_source    text,
+  utm_medium    text,
+  utm_campaign  text,
+  device        text not null,          -- telefon / tablet / komputer
+  country       text,
+  city          text
+);
+create index if not exists page_views_at_idx on public.page_views (at desc);
+alter table public.page_views enable row level security;
+drop policy if exists "page_views: admin" on public.page_views;
+create policy "page_views: admin" on public.page_views
+  for select using (public.is_admin());
+
+-- ═══════════════════════════════════════════════════════════════════
+--  NAGRANIA BEZ LOGOWANIA (link z kodu QR na papierze) + MAPA WOJEWÓDZTW
+-- ═══════════════════════════════════════════════════════════════════
+alter table public.case_recordings add column if not exists public_token text;
+update public.case_recordings set public_token = replace(gen_random_uuid()::text, '-', '') where public_token is null;
+alter table public.case_recordings alter column public_token set default replace(gen_random_uuid()::text, '-', '');
+create unique index if not exists case_recordings_token_idx on public.case_recordings (public_token);
+
+alter table public.page_views add column if not exists region text;   -- kod województwa, np. MZ
+
+alter table public.orders add column if not exists geo_country text;
+alter table public.orders add column if not exists geo_region text;
+alter table public.orders add column if not exists geo_city text;
