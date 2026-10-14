@@ -12,7 +12,7 @@ export default async function AdminDashboard() {
   await requireAdmin(); // każda strona panelu sprawdza uprawnienia sama (layout nie zawsze się wykonuje)
   const db = createAdminClient();
   const [paid, orders, users, cases, messages] = await Promise.all([
-    db.from('orders').select('total_grosze, paid_at').eq('status', 'paid'),
+    db.from('orders').select('*').eq('status', 'paid'),
     db.from('orders').select('id, order_number, email, status, total_grosze, created_at').order('created_at', { ascending: false }).limit(8),
     db.from('profiles').select('id', { count: 'exact', head: true }),
     db.from('cases').select('id, is_published'),
@@ -27,18 +27,19 @@ export default async function AdminDashboard() {
     has_password: Boolean(site.data?.preview_hash),
   };
 
-  const revenue = (paid.data ?? []).reduce((s, o) => s + (o.total_grosze as number), 0);
+  const real = (paid.data ?? []).filter((o) => !o.is_test && o.provider !== 'mock'); // bez płatności testowych i gratisów
+  const revenue = real.reduce((s, o) => s + (o.total_grosze as number), 0);
   // Limit działalności nierejestrowanej liczony kwartalnie (polski czas)
   const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }));
   const qStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
-  const quarter = (paid.data ?? [])
+  const quarter = real
     .filter((o) => o.paid_at && new Date(new Date(o.paid_at as string).toLocaleString('en-US', { timeZone: 'Europe/Warsaw' })) >= qStart)
     .reduce((s, o) => s + (o.total_grosze as number), 0);
   const limit = seller.businessType === 'nierejestrowana' ? seller.quarterlyRevenueLimitGrosze : 0;
   const quarterShare = limit ? quarter / limit : 0;
   const stats = [
     ['Przychód (opłacone)', formatPrice(revenue)],
-    ['Opłacone zamówienia', String(paid.data?.length ?? 0)],
+    ['Opłacone zamówienia', String(real.length)],
     ['Użytkownicy', String(users.count ?? 0)],
     ['Sprawy (opublikowane)', `${cases.data?.length ?? 0} (${cases.data?.filter((c) => c.is_published).length ?? 0})`],
   ];

@@ -261,6 +261,15 @@ export async function markOrderPaid(formData: FormData) {
   revalidatePath('/admin/zamowienia');
 }
 
+/** Dostęp bez zapłaty (np. przeprosiny) — zamówienie nie wchodzi do przychodu ani ewidencji. */
+export async function giveOrderFree(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get('id'));
+  if (!isUuid(id)) return;
+  await fulfillOrder(id, { providerRef: 'gratis', isTest: true });
+  revalidatePath('/admin/zamowienia');
+}
+
 export async function markMessageRead(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get('id'));

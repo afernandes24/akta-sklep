@@ -62,7 +62,7 @@ export const stripeProvider: PaymentProvider = {
     try {
       const session = await getStripe().checkout.sessions.retrieve(sessionId);
       if (session.client_reference_id === order.id && session.payment_status === 'paid') {
-        await fulfillOrder(order.id, { providerRef: session.id, paidAmountGrosze: session.amount_total ?? undefined });
+        await fulfillOrder(order.id, { providerRef: session.id, paidAmountGrosze: session.amount_total ?? undefined, isTest: !session.livemode });
       }
     } catch (e) {
       console.error('[stripe] confirmOnReturn', e);
