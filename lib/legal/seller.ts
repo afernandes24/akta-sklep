@@ -48,7 +48,7 @@ export const seller = {
 
 /** Dostawcy techniczni wymieniani w polityce prywatności. */
 const ALL_PROCESSORS = [
-  { name: 'Railway Corporation', role: 'hosting strony internetowej (serwer aplikacji)', location: 'USA lub UE — zależnie od regionu serwera (dane przekazywane na podstawie standardowych klauzul umownych)' },
+  { name: 'Railway Corporation', role: 'hosting strony internetowej (serwer aplikacji)', location: 'Unia Europejska (Amsterdam, Holandia); firma z siedzibą w USA (standardowe klauzule umowne)' },
   { name: 'Cloudflare, Inc.', role: 'obsługa domeny (DNS), szyfrowanie połączeń i ochrona przed atakami', location: 'globalna sieć serwerów; USA (Data Privacy Framework / standardowe klauzule umowne)' },
   { name: 'Supabase Inc.', role: 'baza danych, logowanie i przechowywanie plików', location: 'serwery w Unii Europejskiej (Frankfurt)' },
   { name: 'Stripe Payments Europe, Ltd.', role: 'obsługa płatności (działa jako odrębny administrator danych płatniczych)', location: 'Irlandia (UE)' },
