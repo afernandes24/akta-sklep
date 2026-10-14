@@ -588,7 +588,7 @@ Najtrudniejsza sprawa w archiwum — dla doświadczonych detektywów.$txt$,
 ]$json$::jsonb,
   5, 120, 24, 5, 2799,
   true, 11,
-  'AKTA #011 — Człowiek za burtą | Najtrudniejsza gra detektywistyczna PDF',
+  'AKTA #011 — Człowiek za burtą | Najtrudniejsza sprawa w naszym archiwum (PDF)',
   'Drukowana gra detektywistyczna: nocne regaty na Mazurach, człowiek za burtą, mapa GPS, zapis tętna i szyfr z flag sygnałowych. Poziom 5/5. Pobierz PDF.',
   array[
     'zaginiecie'

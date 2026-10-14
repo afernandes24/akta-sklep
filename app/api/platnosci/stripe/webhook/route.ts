@@ -48,7 +48,6 @@ export async function POST(req: Request) {
         const result = await fulfillOrder(orderId, {
           providerRef: session.id,
           paidAmountGrosze: session.amount_total ?? undefined,
-          isTest: !event.livemode, // klucz sk_test → brak prawdziwych pieniędzy
         });
         if (!result.ok && result.reason !== 'amount_mismatch') {
           // 500 → Stripe ponowi próbę

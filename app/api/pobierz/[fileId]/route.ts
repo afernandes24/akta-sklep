@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isSupabaseConfigured, siteConfig } from '@/lib/config';
 import { isUuid } from '@/lib/orders';
+import { allow } from '@/lib/rate-limit';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { watermarkPdf } from '@/lib/watermark';
@@ -25,6 +26,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ fileId: 
   } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.redirect(new URL(`/logowanie?next=${encodeURIComponent('/konto/sprawy')}`, siteConfig.url));
+  }
+  // Każde pobranie ładuje PDF do pamięci (znak wodny) — limit chroni serwer przed przeciążeniem.
+  if (!allow(`pobierz:${user.id}`, 30, 10 * 60 * 1000)) {
+    return new NextResponse('Zbyt wiele pobrań w krótkim czasie. Spróbuj ponownie za kilka minut.', { status: 429, headers: { 'Retry-After': '600' } });
   }
 
   const db = createAdminClient();

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { StatusBadge } from '@/components/account/StatusBadge';
-import { giveOrderFree, markOrderPaid } from '../actions';
+import { markOrderPaid } from '../actions';
 import { formatDate, formatPrice, statusLabels } from '@/lib/format';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { Order } from '@/lib/types';
@@ -12,7 +12,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   const db = createAdminClient();
   let query = db
     .from('orders')
-    .select('*, order_items(id, title, price_grosze)') // '*' — działa też przed dodaniem kolumny is_test
+    .select('id, order_number, email, status, total_grosze, provider, provider_ref, created_at, paid_at, order_items(id, title, price_grosze)')
     .order('created_at', { ascending: false })
     .limit(200);
   if (sp.status && sp.status in statusLabels) query = query.eq('status', sp.status);
@@ -73,11 +73,6 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                 <td className="whitespace-nowrap">{formatPrice(o.total_grosze)}</td>
                 <td>
                   <StatusBadge status={o.status} />
-                  {(o as Order & { is_test?: boolean }).is_test && (
-                    <span className="ml-1 rounded bg-ink-700 px-1.5 py-0.5 font-mono text-[10px] text-brass-300" title="Płatność testowa lub gratis — bez przychodu">
-                      TEST / GRATIS
-                    </span>
-                  )}
                   {o.paid_at && <div className="mt-1 text-[11px] text-muted">{formatDate(o.paid_at)}</div>}
                 </td>
                 <td className="font-mono text-xs text-muted">
@@ -90,14 +85,6 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                       <input type="hidden" name="id" value={o.id} />
                       <button className="btn-ghost min-h-0 py-1 text-xs" title="Nadaje klientowi dostęp do plików">
                         Oznacz jako opłacone
-                      </button>
-                    </form>
-                  )}
-                  {o.status === 'pending' && (
-                    <form action={giveOrderFree}>
-                      <input type="hidden" name="id" value={o.id} />
-                      <button className="btn-ghost min-h-0 py-1 text-xs" title="Dostęp bez zapłaty — nie liczy się do przychodu">
-                        Daj gratis
                       </button>
                     </form>
                   )}
