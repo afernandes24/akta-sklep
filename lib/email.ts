@@ -9,7 +9,7 @@ import { createAdminClient } from './supabase/admin';
  * Wysyłka e-maili przez Resend (https://resend.com) — bez dodatkowych bibliotek.
  * Wymaga RESEND_API_KEY i EMAIL_FROM. Bez nich e-mail jest tylko logowany.
  */
-export async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+export async function sendEmail(to: string, subject: string, html: string, replyTo?: string): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
   if (!key || !from) {
@@ -19,13 +19,25 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to, subject, html, reply_to: seller.email.startsWith('[') ? undefined : seller.email }),
+    body: JSON.stringify({ from, to, subject, html, reply_to: replyTo ?? (seller.email.startsWith('[') ? undefined : seller.email) }),
   });
   if (!res.ok) console.error('[email] Resend', res.status, await res.text().catch(() => ''));
   return res.ok;
 }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/**
+ * Powiadomienie dla właściciela sklepu (na adres kontaktowy sprzedawcy).
+ * Linie tekstu są escapowane — można bezpiecznie przekazać dane od klienta.
+ */
+export async function notifyOwner(subject: string, lines: string[], replyTo?: string): Promise<boolean> {
+  const to = seller.email;
+  if (!to || to.startsWith('[')) return false;
+  const body = lines.map((l) => `<p style="margin:0 0 8px;white-space:pre-wrap">${esc(l)}</p>`).join('');
+  const html = `<!doctype html><html lang="pl"><body style="font-family:Arial,sans-serif;font-size:14px;color:#1c1a17">${body}<p style="margin-top:16px;color:#777;font-size:12px">${esc(siteConfig.name)} · ${esc(siteConfig.url)}/admin</p></body></html>`;
+  return sendEmail(to, `[${siteConfig.name}] ${subject}`, html, replyTo).catch(() => false);
+}
 
 function blockHtml(b: Block): string {
   if (typeof b === 'string') return `<p style="margin:0 0 8px">${esc(b)}</p>`;

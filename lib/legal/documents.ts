@@ -2,6 +2,9 @@ import { siteConfig } from '../config';
 import { VOLUME_TIERS } from '../pricing';
 import { priceTaxInfo, processors, registryInfo, seller, sellerIdentity } from './seller';
 
+/** Piksel Meta jest opisywany w dokumentach tylko wtedy, gdy jest skonfigurowany (NEXT_PUBLIC_META_PIXEL_ID). */
+const META = Boolean(process.env.NEXT_PUBLIC_META_PIXEL_ID);
+
 export type Block = string | { list: string[]; ordered?: boolean };
 export interface LegalSection {
   /** Kotwica w adresie, np. /regulamin#opinie */
@@ -296,11 +299,11 @@ export function politykaPrywatnosci(): LegalDoc {
               'Wersja online — notatki wpisane w czytniku oraz data otwarcia koperty z rozwiązaniem: w celu zapisania ich na Koncie (art. 6 ust. 1 lit. b RODO). Na stronach akt wyświetlany jest adres e-mail Klienta w celu ochrony praw autorskich (art. 6 ust. 1 lit. f RODO).',
               'Własne statystyki odwiedzin (bez plików cookies) — odwiedzona podstrona, strona lub kampania, z której nastąpiło wejście, typ urządzenia oraz przybliżona lokalizacja (kraj, miasto) ustalona z adresu IP. Adresu IP nie zapisujemy — przechowujemy jedynie jednodniowy, nieodwracalny skrót, który nie pozwala nas ani nikogo innego zidentyfikować. Cel: zbiorcze statystyki ruchu i ulepszanie Sklepu (art. 6 ust. 1 lit. f RODO). Liczymy też zbiorczo skany kodów QR z materiałów.',
               'Statystyki odwiedzin — dane o korzystaniu ze strony zbierane przez Google Analytics (identyfikatory cookies, przybliżona lokalizacja, typ urządzenia, odwiedzone podstrony): w celu analizy ruchu i ulepszania Sklepu — wyłącznie na podstawie zgody (art. 6 ust. 1 lit. a RODO).',
-              'Marketing — dane o wizytach i zakupach przekazywane do Meta (Piksel Meta): w celu mierzenia skuteczności reklam na Facebooku i Instagramie oraz docierania z reklamą do osób, które odwiedziły Sklep — wyłącznie na podstawie zgody (art. 6 ust. 1 lit. a RODO). Meta Platforms Ireland Ltd. jest w tym zakresie współadministratorem danych.',
+              ...(META ? ['Marketing — dane o wizytach i zakupach przekazywane do Meta (Piksel Meta): w celu mierzenia skuteczności reklam na Facebooku i Instagramie oraz docierania z reklamą do osób, które odwiedziły Sklep — wyłącznie na podstawie zgody (art. 6 ust. 1 lit. a RODO). Meta Platforms Ireland Ltd. jest w tym zakresie współadministratorem danych.'] : []),
               'Bezpieczeństwo i roszczenia — logi techniczne (np. adres IP, czas pobrania pliku): w celu zapewnienia bezpieczeństwa Sklepu, zapobiegania nadużyciom oraz ustalenia, dochodzenia lub obrony roszczeń (art. 6 ust. 1 lit. f RODO).',
             ],
           },
-          'Podanie danych jest dobrowolne, ale niezbędne do założenia Konta i złożenia zamówienia. Zgodę na cookies analityczne i marketingowe możesz w każdej chwili wycofać w „Ustawieniach cookies” (link w stopce) — nie wpływa to na zgodność z prawem przetwarzania przed jej wycofaniem. Nie podejmujemy wobec ciebie decyzji wywołujących skutki prawne w sposób zautomatyzowany.',
+          `Podanie danych jest dobrowolne, ale niezbędne do założenia Konta i złożenia zamówienia. Zgodę na cookies analityczne${META ? ' i marketingowe' : ''} możesz w każdej chwili wycofać w „Ustawieniach cookies” (link w stopce) — nie wpływa to na zgodność z prawem przetwarzania przed jej wycofaniem. Nie podejmujemy wobec ciebie decyzji wywołujących skutki prawne w sposób zautomatyzowany.`,
         ],
       },
       {
@@ -316,7 +319,9 @@ export function politykaPrywatnosci(): LegalDoc {
               'Opinie — do czasu usunięcia opinii lub Konta.',
               'Notatki z Wersji online — do czasu usunięcia Konta.',
               'Własne statystyki odwiedzin — 13 miesięcy.',
-              'Dane z Google Analytics — 14 miesięcy; dane z Piksela Meta — zgodnie z zasadami Meta, nie dłużej niż 2 lata; w każdym przypadku do wycofania zgody.',
+              META
+                ? 'Dane z Google Analytics — 14 miesięcy; dane z Piksela Meta — zgodnie z zasadami Meta, nie dłużej niż 2 lata; w każdym przypadku do wycofania zgody.'
+                : 'Dane z Google Analytics — 14 miesięcy lub do wycofania zgody.',
             ],
           },
         ],
@@ -344,7 +349,7 @@ export function politykaPrywatnosci(): LegalDoc {
       },
       {
         title: '6. Pliki cookies',
-        blocks: [`Sklep używa niezbędnych plików cookies oraz — po wyrażeniu zgody — cookies analitycznych i marketingowych. Szczegóły: ${siteConfig.url}/polityka-cookies.`],
+        blocks: [`Sklep używa niezbędnych plików cookies oraz — po wyrażeniu zgody — cookies analitycznych${META ? ' i marketingowych' : ''}. Szczegóły: ${siteConfig.url}/polityka-cookies.`],
       },
       {
         title: '7. Zmiany polityki',
@@ -386,16 +391,18 @@ export function politykaCookies(): LegalDoc {
           'Google Analytics 4 (Google Ireland Ltd.) — cookies „_ga” i „_ga_*”, ważne do 14 miesięcy. Pomagają nam zrozumieć, jak korzystasz ze strony (które podstrony odwiedzasz, skąd przychodzisz), abyśmy mogli ją ulepszać. Adresy IP nie są przechowywane przez Google Analytics 4.',
         ],
       },
-      {
+      ...(META
+        ? [{
         title: '4. Pliki marketingowe (tylko za zgodą)',
         blocks: [
           'Piksel Meta (Meta Platforms Ireland Ltd.) — cookie „_fbp”, ważne do 90 dni. Pozwala mierzyć skuteczność reklam na Facebooku i Instagramie (np. czy reklama doprowadziła do zakupu) i pokazywać reklamy osobom, które odwiedziły Sklep.',
         ],
-      },
+      }]
+        : []),
       {
-        title: '5. Jak zarządzać zgodą',
+        title: `${META ? 5 : 4}. Jak zarządzać zgodą`,
         blocks: [
-          'Przy pierwszej wizycie wyświetlamy baner, w którym możesz zaakceptować wszystkie pliki, odrzucić pliki opcjonalne albo wybrać kategorie. Do czasu wyrażenia zgody skrypty Google Analytics i Meta nie są ładowane.',
+          `Przy pierwszej wizycie wyświetlamy baner, w którym możesz zaakceptować wszystkie pliki, odrzucić pliki opcjonalne albo wybrać kategorie. Do czasu wyrażenia zgody ${META ? 'skrypty Google Analytics i Meta nie są' : 'skrypt Google Analytics nie jest'} ładowane.`,
           'Swój wybór możesz w każdej chwili zmienić lub wycofać przez link „Ustawienia cookies” w stopce strony. Możesz też usunąć cookies w ustawieniach przeglądarki.',
         ],
       },

@@ -47,7 +47,7 @@ export const seller = {
 };
 
 /** Dostawcy techniczni wymieniani w polityce prywatności. */
-export const processors = [
+const ALL_PROCESSORS = [
   { name: 'Railway Corporation', role: 'hosting strony internetowej (serwer aplikacji)', location: 'USA lub UE — zależnie od regionu serwera (dane przekazywane na podstawie standardowych klauzul umownych)' },
   { name: 'Cloudflare, Inc.', role: 'obsługa domeny (DNS), szyfrowanie połączeń i ochrona przed atakami', location: 'globalna sieć serwerów; USA (Data Privacy Framework / standardowe klauzule umowne)' },
   { name: 'Supabase Inc.', role: 'baza danych, logowanie i przechowywanie plików', location: 'serwery w Unii Europejskiej (Frankfurt)' },
@@ -56,6 +56,9 @@ export const processors = [
   { name: 'Meta Platforms Ireland Limited', role: 'pomiar skuteczności reklam (Piksel Meta) — tylko po wyrażeniu zgody', location: 'Irlandia (UE); możliwy transfer do USA (Data Privacy Framework)' },
   { name: 'Resend (Plus Five Five, Inc.)', role: 'wysyłka e-maili (potwierdzenia zamówień, potwierdzenia zapisu do newslettera i wysyłka sprawy próbnej, e-maile logowania i resetu hasła)', location: 'USA (Data Privacy Framework / standardowe klauzule umowne)' },
 ];
+
+/** Lista do polityki prywatności — Meta tylko wtedy, gdy Piksel Meta jest włączony. */
+export const processors = ALL_PROCESSORS.filter((p) => !p.name.startsWith('Meta') || Boolean(process.env.NEXT_PUBLIC_META_PIXEL_ID));
 
 export function sellerIdentity(): string {
   const parts = [seller.name, seller.address];

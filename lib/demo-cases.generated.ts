@@ -586,7 +586,7 @@ export const generatedDemoCases: CaseRecord[] = [
     "suspect_count": 5,
     "price_grosze": 2799,
     "sort_order": 11,
-    "seo_title": "AKTA #011 — Człowiek za burtą | Najtrudniejsza gra detektywistyczna PDF",
+    "seo_title": "AKTA #011 — Człowiek za burtą | Najtrudniejsza sprawa w naszym archiwum (PDF)",
     "seo_description": "Drukowana gra detektywistyczna: nocne regaty na Mazurach, człowiek za burtą, mapa GPS, zapis tętna i szyfr z flag sygnałowych. Poziom 5/5. Pobierz PDF.",
     "id": "00000000-0000-4000-8000-000000000011",
     "currency": "PLN",

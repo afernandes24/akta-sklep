@@ -17,7 +17,7 @@ export const faq: { q: string; a: string }[] = [
   },
   {
     q: 'Czy potrzebuję aplikacji lub internetu podczas gry?',
-    a: 'W wersji PDF — nie. To gra na papierze: internet jest potrzebny tylko do pobrania plików, a całe śledztwo prowadzisz przy stole z wydrukowanymi aktami.',
+    a: 'W wersji PDF — nie. To gra na papierze: internet jest potrzebny tylko do pobrania plików, a całe śledztwo prowadzisz przy stole z wydrukowanymi aktami. Wyjątek: nagrania z przesłuchań (sprawy oznaczone 🎧) odtwarzasz w przeglądarce, więc do nich potrzebny jest internet.',
   },
   {
     q: 'Czy mogę grać online, bez drukowania?',

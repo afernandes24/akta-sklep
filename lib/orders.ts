@@ -1,6 +1,6 @@
 import 'server-only';
 import { findValidCoupon } from './discounts';
-import { sendOrderConfirmation } from './email';
+import { notifyOwner, sendOrderConfirmation } from './email';
 import { allocateDiscount, type CouponRule, priceCart } from './pricing';
 import { createAdminClient } from './supabase/admin';
 import type { Order, OrderItem, ProductFormat } from './types';
@@ -123,7 +123,7 @@ export async function setProviderRef(orderId: string, providerRef: string) {
  */
 export async function fulfillOrder(
   orderId: string,
-  opts: { providerRef?: string; paidAmountGrosze?: number; /** płatność testowa Stripe albo gratis — nie wchodzi do przychodu */ isTest?: boolean } = {},
+  opts: { providerRef?: string; paidAmountGrosze?: number } = {},
 ): Promise<{ ok: boolean; reason?: string }> {
   const db = createAdminClient();
   const { data: order } = await db
@@ -137,6 +137,12 @@ export async function fulfillOrder(
 
   if (typeof opts.paidAmountGrosze === 'number' && opts.paidAmountGrosze !== order.total_grosze) {
     console.error(`[orders] Kwota się nie zgadza dla ${orderId}: ${opts.paidAmountGrosze} ≠ ${order.total_grosze}`);
+    // Klient zapłacił, ale nie dostał dostępu — sprzedawca musi to sprawdzić ręcznie.
+    await notifyOwner('UWAGA: płatność z inną kwotą niż zamówienie', [
+      `Zamówienie ${orderId} (${opts.providerRef ?? 'brak identyfikatora płatności'})`,
+      `Zapłacono: ${(opts.paidAmountGrosze / 100).toFixed(2)} zł, zamówienie: ${(order.total_grosze / 100).toFixed(2)} zł.`,
+      'Klient NIE dostał dostępu do plików. Sprawdź płatność w Stripe i w razie potrzeby kliknij „Oznacz jako opłacone” w Admin → Zamówienia albo zwróć pieniądze.',
+    ]);
     return { ok: false, reason: 'amount_mismatch' };
   }
 
@@ -144,13 +150,7 @@ export async function fulfillOrder(
   if (order.status !== 'paid') {
     const update: Record<string, unknown> = { status: 'paid', paid_at: new Date().toISOString() };
     if (opts.providerRef) update.provider_ref = opts.providerRef;
-    if (opts.isTest) update.is_test = true;
-    let { data: changed, error } = await db.from('orders').update(update).eq('id', orderId).neq('status', 'paid').select('id');
-    if (error && opts.isTest) {
-      // Kolumna is_test jeszcze nie dodana (supabase/aktualizacja-ewidencja.sql) — zapisz bez znacznika.
-      delete update.is_test;
-      ({ data: changed, error } = await db.from('orders').update(update).eq('id', orderId).neq('status', 'paid').select('id'));
-    }
+    const { data: changed, error } = await db.from('orders').update(update).eq('id', orderId).neq('status', 'paid').select('id');
     if (error) return { ok: false, reason: error.message };
     newlyPaid = Boolean(changed?.length);
     if (newlyPaid && order.discount_code) {
@@ -182,9 +182,7 @@ export async function fulfillOrder(
 /** Zwrot płatności: zamówienie → „refunded”, odebranie dostępu przyznanego tym zamówieniem. */
 export async function refundOrder(orderId: string): Promise<void> {
   const db = createAdminClient();
-  const { error } = await db.from('orders').update({ status: 'refunded', refunded_at: new Date().toISOString() }).eq('id', orderId);
-  // Gdyby kolumna refunded_at nie była jeszcze dodana (aktualizacja-ewidencja.sql) — zapisz sam status.
-  if (error) await db.from('orders').update({ status: 'refunded' }).eq('id', orderId);
+  await db.from('orders').update({ status: 'refunded' }).eq('id', orderId);
   await db.from('entitlements').delete().eq('order_id', orderId);
 }
 
