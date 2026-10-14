@@ -21,6 +21,7 @@ const TIMES = [
 const SORTS = [
   { id: '', label: 'Polecane' },
   { id: 'cena', label: 'Cena: od najniższej' },
+  { id: 'cena-malejaco', label: 'Cena: od najwyższej' },
   { id: 'latwe', label: 'Od najłatwiejszych' },
   { id: 'trudne', label: 'Od najtrudniejszych' },
   { id: 'oceny', label: 'Najlepiej oceniane' },
@@ -85,6 +86,7 @@ export function CatalogBrowser({ cases, ratings }: { cases: CaseRecord[]; rating
     );
     const sorted = [...list];
     if (f.sort === 'cena') sorted.sort((a, b) => a.price_grosze - b.price_grosze);
+    if (f.sort === 'cena-malejaco') sorted.sort((a, b) => b.price_grosze - a.price_grosze);
     if (f.sort === 'latwe') sorted.sort((a, b) => a.difficulty - b.difficulty);
     if (f.sort === 'trudne') sorted.sort((a, b) => b.difficulty - a.difficulty);
     if (f.sort === 'oceny') sorted.sort((a, b) => (ratings[b.id]?.avg ?? 0) - (ratings[a.id]?.avg ?? 0));

@@ -44,8 +44,11 @@ export function CookieBanner() {
           Pliki cookies
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-paper-200">
-          Używamy niezbędnych plików cookies, żeby działało logowanie i koszyk. Za twoją zgodą użyjemy też cookies analitycznych (Google Analytics) i
-          marketingowych (Piksel Meta), żeby ulepszać sklep i mierzyć skuteczność reklam. Szczegóły:{' '}
+          Używamy niezbędnych plików cookies, żeby działało logowanie i koszyk.{' '}
+          {PIXEL_ID
+            ? 'Za twoją zgodą użyjemy też cookies analitycznych (Google Analytics) i marketingowych (Piksel Meta), żeby ulepszać sklep i mierzyć skuteczność reklam.'
+            : 'Za twoją zgodą użyjemy też cookies analitycznych (Google Analytics), żeby ulepszać sklep.'}{' '}
+          Szczegóły:{' '}
           <Link href="/polityka-cookies" className="text-brass-300 underline">
             polityka cookies
           </Link>
