@@ -32,9 +32,9 @@ export default {
         muted: '#a79f92',
       },
       fontFamily: {
-        serif: ['"Playfair Display"', 'Georgia', 'serif'],
-        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
-        mono: ['"Courier Prime"', '"Courier New"', 'Courier', 'monospace'],
+        serif: ['var(--font-serif)', 'Georgia', 'serif'],
+        sans: ['var(--font-sans)', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['var(--font-mono)', '"Courier New"', 'Courier', 'monospace'],
       },
       boxShadow: {
         paper: '0 1px 0 rgba(255,255,255,.35) inset, 0 18px 40px -18px rgba(0,0,0,.7)',
