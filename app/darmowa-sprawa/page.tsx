@@ -13,7 +13,7 @@ export default function FreeCasePage() {
   return (
     <section className="container-page grid gap-12 py-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16">
       <div className="mx-auto w-full max-w-sm">
-        <CaseCover caseNumber={FREE_CASE.number} title={FREE_CASE.title} size="lg" priority />
+        <CaseCover caseNumber={FREE_CASE.number} title={FREE_CASE.title} coverPath={FREE_CASE.cover} size="lg" priority />
       </div>
       <div>
         <p className="eyebrow">Akta #{FREE_CASE.number} · za darmo</p>

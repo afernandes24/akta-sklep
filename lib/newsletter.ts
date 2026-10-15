@@ -14,11 +14,13 @@ export const NEWSLETTER_CONSENT_TEXT =
  */
 export const FREE_CASE = {
   number: '000',
-  title: 'Zegarek z Mariackiej',
-  lead: 'Gdańsk, ulica Mariacka. Z zamkniętej gabloty w antykwariacie znika srebrny zegarek kieszonkowy — pamiątka, której właściciel nigdy nie chciał sprzedać. Zamek nieruszony. W sklepie były tylko trzy osoby.',
-  teaser: 'Krótka sprawa na 30–45 minut: kradzież w gdańskim antykwariacie, trzech podejrzanych i harcerski szyfr.',
-  seoDescription: 'Pobierz za darmo krótką sprawę detektywistyczną do druku: kradzież w gdańskim antykwariacie, trzech podejrzanych i harcerski szyfr. 30–45 minut gry.',
-  bullets: ['3 cele śledztwa', '3 podejrzanych', '9 dowodów i harcerski szyfr', '30–45 minut, 12+', 'Wskazówki i odpowiedzi w osobnych plikach', 'PDF do wydrukowania w domu'],
+  title: 'Tajemnica spowiedzi',
+  /** Okładka z pliku w public/ (ścieżka zaczynająca się od „/”). */
+  cover: '/darmowa-sprawa/okladka-tajemnica-spowiedzi.jpg',
+  lead: 'Wigilia 1994 roku. Śnieżyca odcina Opactwo św. Wawrzyńca pod Gorlicami od świata i zrywa linię — przez prawie półtorej godziny w budynku nie ma prądu. Przed pasterką nowicjusz znajduje w bibliotece martwego ojca Józefa, bibliotekarza i spowiednika. Ciało leży u stóp drabiny przy szafie z najcenniejszymi starodrukami. Lekarz-gość orzeka nieszczęśliwy wypadek, lekarz sądowy twierdzi co innego. Razem z kom. Anną Pawlak przejrzysz protokoły, zapiski ofiary i dowody, rozgryziesz szyfr i ustalisz, kto tej nocy mówi prawdę.',
+  teaser: 'Krótka sprawa na 45–60 minut: Wigilia 1994, opactwo odcięte śnieżycą i martwy spowiednik u stóp drabiny.',
+  seoDescription: 'Wigilia 1994, opactwo odcięte śnieżycą, bibliotekarz martwy w bibliotece. Darmowa gra detektywistyczna PDF do druku: 3 cele, 45–60 minut.',
+  bullets: ['3 cele śledztwa', '4 podejrzanych', 'Szyfr i stare ex-librisy do rozgryzienia', '45–60 minut, 1–6 osób, 16+', 'Wskazówki i odpowiedzi w osobnych plikach', 'PDF do wydrukowania w domu'],
 };
 
 export const FREE_CASE_FOLDER = `free/${FREE_CASE.number}`;

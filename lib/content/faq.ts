@@ -1,7 +1,7 @@
 export const faq: { q: string; a: string }[] = [
   {
     q: 'Czy mogę najpierw zagrać za darmo?',
-    a: 'Tak. Zapisz się do newslettera na stronie „Za darmo”, a wyślemy ci krótką sprawę próbną AKTA #000 (30–45 minut). To najlepszy sposób, żeby sprawdzić, jak działają nasze akta.',
+    a: 'Tak. Zapisz się do newslettera na stronie „Za darmo”, a wyślemy ci krótką sprawę próbną AKTA #000 „Tajemnica spowiedzi” (45–60 minut). To najlepszy sposób, żeby sprawdzić, jak działają nasze akta.',
   },
   {
     q: 'Czy są rabaty przy zakupie kilku spraw?',

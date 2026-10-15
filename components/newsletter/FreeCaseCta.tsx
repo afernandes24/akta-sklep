@@ -8,7 +8,7 @@ export function FreeCaseCta({ source }: { source: string }) {
   return (
     <section className="card grid items-center gap-8 overflow-hidden p-6 sm:p-10 md:grid-cols-[220px_1fr]">
       <div className="mx-auto w-44 -rotate-3 md:w-full">
-        <CaseCover caseNumber={FREE_CASE.number} title={FREE_CASE.title} />
+        <CaseCover caseNumber={FREE_CASE.number} title={FREE_CASE.title} coverPath={FREE_CASE.cover} />
       </div>
       <div>
         <p className="eyebrow">Darmowa sprawa próbna</p>
