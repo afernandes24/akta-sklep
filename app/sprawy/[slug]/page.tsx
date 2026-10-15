@@ -173,7 +173,7 @@ export default async function CasePage({ params }: Params) {
               {(c.recordings_count ?? 0) > 0 && <li>🎧 W zestawie nagrania z przesłuchań — odsłuchasz je na koncie (w obu wersjach)</li>}
             </ul>
             <p className="mt-4 text-xs text-muted">
-              🤖 Postacie są fikcyjne. Ich zdjęcia{(c.recordings_count ?? 0) > 0 ? ' i głosy w nagraniach' : ''} wygenerowano z użyciem sztucznej inteligencji.
+              🤖 Postacie są fikcyjne. Ich portrety{(c.recordings_count ?? 0) > 0 ? ' i głosy w nagraniach' : ''} wygenerowano z użyciem sztucznej inteligencji.
             </p>
           </div>
 
@@ -209,7 +209,7 @@ export default async function CasePage({ params }: Params) {
               <ul className="mt-5 divide-y divide-ink-800 overflow-hidden rounded-lg border border-ink-700">
                 {c.contents.map((line) => {
                   const [name, ...rest] = line.split(' — ');
-                  const isSolution = /rozwi[aą]zanie/i.test(name);
+                  const isSolution = /rozwi[aą]zanie|odpowiedz/i.test(name);
                   return (
                     <li key={line} className={`flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 ${isSolution ? 'bg-stamp-600/10' : 'bg-ink-900'}`}>
                       <span className={`font-mono text-sm ${isSolution ? 'text-stamp-500' : 'text-brass-300'}`}>{name}</span>
