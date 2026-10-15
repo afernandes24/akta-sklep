@@ -13,6 +13,7 @@ const nav = [
   ['/admin/statystyki', 'Statystyki'],
   ['/admin/sprawy', 'Sprawy'],
   ['/admin/zamowienia', 'Zamówienia'],
+  ['/admin/ewidencja', 'Ewidencja'],
   ['/admin/uzytkownicy', 'Użytkownicy'],
   ['/admin/opinie', 'Opinie'],
   ['/admin/rabaty', 'Rabaty'],

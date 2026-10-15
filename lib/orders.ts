@@ -1,6 +1,7 @@
 import 'server-only';
 import { findValidCoupon } from './discounts';
 import { notifyOwner, sendOrderConfirmation } from './email';
+import { recordLedger } from './ledger';
 import { allocateDiscount, type CouponRule, priceCart } from './pricing';
 import { createAdminClient } from './supabase/admin';
 import type { Order, OrderItem, ProductFormat } from './types';
@@ -128,7 +129,7 @@ export async function fulfillOrder(
   const db = createAdminClient();
   const { data: order } = await db
     .from('orders')
-    .select('id, user_id, status, total_grosze, discount_code')
+    .select('id, order_number, user_id, status, total_grosze, discount_code')
     .eq('id', orderId)
     .maybeSingle();
   if (!order) return { ok: false, reason: 'not_found' };
@@ -153,6 +154,10 @@ export async function fulfillOrder(
     const { data: changed, error } = await db.from('orders').update(update).eq('id', orderId).neq('status', 'paid').select('id');
     if (error) return { ok: false, reason: error.message };
     newlyPaid = Boolean(changed?.length);
+    // Ewidencja sprzedaży: wpis w dniu płatności (tylko raz na zamówienie)
+    if (newlyPaid) {
+      await recordLedger({ orderId, orderNumber: (order.order_number as number) ?? null, kind: 'sale', amountGrosze: order.total_grosze as number });
+    }
     if (newlyPaid && order.discount_code) {
       await db.rpc('use_discount_code', { p_code: order.discount_code }).then(({ error: e }) => e && console.error('[orders] kod', e.message));
     }
@@ -182,8 +187,13 @@ export async function fulfillOrder(
 /** Zwrot płatności: zamówienie → „refunded”, odebranie dostępu przyznanego tym zamówieniem. */
 export async function refundOrder(orderId: string): Promise<void> {
   const db = createAdminClient();
+  const { data: order } = await db.from('orders').select('order_number, status, total_grosze, paid_at').eq('id', orderId).maybeSingle();
   await db.from('orders').update({ status: 'refunded' }).eq('id', orderId);
   await db.from('entitlements').delete().eq('order_id', orderId);
+  // Ewidencja sprzedaży: zwrot jako osobny wpis z kwotą ujemną w dniu zwrotu
+  if (order?.paid_at) {
+    await recordLedger({ orderId, orderNumber: (order.order_number as number) ?? null, kind: 'refund', amountGrosze: order.total_grosze as number });
+  }
 }
 
 export async function markOrderStatus(orderId: string, status: 'failed' | 'cancelled') {

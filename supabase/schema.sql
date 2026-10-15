@@ -603,3 +603,22 @@ alter table public.page_views add column if not exists region text;   -- kod woj
 alter table public.orders add column if not exists geo_country text;
 alter table public.orders add column if not exists geo_region text;
 alter table public.orders add column if not exists geo_city text;
+
+-- ═══ EWIDENCJA SPRZEDAŻY (październik 2026) — wpisy dopisuje sklep; uzupełnienie wstecz: supabase/ewidencja.sql ═══
+create table if not exists public.sales_ledger (
+  id             bigint generated always as identity primary key,
+  order_id       uuid not null references public.orders (id) on delete restrict,
+  order_number   bigint,
+  kind           text not null check (kind in ('sale', 'refund')),
+  amount_grosze  integer not null,
+  occurred_at    timestamptz not null default now(),
+  entry_date     date not null,
+  created_at     timestamptz not null default now(),
+  unique (order_id, kind)
+);
+create index if not exists sales_ledger_date_idx on public.sales_ledger (entry_date);
+
+alter table public.sales_ledger enable row level security;
+drop policy if exists "sales_ledger: admin odczyt" on public.sales_ledger;
+create policy "sales_ledger: admin odczyt" on public.sales_ledger
+  for select using (public.is_admin());
