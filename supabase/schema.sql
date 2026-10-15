@@ -622,3 +622,8 @@ alter table public.sales_ledger enable row level security;
 drop policy if exists "sales_ledger: admin odczyt" on public.sales_ledger;
 create policy "sales_ledger: admin odczyt" on public.sales_ledger
   for select using (public.is_admin());
+
+-- ═══ ZAKUP BEZ KONTA (październik 2026) — link dostępu /dostep/<token> ═══
+alter table public.orders add column if not exists access_token uuid not null default gen_random_uuid();
+create unique index if not exists orders_access_token_idx on public.orders (access_token);
+create index if not exists orders_email_idx on public.orders (lower(email));

@@ -5,7 +5,7 @@ import { updateSession } from '@/lib/supabase/middleware';
 import { SUPABASE_URL } from '@/lib/supabase/url';
 
 /** Ścieżki, na których odświeżamy sesję logowania (reszta stron zostaje statyczna). */
-const SESSION_PATHS = ['/konto', '/admin', '/zamowienie', '/koszyk', '/logowanie', '/rejestracja', '/auth', '/api/pobierz', '/api/nagranie', '/online'];
+const SESSION_PATHS = ['/konto', '/admin', '/zamowienie', '/dostep', '/koszyk', '/logowanie', '/rejestracja', '/auth', '/api/pobierz', '/api/nagranie', '/online'];
 
 async function isAdminRequest(request: NextRequest): Promise<boolean> {
   if (!request.cookies.getAll().some((c) => c.name.startsWith('sb-'))) return false;
