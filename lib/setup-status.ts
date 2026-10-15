@@ -36,12 +36,12 @@ export function getSetupChecks(): SetupCheck[] {
     },
     {
       label: 'Klucz Stripe',
-      ok: provider !== 'stripe' || stripeKey.startsWith('sk_'),
-      hint: 'Uzupełnij STRIPE_SECRET_KEY (sk_test_… do testów, sk_live_… na produkcji).',
+      ok: provider !== 'stripe' || /^(sk|rk)_/.test(stripeKey),
+      hint: 'Uzupełnij STRIPE_SECRET_KEY (sk_… albo klucz ograniczony rk_…; _test_ do testów, _live_ na produkcji).',
     },
     {
       label: 'Klucz Stripe w trybie produkcyjnym',
-      ok: provider !== 'stripe' || stripeKey.startsWith('sk_live_'),
+      ok: provider !== 'stripe' || /^(sk|rk)_live_/.test(stripeKey),
       hint: 'Używasz klucza testowego — prawdziwe płatności nie są pobierane.',
     },
     {
