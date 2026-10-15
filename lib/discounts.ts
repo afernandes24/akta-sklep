@@ -5,7 +5,7 @@ import { createAdminClient } from './supabase/admin';
 export type CouponCheck = { ok: true; coupon: CouponRule } | { ok: false; error: string };
 
 /** Sprawdza kod rabatowy (aktywny, ważny, limit użyć, jednorazowy na klienta). */
-export async function findValidCoupon(rawCode: string, userId?: string | null): Promise<CouponCheck> {
+export async function findValidCoupon(rawCode: string, userId?: string | null, email?: string | null): Promise<CouponCheck> {
   const code = normalizeCode(rawCode);
   if (!/^[A-Z0-9_-]{3,32}$/.test(code)) return { ok: false, error: 'Nieprawidłowy kod rabatowy.' };
   const db = createAdminClient();
@@ -28,11 +28,13 @@ export async function findValidCoupon(rawCode: string, userId?: string | null): 
     const { count: inProgress } = await pending;
     if ((c.used_count as number) + (inProgress ?? 0) >= (c.max_uses as number)) return { ok: false, error: 'Limit użyć tego kodu został wyczerpany.' };
   }
-  if (c.one_per_user && userId) {
+  if (c.one_per_user && (userId || email)) {
+    // Jednorazowy na klienta: sprawdzamy konto i (przy zakupie bez konta) adres e-mail
+    const owners = [userId ? `user_id.eq.${userId}` : null, email ? `email.ilike.${email.replace(/[%_,()]/g, '')}` : null].filter(Boolean).join(',');
     const { count } = await db
       .from('orders')
       .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
+      .or(owners)
       .eq('discount_code', code)
       .eq('status', 'paid');
     if (count) return { ok: false, error: 'Ten kod został już przez ciebie wykorzystany.' };

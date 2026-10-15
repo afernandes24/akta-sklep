@@ -12,7 +12,16 @@ export interface RecordingItem {
 export const AI_NOTICE = 'Nagrania wygenerowano z użyciem sztucznej inteligencji — głosy są syntetyczne, a postacie fikcyjne.';
 
 /** Odtwarzacze nagrań z przesłuchań. Plik idzie przez /api/nagranie/[id] (sprawdzenie zakupu). */
-export function RecordingsList({ items, compact = false }: { items: RecordingItem[]; compact?: boolean }) {
+export function RecordingsList({
+  items,
+  compact = false,
+  srcFor = (id: string) => `/api/nagranie/${id}`,
+}: {
+  items: RecordingItem[];
+  compact?: boolean;
+  /** Adres pliku nagrania (domyślnie dla zalogowanych; przy zakupie bez konta — link dostępu). */
+  srcFor?: (id: string) => string;
+}) {
   if (!items.length) return null;
   return (
     <div>
@@ -29,9 +38,9 @@ export function RecordingsList({ items, compact = false }: { items: RecordingIte
             {r.person && <p className="mt-0.5 text-xs text-muted">Przesłuchiwany: {r.person}</p>}
             {!compact && r.description && <p className="mt-1 text-sm text-paper-200">{r.description}</p>}
             {r.mime_type.startsWith('video/') ? (
-              <video controls preload="none" playsInline className="mt-3 w-full rounded bg-black" src={`/api/nagranie/${r.id}`} controlsList="nodownload" />
+              <video controls preload="none" playsInline className="mt-3 w-full rounded bg-black" src={srcFor(r.id)} controlsList="nodownload" />
             ) : (
-              <audio controls preload="none" className="mt-3 w-full" src={`/api/nagranie/${r.id}`} controlsList="nodownload" />
+              <audio controls preload="none" className="mt-3 w-full" src={srcFor(r.id)} controlsList="nodownload" />
             )}
           </li>
         ))}

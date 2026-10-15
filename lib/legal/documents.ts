@@ -57,7 +57,8 @@ export function regulamin(): LegalDoc {
               'Przedsiębiorca na prawach konsumenta — osoba fizyczna zawierająca umowę bezpośrednio związaną z jej działalnością gospodarczą, gdy z treści tej umowy wynika, że nie posiada ona dla niej charakteru zawodowego, wynikającego w szczególności z przedmiotu wykonywanej działalności, udostępnionego w CEIDG.',
               'Produkt — treść cyfrowa oferowana w Sklepie: fabularna gra detektywistyczna w jednej z dwóch wersji, wybieranej przy zakupie: (a) Wersja PDF — zestaw plików PDF przeznaczonych do pobrania i samodzielnego wydrukowania; (b) Wersja online — te same materiały sprawy udostępnione do przeglądania w przeglądarce, na Koncie Klienta, bez pobierania plików. Wersje są odrębnymi Produktami — zakup jednej nie obejmuje drugiej. Niektóre Produkty zawierają dodatkowo Nagrania.',
               'Nagrania — pliki audio lub wideo z fikcyjnymi przesłuchaniami postaci, dołączone do wybranych Produktów (w obu wersjach) i odtwarzane w przeglądarce na Koncie Klienta. Nagrania są wygenerowane z użyciem sztucznej inteligencji: głosy są syntetyczne, a postacie fikcyjne — informacja o tym jest podana przy Produkcie i przy odtwarzaczu.',
-              'Konto — bezpłatna usługa elektroniczna umożliwiająca Klientowi składanie zamówień, przeglądanie historii zakupów, ponowne pobieranie zakupionych Produktów w Wersji PDF, przeglądanie zakupionych Produktów w Wersji online oraz odtwarzanie Nagrań.',
+              'Konto — bezpłatna usługa elektroniczna umożliwiająca Klientowi składanie zamówień, przeglądanie historii zakupów, ponowne pobieranie zakupionych Produktów w Wersji PDF, przeglądanie zakupionych Produktów w Wersji online oraz odtwarzanie Nagrań. Założenie Konta nie jest konieczne do zakupu.',
+              'Link dostępu — indywidualny, poufny link do strony zamówienia, wyświetlany po płatności i wysyłany na adres e-mail Klienta przy zakupie bez Konta; umożliwia pobieranie plików Wersji PDF i odtwarzanie Nagrań bez logowania.',
               'Operator płatności — Stripe Payments Europe, Ltd. z siedzibą w Dublinie (Irlandia), obsługujący płatności w Sklepie.',
             ],
           },
@@ -71,7 +72,7 @@ export function regulamin(): LegalDoc {
             list: [
               'Do korzystania ze Sklepu potrzebne są: urządzenie z dostępem do internetu, aktualna wersja przeglądarki (np. Chrome, Firefox, Safari, Edge) z włączoną obsługą JavaScript i plików cookies oraz aktywny adres e-mail.',
               'Do korzystania z Produktu w Wersji PDF potrzebny jest program do otwierania plików PDF (np. wbudowany w przeglądarkę). Do rozgrywki zalecana jest drukarka i papier formatu A4; druk w kolorze jest zalecany, ale nie jest konieczny.',
-              'Do korzystania z Produktu w Wersji online oraz z Nagrań potrzebne są: dostęp do internetu, aktualna przeglądarka z włączoną obsługą JavaScript oraz zalogowanie na Konto. Zalecany jest ekran o szerokości co najmniej 360 px (telefon, tablet lub komputer), a do Nagrań — głośnik lub słuchawki.',
+              'Do korzystania z Produktu w Wersji online oraz z Nagrań potrzebne są: dostęp do internetu oraz aktualna przeglądarka z włączoną obsługą JavaScript. Wersja online wymaga zalogowania na Konto, a Nagrania — zalogowania na Konto albo Linku dostępu. Zalecany jest ekran o szerokości co najmniej 360 px (telefon, tablet lub komputer), a do Nagrań — głośnik lub słuchawki.',
               'Zakazane jest dostarczanie przez Klienta treści o charakterze bezprawnym oraz podejmowanie działań zakłócających działanie Sklepu.',
             ],
           },
@@ -84,7 +85,7 @@ export function regulamin(): LegalDoc {
             ordered: true,
             list: [
               'Założenie Konta jest bezpłatne i wymaga podania adresu e-mail oraz hasła. Z chwilą założenia Konta zostaje zawarta umowa o jego prowadzenie na czas nieoznaczony.',
-              'Zakup Produktu wymaga zalogowania się na Konto — zakupione Produkty są przypisywane do Konta.',
+              'Zakup Produktu jest możliwy po zalogowaniu na Konto albo bez Konta. Przy zakupie bez Konta Klient podaje adres e-mail, a dostęp do Produktu otrzymuje przez Link dostępu. Zakup bez Konta można w każdej chwili bezpłatnie przypisać do Konta za pomocą Linku dostępu.',
               'Klient może w każdej chwili, bez podawania przyczyny, zażądać usunięcia Konta, wysyłając wiadomość na adres e-mail Sprzedawcy. Usunięcie Konta oznacza utratę możliwości ponownego pobierania Produktów przez Sklep — przed usunięciem zalecamy zapisanie plików na własnym urządzeniu.',
               'Klient zobowiązuje się nie udostępniać danych logowania osobom trzecim.',
             ],
@@ -98,7 +99,7 @@ export function regulamin(): LegalDoc {
             ordered: true,
             list: [
               'Informacje o Produktach w Sklepie stanowią zaproszenie do zawarcia umowy.',
-              'Aby złożyć zamówienie, Klient dodaje Produkt do koszyka, loguje się na Konto, akceptuje Regulamin, składa oświadczenie, o którym mowa w §9 ust. 2, i klika przycisk „Zamawiam i płacę”, co oznacza obowiązek zapłaty.',
+              'Aby złożyć zamówienie, Klient dodaje Produkt do koszyka, loguje się na Konto albo podaje adres e-mail (zakup bez Konta), akceptuje Regulamin, składa oświadczenie, o którym mowa w §9 ust. 2, i klika przycisk „Zamawiam i płacę”, co oznacza obowiązek zapłaty.',
               'Umowa sprzedaży treści cyfrowej zostaje zawarta z chwilą złożenia zamówienia. Po zaksięgowaniu płatności Sprzedawca wysyła na adres e-mail Klienta potwierdzenie zawarcia umowy wraz z treścią Regulaminu i potwierdzeniem złożonego oświadczenia (trwały nośnik).',
             ],
           },
@@ -124,10 +125,10 @@ export function regulamin(): LegalDoc {
           {
             ordered: true,
             list: [
-              'Produkt jest dostarczany niezwłocznie po zaksięgowaniu płatności, poprzez udostępnienie plików do pobrania w zakładce „Moje sprawy” na Koncie Klienta. Produkt nie jest dostarczany na nośniku materialnym.',
-              'Klient może pobierać zakupione pliki wielokrotnie przez cały okres istnienia Konta, nie krócej niż przez 2 lata od dnia zakupu.',
-              'Produkt w Wersji online jest dostarczany poprzez udostępnienie przycisku „Otwórz akta online” przy sprawie w zakładce „Moje sprawy”. Dostęp przysługuje przez cały okres istnienia Konta, nie krócej niż przez 2 lata od dnia zakupu. Notatki Klienta są zapisywane na Koncie.',
-              'Nagrania (jeśli Produkt je zawiera) są udostępniane do odtwarzania w zakładce „Moje sprawy” oraz w Wersji online przez cały okres istnienia Konta, nie krócej niż przez 2 lata od dnia zakupu. Nagrania nie są przeznaczone do pobierania.',
+              'Produkt jest dostarczany niezwłocznie po zaksięgowaniu płatności, poprzez udostępnienie plików do pobrania w zakładce „Moje sprawy” na Koncie Klienta, a przy zakupie bez Konta — na stronie Linku dostępu. Produkt nie jest dostarczany na nośniku materialnym.',
+              'Klient może pobierać zakupione pliki wielokrotnie przez cały okres istnienia Konta (przy zakupie bez Konta — za pomocą Linku dostępu), nie krócej niż przez 2 lata od dnia zakupu.',
+              'Produkt w Wersji online jest dostarczany poprzez udostępnienie przycisku „Otwórz akta online” przy sprawie w zakładce „Moje sprawy”. Dostęp przysługuje przez cały okres istnienia Konta, nie krócej niż przez 2 lata od dnia zakupu. Notatki Klienta są zapisywane na Koncie. Przy zakupie bez Konta dostęp do Wersji online wymaga bezpłatnego przypisania zakupu do Konta (przycisk na stronie Linku dostępu).',
+              'Nagrania (jeśli Produkt je zawiera) są udostępniane do odtwarzania w zakładce „Moje sprawy” (przy zakupie bez Konta — na stronie Linku dostępu) oraz w Wersji online przez cały okres istnienia Konta, nie krócej niż przez 2 lata od dnia zakupu. Nagrania nie są przeznaczone do pobierania.',
               'Sprzedawca może aktualizować treść Wersji online i Nagrań (np. poprawki błędów, lepsza jakość obrazu lub dźwięku), zachowując jej główną fabułę i funkcje. Aktualizacja nie wymaga zgody Klienta i nie wiąże się z dodatkowymi kosztami. Jeżeli aktualizacja istotnie i negatywnie wpływa na dostęp do Produktu lub korzystanie z niego, Klient może rozwiązać umowę w terminie 30 dni od jej wprowadzenia albo od poinformowania o niej, zgodnie z art. 43m ustawy o prawach konsumenta.',
               'Jeżeli pliki nie są dostępne w ciągu 24 godzin od płatności, Klient powinien skontaktować się ze Sprzedawcą.',
             ],
@@ -142,7 +143,7 @@ export function regulamin(): LegalDoc {
             list: [
               'Produkty są utworami chronionymi prawem autorskim. Z chwilą dostarczenia Produktu Klient otrzymuje niewyłączną, nieprzenoszalną i nieograniczoną w czasie licencję na korzystanie z Produktu do celów prywatnych.',
               'Licencja obejmuje: pobranie plików, zapisanie ich na własnych urządzeniach, drukowanie na własny użytek oraz rozgrywkę z domownikami i gośćmi przy wspólnej grze. W Wersji online i w zakresie Nagrań licencja obejmuje korzystanie na Koncie Klienta, także wspólnie z domownikami i gośćmi przy jednym ekranie.',
-              'Licencja nie obejmuje: udostępniania danych logowania do Konta w celu korzystania z Wersji online przez osoby trzecie, kopiowania i rozpowszechniania materiałów z Wersji online (np. zrzutów ekranu stron) oraz Nagrań (np. nagrywania i publikowania dźwięku), odsprzedaży, udostępniania plików osobom trzecim (w tym w internecie), publicznego odtwarzania, wykorzystania komercyjnego (np. w płatnych wydarzeniach, escape roomach, szkoleniach) ani modyfikowania i rozpowszechniania Produktu bez pisemnej zgody Sprzedawcy.',
+              'Licencja nie obejmuje: udostępniania danych logowania do Konta lub Linku dostępu w celu korzystania z Wersji online przez osoby trzecie, kopiowania i rozpowszechniania materiałów z Wersji online (np. zrzutów ekranu stron) oraz Nagrań (np. nagrywania i publikowania dźwięku), odsprzedaży, udostępniania plików osobom trzecim (w tym w internecie), publicznego odtwarzania, wykorzystania komercyjnego (np. w płatnych wydarzeniach, escape roomach, szkoleniach) ani modyfikowania i rozpowszechniania Produktu bez pisemnej zgody Sprzedawcy.',
               'Wszystkie postacie, firmy, miejsca i wydarzenia przedstawione w Produktach są fikcyjne.',
               'Przy pobieraniu pliki są automatycznie oznaczane danymi Klienta (adres e-mail i numer zamówienia) umieszczonymi na marginesie stron. Oznaczenie służy ochronie przed nieuprawnionym rozpowszechnianiem i nie wpływa na możliwość korzystania z Produktu. Usuwanie oznaczeń jest zabronione.',
             ],
@@ -288,7 +289,7 @@ export function politykaPrywatnosci(): LegalDoc {
           {
             list: [
               'Konto — adres e-mail, hasło (w formie zaszyfrowanej), imię (opcjonalnie): w celu założenia i prowadzenia Konta (art. 6 ust. 1 lit. b RODO).',
-              'Zamówienia — adres e-mail, historia zamówień, zakupione Produkty, data i treść oświadczeń złożonych przy zakupie: w celu zawarcia i wykonania umowy oraz dostarczenia Produktu (art. 6 ust. 1 lit. b RODO).',
+              'Zamówienia — adres e-mail, historia zamówień, zakupione Produkty, data i treść oświadczeń złożonych przy zakupie: w celu zawarcia i wykonania umowy oraz dostarczenia Produktu, także przy zakupie bez Konta — wtedy adres e-mail służy również do wysłania Linku dostępu (art. 6 ust. 1 lit. b RODO).',
               'Płatności — identyfikator transakcji i jej status. Dane karty lub rachunku bankowego przetwarza wyłącznie Operator płatności (Stripe) — Administrator nie ma do nich dostępu.',
               'Rozliczenia — dane z zamówień i faktur: w celu wypełnienia obowiązków podatkowych i rachunkowych (art. 6 ust. 1 lit. c RODO).',
               'Reklamacje i odstąpienia — dane podane w zgłoszeniu: w celu ich rozpatrzenia (art. 6 ust. 1 lit. b i c RODO).',

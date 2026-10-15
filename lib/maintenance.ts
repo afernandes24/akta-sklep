@@ -110,6 +110,7 @@ export async function isAdminId(userId: string): Promise<boolean> {
 /** Ścieżki dostępne zawsze (logowanie admina, płatności, dokumenty prawne, strona „Wkrótce”). */
 const ALWAYS_OPEN = [
   '/wkrotce',
+  '/dostep', // kupujący bez konta zawsze pobierze opłacone pliki
   '/qr',
   '/n',
   '/admin',

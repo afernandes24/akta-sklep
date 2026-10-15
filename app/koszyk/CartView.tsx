@@ -163,17 +163,7 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
         </div>
         <p className="mt-2 text-xs text-muted">Cenę sprawdzamy jeszcze raz przed płatnością — jeśli się zmieni, zobaczysz komunikat, zanim zapłacisz.</p>
 
-        {!loggedIn ? (
-          <div className="mt-6 space-y-3">
-            <Notice>Zaloguj się lub załóż konto — zakupione sprawy zostaną przypisane do twojego konta i zawsze będziesz mieć do nich dostęp.</Notice>
-            <Link href="/logowanie?next=/koszyk" className="btn-primary w-full">
-              Zaloguj się i zapłać
-            </Link>
-            <Link href="/rejestracja?next=/koszyk" className="btn-secondary w-full">
-              Załóż konto
-            </Link>
-          </div>
-        ) : (
+        {
           <form action={action} className="mt-6 space-y-4">
             {items.map((i) => (
               <input key={cartKey(i)} type="hidden" name="caseId" value={cartKey(i)} />
@@ -183,7 +173,37 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
             {state.error && <Notice tone="error">{state.error}</Notice>}
             {!paymentsReady && <Notice tone="warning">Płatności nie są jeszcze skonfigurowane.</Notice>}
             {testMode && <Notice tone="warning">Tryb testowy — żadne pieniądze nie zostaną pobrane.</Notice>}
-            <p className="text-xs text-muted">Zamawiasz jako: {email}</p>
+            {loggedIn ? (
+              <p className="text-xs text-muted">Zamawiasz jako: {email}</p>
+            ) : (
+              <div>
+                <label htmlFor="checkout-email" className="label">
+                  Twój e-mail
+                </label>
+                <input
+                  id="checkout-email"
+                  name="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  inputMode="email"
+                  placeholder="np. jan@gmail.com"
+                  className="input"
+                  maxLength={200}
+                />
+                <p className="mt-1.5 text-xs text-muted">
+                  Bez zakładania konta. Po płatności od razu pobierzesz pliki, a link do nich wyślemy też na ten adres.{' '}
+                  <Link href="/logowanie?next=/koszyk" className="text-brass-300 underline underline-offset-2">
+                    Masz konto? Zaloguj się
+                  </Link>
+                </p>
+                {items.some((i) => i.format === 'online') && (
+                  <p className="mt-1.5 text-xs text-brass-300">
+                    Wersja online działa na darmowym koncie — po płatności założysz je jednym kliknięciem, a zakup sam się do niego przypisze.
+                  </p>
+                )}
+              </div>
+            )}
             <label className="flex gap-3 text-sm leading-relaxed text-paper-200">
               <input type="checkbox" name="terms" required className="mt-1 h-4 w-4 shrink-0 accent-brass-400" />
               <span>
@@ -203,7 +223,7 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
             </button>
             <p className="text-center text-xs text-muted">Płatność obsługuje: {providerLabel}</p>
           </form>
-        )}
+        }
       </aside>
     </div>
   );

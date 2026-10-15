@@ -21,7 +21,8 @@ export type CreateOrderResult =
  * Pomija sprawy, które użytkownik już posiada, oraz nieopublikowane.
  */
 export async function createOrder(params: {
-  userId: string;
+  /** null = zakup bez konta (dostęp przez link z e-maila). */
+  userId: string | null;
   email: string;
   caseIds: string[];
   provider: string;
@@ -48,7 +49,9 @@ export async function createOrder(params: {
 
   const [{ data: cases, error: casesError }, { data: owned }] = await Promise.all([
     db.from('cases').select('id, title, case_number, price_grosze, currency, online_enabled, online_price_grosze').in('id', ids).eq('is_published', true),
-    db.from('entitlements').select('case_id, format').eq('user_id', params.userId).in('case_id', ids),
+    params.userId
+      ? db.from('entitlements').select('case_id, format').eq('user_id', params.userId).in('case_id', ids)
+      : Promise.resolve({ data: [] as { case_id: string; format: string | null }[] }),
   ]);
   if (casesError) throw new Error(casesError.message);
   if (!cases || cases.length === 0) return { kind: 'empty' };
@@ -67,7 +70,7 @@ export async function createOrder(params: {
 
   let coupon: CouponRule | null = null;
   if (params.couponCode) {
-    const check = await findValidCoupon(params.couponCode, params.userId);
+    const check = await findValidCoupon(params.couponCode, params.userId, params.email);
     if (!check.ok) return { kind: 'coupon_invalid', error: check.error };
     coupon = check.coupon;
   }

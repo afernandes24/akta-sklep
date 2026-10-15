@@ -24,6 +24,11 @@ export default async function MyCasesPage({ searchParams }: { searchParams: Prom
         <AccountNav active="sprawy" isAdmin={profile?.is_admin} />
       </div>
 
+      {sp.info === 'przypisano' && (
+        <div className="mt-6">
+          <Notice tone="success">Gotowe — zakup został dodany do twojego konta.</Notice>
+        </div>
+      )}
       {sp.info === 'posiadane' && (
         <div className="mt-6">
           <Notice tone="success">Masz już te sprawy na koncie — nie musisz kupować ich ponownie. Pobierz pliki poniżej.</Notice>

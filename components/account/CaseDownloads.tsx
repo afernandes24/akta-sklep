@@ -7,8 +7,20 @@ import type { Review } from '@/lib/types';
 import { RecordingsList } from '../case/RecordingsList';
 import { ReviewForm } from './ReviewForm';
 
-export function CaseDownloads({ entry, review, defaultAuthor = '' }: { entry: LibraryEntry; review?: Review; defaultAuthor?: string }) {
+export function CaseDownloads({
+  entry,
+  review,
+  defaultAuthor = '',
+  accessToken,
+}: {
+  entry: LibraryEntry;
+  review?: Review;
+  defaultAuthor?: string;
+  /** Zakup bez konta: pliki i nagrania przez link dostępu, bez opinii i bez czytnika online. */
+  accessToken?: string;
+}) {
   const { caseItem, files } = entry;
+  const fileHref = (id: string) => (accessToken ? `/api/dostep/${accessToken}/plik/${id}` : `/api/pobierz/${id}`);
   const kind = (f: (typeof files)[number]) => fileKind(f.file_name, f.is_solution);
   const regular = files.filter((f) => kind(f) === 'material');
   const hints = files.filter((f) => kind(f) === 'hint');
@@ -28,10 +40,14 @@ export function CaseDownloads({ entry, review, defaultAuthor = '' }: { entry: Li
             <div>
               <p className="font-semibold text-paper-50">Wersja online</p>
               <p className="text-xs text-muted">
-                {entry.onlineReady ? 'Czytaj akta w przeglądarce — notatki zapisują się na koncie.' : 'Wersja online jest w przygotowaniu — pojawi się tutaj automatycznie.'}
+                {accessToken
+                  ? 'Wersja online działa na koncie — przypisz zakup do konta przyciskiem poniżej (to darmowe i zajmie chwilę).'
+                  : entry.onlineReady
+                    ? 'Czytaj akta w przeglądarce — notatki zapisują się na koncie.'
+                    : 'Wersja online jest w przygotowaniu — pojawi się tutaj automatycznie.'}
               </p>
             </div>
-            {entry.onlineReady && (
+            {entry.onlineReady && !accessToken && (
               <Link href={`/online/${caseItem.slug}`} className="btn-primary shrink-0 py-2 text-sm">
                 ▶ Otwórz akta online
               </Link>
@@ -53,7 +69,7 @@ export function CaseDownloads({ entry, review, defaultAuthor = '' }: { entry: Li
                       {f.size_bytes ? ` · ${formatBytes(f.size_bytes)}` : ''}
                     </p>
                   </div>
-                  <a href={`/api/pobierz/${f.id}`} className="btn-secondary shrink-0 py-2 text-xs" download>
+                  <a href={fileHref(f.id)} className="btn-secondary shrink-0 py-2 text-xs" download>
                     ↓ Pobierz PDF
                   </a>
                 </li>
@@ -76,7 +92,7 @@ export function CaseDownloads({ entry, review, defaultAuthor = '' }: { entry: Li
                   {hints.map((f) => (
                     <li key={f.id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                       <p className="truncate font-mono text-sm text-brass-300">{f.file_name}</p>
-                      <a href={`/api/pobierz/${f.id}`} className="btn-secondary shrink-0 py-2 text-xs" download>
+                      <a href={fileHref(f.id)} className="btn-secondary shrink-0 py-2 text-xs" download>
                         ↓ Pobierz wskazówki
                       </a>
                     </li>
@@ -101,7 +117,7 @@ export function CaseDownloads({ entry, review, defaultAuthor = '' }: { entry: Li
                   {solution.map((f) => (
                     <li key={f.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <p className="font-mono text-sm text-stamp-500">{f.file_name}</p>
-                      <a href={`/api/pobierz/${f.id}`} className="btn-danger shrink-0 py-2 text-xs" download>
+                      <a href={fileHref(f.id)} className="btn-danger shrink-0 py-2 text-xs" download>
                         Pobierz
                       </a>
                     </li>
@@ -124,11 +140,11 @@ export function CaseDownloads({ entry, review, defaultAuthor = '' }: { entry: Li
               </span>
             </summary>
             <div className="border-t border-ink-800 p-3 sm:p-4">
-              <RecordingsList items={entry.recordings} compact />
+              <RecordingsList items={entry.recordings} compact srcFor={accessToken ? (id) => `/api/dostep/${accessToken}/nagranie/${id}` : undefined} />
             </div>
           </details>
         )}
-        <ReviewForm caseId={caseItem.id} existing={review} defaultAuthor={defaultAuthor} />
+        {!accessToken && <ReviewForm caseId={caseItem.id} existing={review} defaultAuthor={defaultAuthor} />}
       </div>
     </article>
   );

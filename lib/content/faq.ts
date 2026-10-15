@@ -9,11 +9,15 @@ export const faq: { q: string; a: string }[] = [
   },
   {
     q: 'Jak otrzymam pliki po zakupie?',
-    a: 'Od razu po potwierdzeniu płatności pliki PDF pojawiają się na twoim koncie w zakładce „Moje sprawy”. Możesz je pobrać na komputer, tablet lub telefon.',
+    a: 'Od razu po płatności zobaczysz stronę z plikami do pobrania, a link do niej wyślemy też e-mailem. Jeśli kupujesz z kontem, pliki są również w zakładce „Moje sprawy”. Możesz je pobrać na komputer, tablet lub telefon.',
   },
   {
     q: 'Czy mogę pobrać pliki ponownie?',
-    a: 'Tak. Zakupione sprawy zostają na twoim koncie na stałe — możesz pobierać je wielokrotnie, np. gdy zgubisz wydruk lub zmienisz komputer.',
+    a: 'Tak. Zakupione sprawy zostają na twoim koncie na stałe — możesz pobierać je wielokrotnie, np. gdy zgubisz wydruk lub zmienisz komputer. Przy zakupie bez konta użyj linku z e-maila z potwierdzeniem zamówienia.',
+  },
+  {
+    q: 'Czy muszę zakładać konto?',
+    a: 'Nie. W koszyku wystarczy podać adres e-mail. Po płatności od razu pobierzesz pliki, a link do nich dostaniesz też mailem. Konto przyda się, jeśli chcesz mieć wszystkie sprawy w jednym miejscu, korzystać z wersji online albo dodać opinię — zakup bez konta możesz do niego dopisać w każdej chwili jednym kliknięciem.',
   },
   {
     q: 'Czy potrzebuję aplikacji lub internetu podczas gry?',

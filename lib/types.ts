@@ -103,6 +103,8 @@ export interface Order {
   provider_ref: string | null;
   created_at: string;
   paid_at: string | null;
+  /** Tajny token linku dostępu (/dostep/<token>) — zakup bez konta. */
+  access_token?: string;
   order_items?: OrderItem[];
 }
 

@@ -15,13 +15,21 @@ import { getPaymentProvider, getPaymentProviderId } from '@/lib/payments';
 
 export type CheckoutState = { error?: string };
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 export async function startCheckout(_prev: CheckoutState, formData: FormData): Promise<CheckoutState> {
   if (!isServiceRoleConfigured()) {
     return { error: 'Sklep nie jest jeszcze połączony z bazą danych. Uzupełnij konfigurację Supabase (README).' };
   }
 
+  // Zalogowany klient kupuje na konto; gość podaje tylko e-mail i dostaje link dostępu.
   const user = await getUser();
-  if (!user?.email) redirect('/logowanie?next=/koszyk');
+  const guestEmail = String(formData.get('email') ?? '').trim().toLowerCase().slice(0, 200);
+  const buyerEmail = user?.email ?? guestEmail;
+  if (!user) {
+    if (!EMAIL_RE.test(guestEmail)) return { error: 'Podaj poprawny adres e-mail — wyślemy na niego link do plików.' };
+    if (!allow(`guest-checkout:${await clientIp()}`, 10, 60 * 60 * 1000)) return { error: 'Zbyt wiele prób. Spróbuj ponownie za chwilę.' };
+  }
 
   if (formData.get('terms') !== 'on' || formData.get('digital_consent') !== 'on') {
     return { error: 'Aby kontynuować, zaakceptuj regulamin i wyraź zgodę na natychmiastowe dostarczenie plików.' };
@@ -30,6 +38,9 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
   const provider = getPaymentProvider();
   if (!provider) {
     return { error: 'Płatności nie są jeszcze skonfigurowane. Spróbuj ponownie później lub skontaktuj się z nami.' };
+  }
+  if (!user && provider.id === 'mock') {
+    return { error: 'W trybie testowym płatności zakup bez konta jest wyłączony — zaloguj się.' };
   }
 
   const caseIds = formData.getAll('caseId').map(String);
@@ -40,8 +51,8 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
     const couponCode = String(formData.get('coupon') ?? '').trim() || null;
     const expectedRaw = Number.parseInt(String(formData.get('expectedTotal') ?? ''), 10);
     const result = await createOrder({
-      userId: user.id,
-      email: user.email,
+      userId: user?.id ?? null,
+      email: buyerEmail,
       caseIds,
       provider: getPaymentProviderId(),
       couponCode,
@@ -51,11 +62,16 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
     if (result.kind === 'coupon_invalid') return { error: `Kod rabatowy: ${result.error} Usuń kod, aby kontynuować.` };
     if (result.kind === 'price_changed')
       return { error: `Kwota do zapłaty zmieniła się na ${formatPrice(result.total)} (zmiana ceny, rabatu albo część spraw już masz). Odśwież stronę koszyka i sprawdź zamówienie.` };
+    if (result.kind === 'created' && !user && !result.order.access_token) {
+      // Baza bez kolumny access_token (nie uruchomiono supabase/zakup-bez-konta.sql)
+      await markOrderStatus(result.order.id, 'failed');
+      return { error: 'Zakup bez konta jest chwilowo niedostępny — zaloguj się albo załóż konto.' };
+    }
     if (result.kind === 'already_owned') {
       redirectTo = '/konto/sprawy?info=posiadane';
     } else if (result.order.total_grosze === 0) {
       await fulfillOrder(result.order.id);
-      redirectTo = `/zamowienie/${result.order.id}`;
+      redirectTo = user ? `/zamowienie/${result.order.id}` : `/dostep/${result.order.access_token}`;
     } else {
       orderIdForCleanup = result.order.id;
       // Przybliżona lokalizacja kupującego (kraj / województwo / miasto) — do mapy w statystykach
@@ -64,8 +80,8 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
       const { redirectUrl, providerRef } = await provider.createCheckout({
         order: result.order,
         items: result.items,
-        email: user.email,
-        returnUrl: `${siteConfig.url}/zamowienie/${result.order.id}`,
+        email: buyerEmail,
+        returnUrl: user ? `${siteConfig.url}/zamowienie/${result.order.id}` : `${siteConfig.url}/dostep/${result.order.access_token}`,
         cancelUrl: `${siteConfig.url}/koszyk?anulowano=1`,
       });
       if (providerRef) await setProviderRef(result.order.id, providerRef);

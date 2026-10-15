@@ -60,7 +60,7 @@ export async function sendOrderConfirmation(orderId: string): Promise<void> {
   const db = createAdminClient();
   const { data: order } = await db
     .from('orders')
-    .select('id, order_number, email, total_grosze, discount_grosze, discount_label, created_at, paid_at, consent_digital_at, order_items(title, price_grosze, list_price_grosze)')
+    .select('id, order_number, email, user_id, access_token, total_grosze, discount_grosze, discount_label, created_at, paid_at, consent_digital_at, order_items(title, price_grosze, list_price_grosze)')
     .eq('id', orderId)
     .maybeSingle();
   if (!order) return;
@@ -81,13 +81,17 @@ export async function sendOrderConfirmation(orderId: string): Promise<void> {
   const hasOnline = items.some((i) => /\(wersja online\)$/.test(i.title));
   const hasPdf = items.some((i) => !/\(wersja online\)$/.test(i.title));
   const ready = hasPdf && hasOnline ? 'Pliki PDF i wersja online czekają' : hasOnline ? 'Wersja online czeka' : 'Pliki PDF czekają';
+  // Zakup bez konta: link dostępu z tokenem; z kontem: „Moje sprawy”.
+  const guest = !order.user_id && Boolean(order.access_token);
+  const accessUrl = guest ? `${siteConfig.url}/dostep/${order.access_token}` : `${siteConfig.url}/konto/sprawy`;
+  const where = guest ? 'pod tym linkiem (działa bez logowania — zachowaj tego maila)' : 'na twoim koncie';
 
   const html = `<!doctype html><html lang="pl"><body style="margin:0;background:#f4efe3;font-family:Georgia,serif;color:#1c1a17">
 <div style="max-width:600px;margin:0 auto;padding:32px 20px">
   <p style="font-family:'Courier New',monospace;letter-spacing:3px;font-size:12px;color:#8a6d33;text-transform:uppercase;margin:0">${esc(siteConfig.name)}</p>
   <h1 style="font-size:28px;margin:8px 0 16px">Akta są twoje</h1>
-  <p>Dziękujemy za zakup! Płatność za zamówienie <strong>nr ${order.order_number}</strong> została potwierdzona. ${ready} na twoim koncie:</p>
-  <p style="margin:24px 0"><a href="${siteConfig.url}/konto/sprawy" style="background:#1c1a17;color:#f7f1e3;padding:12px 22px;border-radius:6px;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold">${hasPdf ? 'Pobierz materiały' : 'Otwórz akta'}</a></p>
+  <p>Dziękujemy za zakup! Płatność za zamówienie <strong>nr ${order.order_number}</strong> została potwierdzona. ${ready} ${where}:</p>
+  <p style="margin:24px 0"><a href="${accessUrl}" style="background:#1c1a17;color:#f7f1e3;padding:12px 22px;border-radius:6px;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold">${hasPdf ? 'Pobierz materiały' : 'Otwórz akta'}</a></p>
   <table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:14px">${rows}
     <tr><td style="padding:10px 0;font-weight:bold">Razem</td><td style="padding:10px 0;text-align:right;font-weight:bold">${formatPrice(order.total_grosze)}</td></tr>
   </table>
