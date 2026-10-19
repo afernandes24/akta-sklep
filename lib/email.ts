@@ -4,6 +4,7 @@ import { formatDate, formatPrice } from './format';
 import { type Block, DIGITAL_CONSENT_TEXT, regulamin } from './legal/documents';
 import { seller, sellerIdentity } from './legal/seller';
 import { createAdminClient } from './supabase/admin';
+import { telegram } from './telegram';
 
 /**
  * Wysyłka e-maili przez Resend (https://resend.com) — bez dodatkowych bibliotek.
@@ -32,6 +33,7 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
  * Linie tekstu są escapowane — można bezpiecznie przekazać dane od klienta.
  */
 export async function notifyOwner(subject: string, lines: string[], replyTo?: string): Promise<boolean> {
+  await telegram(subject.startsWith('UWAGA') ? `⚠️ ${subject}` : `✉️ ${subject}`, lines.slice(0, 3));
   const to = seller.email;
   if (!to || to.startsWith('[')) return false;
   const body = lines.map((l) => `<p style="margin:0 0 8px;white-space:pre-wrap">${esc(l)}</p>`).join('');

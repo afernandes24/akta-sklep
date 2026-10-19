@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getUser } from '@/lib/auth';
 import { isUuid } from '@/lib/orders';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { telegram } from '@/lib/telegram';
 
 export type ReviewState = { error?: string; ok?: boolean };
 
@@ -34,6 +35,8 @@ export async function submitReview(_prev: ReviewState, formData: FormData): Prom
     console.error('[reviews] submit', error.message);
     return { error: 'Nie udało się zapisać opinii. Spróbuj ponownie.' };
   }
+  const { data: c } = await db.from('cases').select('title').eq('id', caseId).maybeSingle();
+  await telegram(`⭐ Nowa opinia ${rating}/5 — ${c?.title ?? 'sprawa'}`, [`„${body.slice(0, 300)}” — ${author}`, 'Zaakceptuj: Admin → Opinie']);
   revalidatePath('/konto/sprawy');
   return { ok: true };
 }

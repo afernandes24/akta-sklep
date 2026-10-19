@@ -2,6 +2,7 @@ import 'server-only';
 import { findValidCoupon } from './discounts';
 import { notifyOwner, sendOrderConfirmation } from './email';
 import { recordLedger } from './ledger';
+import { telegram } from './telegram';
 import { allocateDiscount, type CouponRule, priceCart } from './pricing';
 import { createAdminClient } from './supabase/admin';
 import type { Order, OrderItem, ProductFormat } from './types';
@@ -160,6 +161,12 @@ export async function fulfillOrder(
     // Ewidencja sprzedaży: wpis w dniu płatności (tylko raz na zamówienie)
     if (newlyPaid) {
       await recordLedger({ orderId, orderNumber: (order.order_number as number) ?? null, kind: 'sale', amountGrosze: order.total_grosze as number });
+      const { data: info } = await db.from('orders').select('email, discount_code, order_items(title)').eq('id', orderId).maybeSingle();
+      const titles = ((info?.order_items ?? []) as { title: string }[]).map((i) => '• ' + i.title);
+      await telegram(`💰 Nowe zamówienie nr ${order.order_number} — ${((order.total_grosze as number) / 100).toFixed(2).replace('.', ',')} zł`, [
+        ...titles,
+        `${info?.email ?? ''}${order.user_id ? '' : ' (bez konta)'}${info?.discount_code ? ` · kod ${info.discount_code}` : ''}`,
+      ]);
     }
     if (newlyPaid && order.discount_code) {
       await db.rpc('use_discount_code', { p_code: order.discount_code }).then(({ error: e }) => e && console.error('[orders] kod', e.message));
@@ -194,6 +201,9 @@ export async function refundOrder(orderId: string): Promise<void> {
   await db.from('orders').update({ status: 'refunded' }).eq('id', orderId);
   await db.from('entitlements').delete().eq('order_id', orderId);
   // Ewidencja sprzedaży: zwrot jako osobny wpis z kwotą ujemną w dniu zwrotu
+  if (order?.paid_at && order.status !== 'refunded') {
+    await telegram(`↩️ Zwrot — zamówienie nr ${order.order_number}`, [`${((order.total_grosze as number) / 100).toFixed(2).replace('.', ',')} zł, dostęp do plików odebrany`]);
+  }
   if (order?.paid_at) {
     await recordLedger({ orderId, orderNumber: (order.order_number as number) ?? null, kind: 'refund', amountGrosze: order.total_grosze as number });
   }
