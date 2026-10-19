@@ -139,3 +139,38 @@ export async function getStats(days: number): Promise<Stats> {
     map: { visitors: mapVisitors, buyers: mapBuyers, revenue: mapRevenue, buyersAbroad: top(abroad, 8), buyersUnknown },
   };
 }
+
+/* ── Na żywo: kto jest teraz w sklepie ─────────────────────────────── */
+export interface LiveStats {
+  ready: boolean;
+  activeNow: number; // różne osoby w ostatnich 5 minutach
+  todayVisitors: number;
+  todayViews: number;
+  recent: { at: string; path: string; source: string; device: string; city: string | null }[];
+}
+
+export async function getLive(): Promise<LiveStats> {
+  const db = createAdminClient();
+  const now = Date.now();
+  // początek dnia w czasie polskim
+  const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }));
+  const offset = new Date().getTime() - today.getTime();
+  today.setHours(0, 0, 0, 0);
+  const startOfDay = new Date(today.getTime() + offset);
+  const { data, error } = await db
+    .from('page_views')
+    .select('at, path, visitor, source, device, city')
+    .gte('at', startOfDay.toISOString())
+    .order('at', { ascending: false })
+    .limit(5000);
+  if (error) return { ready: false, activeNow: 0, todayVisitors: 0, todayViews: 0, recent: [] };
+  const rows = (data ?? []) as { at: string; path: string; visitor: string; source: string; device: string; city: string | null }[];
+  const active = new Set(rows.filter((r) => now - new Date(r.at).getTime() < 5 * 60 * 1000).map((r) => r.visitor));
+  return {
+    ready: true,
+    activeNow: active.size,
+    todayVisitors: new Set(rows.map((r) => r.visitor)).size,
+    todayViews: rows.length,
+    recent: rows.slice(0, 12).map(({ at, path, source, device, city }) => ({ at, path, source, device, city })),
+  };
+}

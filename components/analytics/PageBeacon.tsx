@@ -2,13 +2,14 @@
 
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
+import { isExcludedClient } from '@/lib/exclude';
 
 /** Statystyki odwiedzin bez cookies: jedno małe zgłoszenie na wyświetlenie strony (bez panelu admina). */
 export function PageBeacon() {
   const pathname = usePathname();
   const first = useRef(true);
   useEffect(() => {
-    if (!pathname || pathname.startsWith('/admin')) return;
+    if (!pathname || pathname.startsWith('/admin') || isExcludedClient()) return;
     const body = JSON.stringify({
       p: pathname,
       q: window.location.search.slice(0, 300),

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { AutoExcludeDevice } from '@/components/admin/ExcludeDevice';
 import { Notice } from '@/components/ui/PageHeader';
 import { requireAdmin } from '@/lib/auth';
 import { isServiceRoleConfigured } from '@/lib/config';
@@ -29,6 +30,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="container-page py-8">
+      <AutoExcludeDevice />
       <div className="flex flex-col gap-4 border-b border-ink-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="eyebrow">Panel administratora</p>

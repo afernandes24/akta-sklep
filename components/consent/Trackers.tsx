@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import Script from 'next/script';
 import { useEffect, useRef, useState } from 'react';
 import { CONSENT_EVENT, type Consent, GA_ID, PIXEL_ID, readConsent } from '@/lib/consent';
+import { isExcludedClient } from '@/lib/exclude';
 
 /** Ładuje Google Analytics i Piksel Meta WYŁĄCZNIE po wyrażeniu zgody. */
 export function Trackers() {
@@ -12,8 +13,10 @@ export function Trackers() {
   const firstPixelView = useRef(true);
 
   useEffect(() => {
+    // Właściciel sklepu nie trafia do Google Analytics ani Piksela
+    if (isExcludedClient()) return;
     setConsent(readConsent());
-    const onChange = (e: Event) => setConsent((e as CustomEvent<Consent>).detail);
+    const onChange = (e: Event) => !isExcludedClient() && setConsent((e as CustomEvent<Consent>).detail);
     window.addEventListener(CONSENT_EVENT, onChange);
     return () => window.removeEventListener(CONSENT_EVENT, onChange);
   }, []);

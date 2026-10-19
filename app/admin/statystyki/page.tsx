@@ -2,7 +2,9 @@ import Link from 'next/link';
 import { PolandMap } from '@/components/admin/PolandMap';
 import { requireAdmin } from '@/lib/auth';
 import { formatPrice } from '@/lib/format';
-import { getStats, type Row } from '@/lib/stats';
+import { AutoRefresh } from '@/components/account/AutoRefresh';
+import { ExcludeToggle } from '@/components/admin/ExcludeDevice';
+import { getLive, getStats, type Row } from '@/lib/stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +43,8 @@ function Bars({ title, rows, total, empty = 'Brak danych w tym okresie.' }: { ti
 export default async function AdminStatsPage({ searchParams }: { searchParams: Promise<{ dni?: string }> }) {
   await requireAdmin();
   const days = RANGES.includes(Number((await searchParams).dni)) ? Number((await searchParams).dni) : 30;
-  const s = await getStats(days);
+  const [s, live] = await Promise.all([getStats(days), getLive()]);
+  const time = (iso: string) => new Intl.DateTimeFormat('pl-PL', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Warsaw' }).format(new Date(iso));
   const maxDay = Math.max(1, ...s.daily.map((d) => d.visitors));
 
   return (
@@ -49,7 +52,7 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: P
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Statystyki</h1>
-          <p className="mt-1 text-sm text-muted">Liczone bez cookies, więc obejmują wszystkich odwiedzających (bez panelu admina). Szczegółowe raporty: Google Analytics.</p>
+          <p className="mt-1 text-sm text-muted">Liczone bez cookies, więc obejmują wszystkich odwiedzających — poza panelem admina i twoimi urządzeniami. Szczegółowe raporty: Google Analytics.</p>
         </div>
         <nav className="flex gap-2" aria-label="Okres">
           {RANGES.map((d) => (
@@ -59,6 +62,59 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: P
           ))}
         </nav>
       </div>
+
+      {/* Odświeża się co 30 s, dopóki strona jest otwarta (do 2 godzin) */}
+      <AutoRefresh intervalMs={30000} maxTries={240} />
+      <ExcludeToggle />
+
+      <section className="card p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-serif text-lg font-semibold">Na żywo</h2>
+          <span className="font-mono text-[11px] text-muted">odświeża się co 30 s</span>
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          {[
+            ['Teraz w sklepie', String(live.activeNow), 'ostatnie 5 minut'],
+            ['Dziś odwiedzających', String(live.todayVisitors), 'od północy'],
+            ['Dziś wyświetleń', String(live.todayViews), 'wszystkie strony'],
+          ].map(([label, value, hint]) => (
+            <div key={label}>
+              <p className="font-mono text-[11px] uppercase tracking-widest text-muted">{label}</p>
+              <p className="mt-1 flex items-center gap-2 font-serif text-3xl font-bold text-paper-50">
+                {label === 'Teraz w sklepie' && Number(value) > 0 && <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-400" aria-hidden />}
+                {value}
+              </p>
+              <p className="text-xs text-muted">{hint}</p>
+            </div>
+          ))}
+        </div>
+        {live.recent.length > 0 && (
+          <div className="mt-5 overflow-x-auto">
+            <table className="w-full min-w-[480px] text-sm">
+              <thead>
+                <tr className="text-left font-mono text-[11px] uppercase tracking-widest text-muted">
+                  <th className="pb-2 font-normal">Godz.</th>
+                  <th className="pb-2 font-normal">Strona</th>
+                  <th className="pb-2 font-normal">Skąd</th>
+                  <th className="pb-2 font-normal">Urządzenie</th>
+                  <th className="pb-2 font-normal">Miasto</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-800">
+                {live.recent.map((r, i) => (
+                  <tr key={i}>
+                    <td className="py-1.5 pr-3 font-mono text-paper-200">{time(r.at)}</td>
+                    <td className="max-w-[220px] truncate py-1.5 pr-3 text-paper-100">{r.path}</td>
+                    <td className="py-1.5 pr-3 text-paper-200">{r.source}</td>
+                    <td className="py-1.5 pr-3 text-paper-200">{r.device}</td>
+                    <td className="py-1.5 text-muted">{r.city ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       {!s.ready && <p className="text-sm text-stamp-500">Brak tabeli statystyk — uruchom cały plik supabase/schema.sql w Supabase.</p>}
 

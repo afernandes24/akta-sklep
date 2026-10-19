@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { isServiceRoleConfigured, siteConfig } from '@/lib/config';
 import { classifySource, deviceFromUA, geoFromHeaders } from '@/lib/stats-shared';
 import { allow } from '@/lib/rate-limit';
+import { EXCLUDE_COOKIE } from '@/lib/exclude';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 export const runtime = 'nodejs';
@@ -13,6 +14,8 @@ const ok = () => new NextResponse(null, { status: 204 });
 
 export async function POST(req: Request) {
   if (!isServiceRoleConfigured()) return ok();
+  // Urządzenie właściciela (ciasteczko z panelu admina) nie jest liczone
+  if ((req.headers.get('cookie') ?? '').split(/;\s*/).includes(`${EXCLUDE_COOKIE}=1`)) return ok();
   const ua = req.headers.get('user-agent') ?? '';
   if (!ua || BOT.test(ua)) return ok();
   let body: { p?: string; q?: string; r?: string };
