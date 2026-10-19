@@ -1,4 +1,3 @@
-import { telegram } from '@/lib/telegram';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Notice } from '@/components/ui/PageHeader';
@@ -35,7 +34,6 @@ export default async function ConfirmPage({ searchParams }: { searchParams: Prom
       .select('id');
     justConfirmed = Boolean(data?.length);
     if (justConfirmed) await sendFreeCaseEmail(sub.email, sub.token).catch(() => undefined);
-    if (justConfirmed) await telegram('📬 Nowy zapis do newslettera', [sub.email]);
   }
 
   const files = await listFreeFiles();
