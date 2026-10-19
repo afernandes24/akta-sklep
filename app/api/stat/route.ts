@@ -3,7 +3,9 @@ import { NextResponse } from 'next/server';
 import { isServiceRoleConfigured, siteConfig } from '@/lib/config';
 import { classifySource, deviceFromUA, geoFromHeaders } from '@/lib/stats-shared';
 import { allow } from '@/lib/rate-limit';
-import { EXCLUDE_COOKIE } from '@/lib/exclude';
+import { EXCLUDE_COOKIE, EXCLUDE_MAX_AGE } from '@/lib/exclude';
+import { getUser } from '@/lib/auth';
+import { isAdminUser } from '@/lib/online';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 export const runtime = 'nodejs';
@@ -15,7 +17,17 @@ const ok = () => new NextResponse(null, { status: 204 });
 export async function POST(req: Request) {
   if (!isServiceRoleConfigured()) return ok();
   // Urządzenie właściciela (ciasteczko z panelu admina) nie jest liczone
-  if ((req.headers.get('cookie') ?? '').split(/;\s*/).includes(`${EXCLUDE_COOKIE}=1`)) return ok();
+  const cookies = (req.headers.get('cookie') ?? '').split(/;\s*/);
+  if (cookies.includes(`${EXCLUDE_COOKIE}=1`)) return ok();
+  // Zalogowany admin (na dowolnym urządzeniu) też nie jest liczony — i dostaje ciasteczko, żeby kolejne wejścia odpadały od razu
+  if (cookies.some((c) => /^sb-[^=]*auth-token/.test(c))) {
+    const user = await getUser().catch(() => null);
+    if (user && (await isAdminUser(user.id))) {
+      const res = ok();
+      res.cookies.set(EXCLUDE_COOKIE, '1', { path: '/', maxAge: EXCLUDE_MAX_AGE, sameSite: 'lax', secure: true });
+      return res;
+    }
+  }
   const ua = req.headers.get('user-agent') ?? '';
   if (!ua || BOT.test(ua)) return ok();
   let body: { p?: string; q?: string; r?: string };
@@ -48,7 +60,7 @@ export async function POST(req: Request) {
   const geo = geoFromHeaders(req.headers);
 
   const db = createAdminClient();
-  await db.from('page_views').insert({
+  const row = {
     path,
     visitor,
     source: classifySource(utm('utm_source'), refHost),
@@ -60,7 +72,10 @@ export async function POST(req: Request) {
     country: geo.country,
     region: geo.region,
     city: geo.city,
-  });
+  };
+  // lat/lon (punkty miast na mapie) — jeśli baza nie ma jeszcze tych kolumn, zapis idzie bez nich
+  const { error } = await db.from('page_views').insert({ ...row, lat: geo.lat, lon: geo.lon });
+  if (error) await db.from('page_views').insert(row);
   // Raz na jakiś czas sprzątamy dane starsze niż 13 miesięcy (tak mówi polityka prywatności)
   if (Math.random() < 0.01) await db.from('page_views').delete().lt('at', new Date(Date.now() - 400 * 864e5).toISOString());
   return ok();

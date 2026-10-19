@@ -3,7 +3,7 @@ import { StatusBadge } from '@/components/account/StatusBadge';
 import { SiteStatusCard } from '@/components/admin/SiteStatusCard';
 import { markMessageRead } from './actions';
 import { formatDate, formatPrice } from '@/lib/format';
-import { getSetupChecks } from '@/lib/setup-status';
+import { getAdmins, isAdminOrder } from '@/lib/admins';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/auth';
 import { seller } from '@/lib/legal/seller';
@@ -11,21 +11,19 @@ import { seller } from '@/lib/legal/seller';
 export default async function AdminDashboard() {
   await requireAdmin(); // każda strona panelu sprawdza uprawnienia sama (layout nie zawsze się wykonuje)
   const db = createAdminClient();
-  const [paid, orders, users, cases, messages] = await Promise.all([
-    db.from('orders').select('total_grosze, paid_at').eq('status', 'paid'),
-    db.from('orders').select('id, order_number, email, status, total_grosze, created_at').order('created_at', { ascending: false }).limit(8),
+  const [paidRes, ordersRes, users, cases, messages, admins] = await Promise.all([
+    db.from('orders').select('total_grosze, paid_at, user_id, email').eq('status', 'paid'),
+    db.from('orders').select('id, order_number, user_id, email, status, total_grosze, created_at').order('created_at', { ascending: false }).limit(40),
     db.from('profiles').select('id', { count: 'exact', head: true }),
     db.from('cases').select('id, is_published'),
     db.from('contact_messages').select('*').eq('is_read', false).order('created_at', { ascending: false }).limit(10),
+    getAdmins(),
   ]);
-  const site = await db.from('site_settings').select('is_open, headline, message, launch_label, preview_hash').eq('id', 1).maybeSingle();
-  const siteView = {
-    is_open: site.data ? Boolean(site.data.is_open) : true,
-    headline: (site.data?.headline as string) ?? 'Śledztwo wkrótce się zacznie',
-    message: (site.data?.message as string) ?? '',
-    launch_label: (site.data?.launch_label as string | null) ?? null,
-    has_password: Boolean(site.data?.preview_hash),
-  };
+  // Zamówienia z kont adminów (testy) nie są liczone
+  const paid = { data: (paidRes.data ?? []).filter((o) => !isAdminOrder(o, admins)) };
+  const orders = { data: (ordersRes.data ?? []).filter((o) => !isAdminOrder(o, admins)).slice(0, 8) };
+  const site = await db.from('site_settings').select('is_open').eq('id', 1).maybeSingle();
+  const isOpen = site.data ? Boolean(site.data.is_open) : true;
 
   const revenue = (paid.data ?? []).reduce((s, o) => s + (o.total_grosze as number), 0);
   // Limit działalności nierejestrowanej liczony kwartalnie (polski czas)
@@ -43,33 +41,9 @@ export default async function AdminDashboard() {
     ['Sprawy (opublikowane)', `${cases.data?.length ?? 0} (${cases.data?.filter((c) => c.is_published).length ?? 0})`],
   ];
 
-  const checks = getSetupChecks();
-  const missing = checks.filter((c) => !c.ok).length;
-
   return (
     <div className="space-y-10">
-      <SiteStatusCard s={siteView} missingTable={Boolean(site.error)} />
-      <section className="card p-6">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-serif text-xl font-semibold">Gotowość do sprzedaży</h2>
-          <span className={`font-mono text-xs ${missing ? 'text-brass-300' : 'text-emerald-300'}`}>
-            {missing ? `Do zrobienia: ${missing}` : 'Wszystko gotowe ✓'}
-          </span>
-        </div>
-        <ul className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-          {checks.map((c) => (
-            <li key={c.label} className="flex gap-2">
-              <span aria-hidden className={c.ok ? 'text-emerald-300' : 'text-stamp-500'}>
-                {c.ok ? '✓' : '✗'}
-              </span>
-              <span>
-                <span className="text-paper-50">{c.label}</span>
-                {!c.ok && <span className="block text-xs text-muted">{c.hint}</span>}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <SiteStatusCard isOpen={isOpen} missingTable={Boolean(site.error)} />
 
       {limit > 0 && (
         <section className={`card p-6 ${quarterShare >= 0.8 ? 'border-stamp-500/60' : ''}`}>

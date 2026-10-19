@@ -60,13 +60,44 @@ export function plRegion(country: string | null, code: string | null, name: stri
 }
 
 /** Lokalizacja z nagłówków Cloudflare (kraj zawsze; region i miasto po włączeniu „visitor location headers”). */
+/**
+ * Naprawia polskie znaki z nagłówków Cloudflare: bajty UTF-8 odczytane jako Latin-1
+ * dają np. „GdaÅsk” zamiast „Gdańsk”. Działa też na danych już zapisanych w bazie.
+ */
+export function fixText(s: string | null | undefined): string | null {
+  if (!s) return null;
+  let t = s;
+  if (/[\u00c2-\u00c5]/.test(t) && [...t].every((c) => c.charCodeAt(0) <= 0xff)) {
+    try {
+      const d = new TextDecoder('utf-8', { fatal: true }).decode(Uint8Array.from([...t].map((c) => c.charCodeAt(0))));
+      t = d;
+    } catch {
+      /* to nie był zepsuty UTF-8 — zostawiamy */
+    }
+  }
+  if (/%[0-9a-f]{2}/i.test(t)) {
+    try {
+      t = decodeURIComponent(t);
+    } catch {
+      /* zostawiamy */
+    }
+  }
+  return t.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim() || null;
+}
+
+const coord = (v: string | null, min: number, max: number) => {
+  const n = v ? Number.parseFloat(v) : NaN;
+  return Number.isFinite(n) && n >= min && n <= max ? Math.round(n * 1000) / 1000 : null;
+};
+
 export function geoFromHeaders(h: Headers) {
   const raw = h.get('cf-ipcountry');
   const country = raw && /^[A-Z]{2}$/.test(raw) && raw !== 'XX' && raw !== 'T1' ? raw : null;
-  const city = h.get('cf-ipcity');
   return {
     country,
-    region: plRegion(country, h.get('cf-region-code'), h.get('cf-region')),
-    city: city ? decodeURIComponent(city).slice(0, 80) : null,
+    region: plRegion(country, h.get('cf-region-code'), fixText(h.get('cf-region'))),
+    city: fixText(h.get('cf-ipcity'))?.slice(0, 80) ?? null,
+    lat: coord(h.get('cf-iplatitude'), -90, 90),
+    lon: coord(h.get('cf-iplongitude'), -180, 180),
   };
 }

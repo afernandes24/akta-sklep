@@ -6,7 +6,8 @@ import { RecordingUploader } from '@/components/admin/RecordingUploader';
 import { Uploader } from '@/components/admin/Uploader';
 import { CaseCover } from '@/components/case/CaseCover';
 import { Notice } from '@/components/ui/PageHeader';
-import { deleteCase, deleteFile, deleteImage, removeCover, updateFile, updateImage } from '../../actions';
+import { DeleteCaseForm } from '@/components/admin/DeleteCaseForm';
+import { deleteFile, deleteImage, removeCover, updateFile, updateImage } from '../../actions';
 import { CASE_COLUMNS, normalizeCase } from '@/lib/cases';
 import { publicStorageUrl } from '@/lib/config';
 import { formatBytes, formatDuration } from '@/lib/format';
@@ -60,6 +61,11 @@ export default async function EditCasePage({
         {sp.nowa && (
           <div className="mt-4">
             <Notice tone="success">Sprawa utworzona. Dodaj teraz okładkę i pliki PDF, a potem ją opublikuj.</Notice>
+          </div>
+        )}
+        {sp.blad === 'potwierdzenie' && (
+          <div className="mt-4">
+            <Notice tone="error">Nie usunięto — numer sprawy się nie zgadzał.</Notice>
           </div>
         )}
         {sp.blad === 'sprzedana' && (
@@ -256,10 +262,7 @@ export default async function EditCasePage({
         <section className="card border-stamp-500/40 p-5">
           <h2 className="font-serif text-lg font-semibold text-stamp-500">Strefa niebezpieczna</h2>
           <p className="mt-1 text-xs text-muted">Usunięcie jest nieodwracalne. Sprawy już kupionej nie da się usunąć — możesz ją ukryć.</p>
-          <form action={deleteCase} className="mt-3">
-            <input type="hidden" name="id" value={c.id} />
-            <button className="btn-danger w-full text-xs">Usuń sprawę na stałe</button>
-          </form>
+          <DeleteCaseForm id={c.id} caseNumber={String(c.case_number)} title={c.title} />
         </section>
       </aside>
     </div>

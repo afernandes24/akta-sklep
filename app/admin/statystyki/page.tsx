@@ -44,7 +44,6 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: P
   await requireAdmin();
   const days = RANGES.includes(Number((await searchParams).dni)) ? Number((await searchParams).dni) : 30;
   const [s, live] = await Promise.all([getStats(days), getLive()]);
-  const time = (iso: string) => new Intl.DateTimeFormat('pl-PL', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Warsaw' }).format(new Date(iso));
   const maxDay = Math.max(1, ...s.daily.map((d) => d.visitors));
 
   return (
@@ -52,7 +51,7 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: P
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Statystyki</h1>
-          <p className="mt-1 text-sm text-muted">Liczone bez cookies, więc obejmują wszystkich odwiedzających — poza panelem admina i twoimi urządzeniami. Szczegółowe raporty: Google Analytics.</p>
+          <p className="mt-1 text-sm text-muted">Bez adminów i ich zamówień (testów). Szczegółowe raporty: Google Analytics.</p>
         </div>
         <nav className="flex gap-2" aria-label="Okres">
           {RANGES.map((d) => (
@@ -88,32 +87,6 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: P
             </div>
           ))}
         </div>
-        {live.recent.length > 0 && (
-          <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[480px] text-sm">
-              <thead>
-                <tr className="text-left font-mono text-[11px] uppercase tracking-widest text-muted">
-                  <th className="pb-2 font-normal">Godz.</th>
-                  <th className="pb-2 font-normal">Strona</th>
-                  <th className="pb-2 font-normal">Skąd</th>
-                  <th className="pb-2 font-normal">Urządzenie</th>
-                  <th className="pb-2 font-normal">Miasto</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-800">
-                {live.recent.map((r, i) => (
-                  <tr key={i}>
-                    <td className="py-1.5 pr-3 font-mono text-paper-200">{time(r.at)}</td>
-                    <td className="max-w-[220px] truncate py-1.5 pr-3 text-paper-100">{r.path}</td>
-                    <td className="py-1.5 pr-3 text-paper-200">{r.source}</td>
-                    <td className="py-1.5 pr-3 text-paper-200">{r.device}</td>
-                    <td className="py-1.5 text-muted">{r.city ?? '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </section>
 
       {!s.ready && <p className="text-sm text-stamp-500">Brak tabeli statystyk — uruchom cały plik supabase/schema.sql w Supabase.</p>}
@@ -154,7 +127,6 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: P
         <PolandMap {...s.map} />
         <Bars title="Skąd przychodzą" rows={s.sources} />
         <Bars title="Lejek zakupowy" rows={s.funnel} total={s.funnel[0]?.value} />
-        <Bars title="Najczęściej oglądane strony" rows={s.pages} />
         <section className="card p-5">
           <h2 className="font-serif text-lg font-semibold">Sprawy: oglądali → kupili</h2>
           {s.cases.length === 0 ? (
@@ -184,7 +156,6 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: P
         </section>
         <Bars title="Urządzenia" rows={s.devices} />
         <Bars title="Kraje" rows={s.countries} />
-        <Bars title="Miasta (odwiedzający)" rows={s.cities} empty="Brak danych — włącz w Cloudflare: Rules → Transform Rules → Managed Transforms → „Add visitor location headers”." />
         <Bars title="Kampanie (utm_campaign)" rows={s.campaigns} empty="Dodawaj do linków w reklamach np. ?utm_source=instagram&utm_campaign=start — zobaczysz tu, która kampania działa." />
         <Bars title="Kody rabatowe (opłacone)" rows={s.coupons} empty="Nikt jeszcze nie użył kodu w tym okresie." />
       </div>

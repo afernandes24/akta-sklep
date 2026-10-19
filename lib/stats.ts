@@ -1,5 +1,16 @@
 import 'server-only';
 import { createAdminClient } from './supabase/admin';
+import { getAdmins, isAdminOrder } from './admins';
+import { cityCoords } from './pl-cities';
+import { fixText } from './stats-shared';
+
+export interface CityPoint {
+  name: string;
+  lat: number | null;
+  lon: number | null;
+  value: number;
+  revenue: number;
+}
 
 export interface Row {
   label: string;
@@ -16,18 +27,16 @@ export interface Stats {
   conversion: number;
   daily: { date: string; visitors: number; revenue: number }[];
   sources: Row[];
-  pages: Row[];
   cases: { slug: string; title: string; views: number; sold: number }[];
   devices: Row[];
   countries: Row[];
-  cities: Row[];
   funnel: Row[];
   coupons: Row[];
   campaigns: Row[];
-  map: { visitors: Record<string, number>; buyers: Record<string, number>; revenue: Record<string, number>; buyersAbroad: Row[]; buyersUnknown: number };
+  map: { visitors: Record<string, number>; buyers: Record<string, number>; revenue: Record<string, number>; buyersAbroad: Row[]; buyersUnknown: number; cityVisitors: CityPoint[]; cityBuyers: CityPoint[] };
 }
 
-type View = { at: string; path: string; visitor: string; source: string; utm_campaign: string | null; device: string; country: string | null; region: string | null; city: string | null };
+type View = { at: string; path: string; visitor: string; source: string; utm_campaign: string | null; device: string; country: string | null; region: string | null; city: string | null; lat?: number | null; lon?: number | null };
 
 const top = (m: Map<string, number>, n = 10): Row[] =>
   [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, n).map(([label, value]) => ({ label, value }));
@@ -40,13 +49,18 @@ export async function getStats(days: number): Promise<Stats> {
   since.setHours(0, 0, 0, 0);
   const sinceIso = since.toISOString();
 
-  const [pv, orders, casesRes] = await Promise.all([
-    db.from('page_views').select('at, path, visitor, source, utm_campaign, device, country, region, city').gte('at', sinceIso).order('at').limit(100000),
-    db.from('orders').select('id, status, total_grosze, paid_at, created_at, discount_code, geo_country, geo_region, order_items(case_id)').gte('created_at', sinceIso).limit(10000),
-    db.from('cases').select('id, slug, title'),
-  ]);
-  const views = (pv.data ?? []) as View[];
-  const ords = (orders.data ?? []) as { status: string; total_grosze: number; paid_at: string | null; created_at: string; discount_code: string | null; geo_country: string | null; geo_region: string | null; order_items: { case_id: string | null }[] }[];
+  // Kolumny lat/lon dochodzą z supabase/panel-admina.sql — bez nich zapytanie idzie bez nich
+  const pvQuery = (cols: string) => db.from('page_views').select(cols).gte('at', sinceIso).order('at').limit(100000);
+  const ordQuery = (cols: string) => db.from('orders').select(cols).gte('created_at', sinceIso).limit(10000);
+  const PV = 'at, path, visitor, source, utm_campaign, device, country, region, city';
+  const ORD = 'id, user_id, email, status, total_grosze, paid_at, created_at, discount_code, geo_country, geo_region, geo_city, order_items(case_id)';
+  const [pvFull, ordFull, casesRes, admins] = await Promise.all([pvQuery(PV + ', lat, lon'), ordQuery(ORD + ', geo_lat, geo_lon'), db.from('cases').select('id, slug, title'), getAdmins()]);
+  const pv = pvFull.error ? await pvQuery(PV) : pvFull;
+  const orders = ordFull.error ? await ordQuery(ORD) : ordFull;
+  const views = ((pv.data ?? []) as unknown as View[]).map((v) => ({ ...v, city: fixText(v.city) }));
+  type Ord = { user_id: string | null; email: string; status: string; total_grosze: number; paid_at: string | null; created_at: string; discount_code: string | null; geo_country: string | null; geo_region: string | null; geo_city: string | null; geo_lat?: number | null; geo_lon?: number | null; order_items: { case_id: string | null }[] };
+  // Zamówienia z kont adminów (testy) nie są liczone
+  const ords = ((orders.data ?? []) as unknown as Ord[]).filter((o) => !isAdminOrder(o, admins)).map((o) => ({ ...o, geo_city: fixText(o.geo_city) }));
   const cases = (casesRes.data ?? []) as { id: string; slug: string; title: string }[];
   const paid = ords.filter((o) => o.status === 'paid');
 
@@ -69,16 +83,13 @@ export async function getStats(days: number): Promise<Stats> {
   for (const v of firstByVisitor.values()) daily.get(dayKey(v.at)) && (daily.get(dayKey(v.at))!.visitors += 1);
   for (const o of paid) if (o.paid_at && daily.get(dayKey(o.paid_at))) daily.get(dayKey(o.paid_at))!.revenue += o.total_grosze;
 
-  const sources = new Map<string, number>(), devices = new Map<string, number>(), countries = new Map<string, number>(), cities = new Map<string, number>(), campaigns = new Map<string, number>();
+  const sources = new Map<string, number>(), devices = new Map<string, number>(), countries = new Map<string, number>(), campaigns = new Map<string, number>();
   for (const v of firstByVisitor.values()) {
     inc(sources, v.source);
     inc(devices, v.device);
     if (v.country) inc(countries, COUNTRY[v.country] ?? v.country);
-    if (v.city) inc(cities, v.city);
     if (v.utm_campaign) inc(campaigns, v.utm_campaign);
   }
-  const pages = new Map<string, number>();
-  for (const v of views) inc(pages, v.path);
 
   const caseViews = new Map<string, number>();
   for (const set of pathsByVisitor.values()) for (const p of set) {
@@ -112,6 +123,31 @@ export async function getStats(days: number): Promise<Stats> {
     else buyersUnknown += 1;
   }
 
+  // Miasta: punkty na mapie (współrzędne z Cloudflare, a gdy ich brak — z listy większych miast)
+  const cityAgg = (rows: { city: string | null; lat?: number | null; lon?: number | null; amount?: number }[]): CityPoint[] => {
+    const m = new Map<string, { value: number; revenue: number; lat: number; lon: number; n: number }>();
+    for (const r of rows) {
+      if (!r.city) continue;
+      const e = m.get(r.city) ?? { value: 0, revenue: 0, lat: 0, lon: 0, n: 0 };
+      e.value += 1;
+      e.revenue += r.amount ?? 0;
+      if (r.lat != null && r.lon != null) {
+        e.lat += Number(r.lat);
+        e.lon += Number(r.lon);
+        e.n += 1;
+      }
+      m.set(r.city, e);
+    }
+    return [...m.entries()]
+      .map(([name, e]) => {
+        const fb = cityCoords(name);
+        return { name, value: e.value, revenue: e.revenue, lat: e.n ? e.lat / e.n : (fb?.[0] ?? null), lon: e.n ? e.lon / e.n : (fb?.[1] ?? null) };
+      })
+      .sort((a, b) => b.value - a.value);
+  };
+  const cityVisitors = cityAgg([...firstByVisitor.values()].filter((v) => !v.country || v.country === 'PL'));
+  const cityBuyers = cityAgg(paid.filter((o) => !o.geo_country || o.geo_country === 'PL').map((o) => ({ city: o.geo_city, lat: o.geo_lat, lon: o.geo_lon, amount: o.total_grosze })));
+
   return {
     days,
     ready: !pv.error,
@@ -122,11 +158,9 @@ export async function getStats(days: number): Promise<Stats> {
     conversion: visitors ? paid.length / visitors : 0,
     daily: [...daily.entries()].map(([date, d]) => ({ date, ...d })),
     sources: top(sources),
-    pages: top(pages),
     cases: caseRows,
     devices: top(devices, 3),
     countries: top(countries, 8),
-    cities: top(cities, 8),
     funnel: [
       { label: 'Odwiedzili sklep', value: visitors },
       { label: 'Obejrzeli sprawę', value: sawCase },
@@ -136,7 +170,7 @@ export async function getStats(days: number): Promise<Stats> {
     ],
     coupons: top(coupons),
     campaigns: top(campaigns),
-    map: { visitors: mapVisitors, buyers: mapBuyers, revenue: mapRevenue, buyersAbroad: top(abroad, 8), buyersUnknown },
+    map: { visitors: mapVisitors, buyers: mapBuyers, revenue: mapRevenue, buyersAbroad: top(abroad, 8), buyersUnknown, cityVisitors, cityBuyers },
   };
 }
 
@@ -146,7 +180,6 @@ export interface LiveStats {
   activeNow: number; // różne osoby w ostatnich 5 minutach
   todayVisitors: number;
   todayViews: number;
-  recent: { at: string; path: string; source: string; device: string; city: string | null }[];
 }
 
 export async function getLive(): Promise<LiveStats> {
@@ -159,18 +192,17 @@ export async function getLive(): Promise<LiveStats> {
   const startOfDay = new Date(today.getTime() + offset);
   const { data, error } = await db
     .from('page_views')
-    .select('at, path, visitor, source, device, city')
+    .select('at, visitor')
     .gte('at', startOfDay.toISOString())
     .order('at', { ascending: false })
     .limit(5000);
-  if (error) return { ready: false, activeNow: 0, todayVisitors: 0, todayViews: 0, recent: [] };
-  const rows = (data ?? []) as { at: string; path: string; visitor: string; source: string; device: string; city: string | null }[];
+  if (error) return { ready: false, activeNow: 0, todayVisitors: 0, todayViews: 0 };
+  const rows = (data ?? []) as { at: string; visitor: string }[];
   const active = new Set(rows.filter((r) => now - new Date(r.at).getTime() < 5 * 60 * 1000).map((r) => r.visitor));
   return {
     ready: true,
     activeNow: active.size,
     todayVisitors: new Set(rows.map((r) => r.visitor)).size,
     todayViews: rows.length,
-    recent: rows.slice(0, 12).map(({ at, path, source, device, city }) => ({ at, path, source, device, city })),
   };
 }

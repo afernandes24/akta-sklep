@@ -5,6 +5,7 @@ import { formatDate, formatPrice, statusLabels } from '@/lib/format';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { Order } from '@/lib/types';
 import { requireAdmin } from '@/lib/auth';
+import { getAdmins, isAdminOrder } from '@/lib/admins';
 
 export default async function AdminOrdersPage({ searchParams }: { searchParams: Promise<{ status?: string; q?: string }> }) {
   await requireAdmin(); // każda strona panelu sprawdza uprawnienia sama (layout nie zawsze się wykonuje)
@@ -12,13 +13,14 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   const db = createAdminClient();
   let query = db
     .from('orders')
-    .select('id, order_number, email, status, total_grosze, provider, provider_ref, created_at, paid_at, order_items(id, title, price_grosze)')
+    .select('id, order_number, user_id, email, status, total_grosze, provider, provider_ref, created_at, paid_at, order_items(id, title, price_grosze)')
     .order('created_at', { ascending: false })
-    .limit(200);
+    .limit(300);
   if (sp.status && sp.status in statusLabels) query = query.eq('status', sp.status);
   if (sp.q) query = query.ilike('email', `%${sp.q.replace(/[%_]/g, '')}%`);
-  const { data } = await query;
-  const orders = (data ?? []) as unknown as Order[];
+  const [{ data }, admins] = await Promise.all([query, getAdmins()]);
+  // Zamówienia z kont adminów (testy) są pomijane
+  const orders = ((data ?? []) as unknown as (Order & { user_id: string | null })[]).filter((o) => !isAdminOrder(o, admins)).slice(0, 200);
 
   const filters = [['', 'Wszystkie'], ...Object.entries(statusLabels)];
 

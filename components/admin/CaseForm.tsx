@@ -4,9 +4,8 @@ import { useActionState, useState } from 'react';
 import { type SaveCaseState, saveCase } from '@/app/admin/actions';
 import { Notice } from '@/components/ui/PageHeader';
 import { slugify } from '@/lib/format';
-import { CASE_TAGS, LEVEL_NAMES } from '@/lib/tags';
+import { LEVEL_NAMES } from '@/lib/tags';
 import type { CaseRecord } from '@/lib/types';
-import { ExcerptsEditor } from './ExcerptsEditor';
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -108,46 +107,6 @@ export function CaseForm({ c }: { c?: CaseRecord }) {
             <input name="online_price" className="input" inputMode="decimal" defaultValue={c?.online_price_grosze != null ? (c.online_price_grosze / 100).toFixed(2).replace('.', ',') : ''} />
           </Field>
         </div>
-      </section>
-
-      <section className="card space-y-5 p-6">
-        <h2 className="font-serif text-xl font-semibold">Treści na stronie produktu</h2>
-        <fieldset>
-          <legend className="label">Działy (filtry w katalogu)</legend>
-          <div className="flex flex-wrap gap-3">
-            {CASE_TAGS.map((t) => (
-              <label key={t.id} className="flex items-center gap-2 rounded-md border border-ink-700 px-3 py-2 text-sm text-paper-200">
-                <input type="checkbox" name="tags" value={t.id} defaultChecked={c?.tags?.includes(t.id)} className="h-4 w-4 accent-brass-400" />
-                <span>
-                  {t.label} <span className="text-xs text-muted">({t.hint})</span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-        <Field label="Miasto (dział „Mapa zbrodni”)" hint="Np. Gdańsk. Puste = sprawa nie trafia do działu miast.">
-          <input name="city" className="input" maxLength={60} defaultValue={c?.city ?? ''} />
-        </Field>
-        <Field label="Czego można się spodziewać" hint="Jedna pozycja w linii.">
-          <textarea name="highlights" className="input" rows={5} defaultValue={c?.highlights.join('\n') ?? ''} />
-        </Field>
-        <Field label="Co otrzymasz (lista plików)" hint='Jedna pozycja w linii, np. „Akta sprawy (45 stron) — raporty, przesłuchania, 5 celów”.'>
-          <textarea name="contents" className="input font-mono" rows={5} defaultValue={c?.contents.join('\n') ?? ''} />
-        </Field>
-        <div>
-          <span className="label">Przykładowe fragmenty akt</span>
-          <ExcerptsEditor initial={c?.excerpts ?? []} />
-        </div>
-      </section>
-
-      <section className="card space-y-5 p-6">
-        <h2 className="font-serif text-xl font-semibold">SEO</h2>
-        <Field label="Tytuł SEO" hint="Zostaw puste, aby użyć domyślnego. Najlepiej do 60 znaków.">
-          <input name="seo_title" className="input" defaultValue={c?.seo_title ?? ''} maxLength={120} />
-        </Field>
-        <Field label="Opis meta (description)" hint="Najlepiej 140–160 znaków.">
-          <textarea name="seo_description" className="input" rows={3} defaultValue={c?.seo_description ?? ''} maxLength={300} />
-        </Field>
       </section>
 
       <div className="sticky bottom-0 z-10 -mx-4 flex flex-col gap-4 border-t border-ink-700 bg-ink-950/95 px-4 py-4 backdrop-blur sm:flex-row sm:items-center sm:justify-between">

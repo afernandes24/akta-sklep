@@ -64,15 +64,12 @@ export async function saveCase(_prev: SaveCaseState, formData: FormData): Promis
   if (!slug) return { error: 'Adres URL (slug) jest nieprawidłowy.' };
   if (price === null) return { error: 'Podaj poprawną cenę, np. 24,99.' };
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     title,
     slug,
     case_number: String(formData.get('case_number') ?? '').trim() || '000',
     tagline: String(formData.get('tagline') ?? '').trim(),
     description: String(formData.get('description') ?? '').trim(),
-    highlights: lines(formData.get('highlights')),
-    contents: lines(formData.get('contents')),
-    excerpts: parseExcerpts(formData.get('excerpts')),
     difficulty: int(formData.get('difficulty'), 3, 1, 5),
     play_time_minutes: int(formData.get('play_time_minutes'), 90, 1, 1000),
     page_count: int(formData.get('page_count'), 0),
@@ -80,13 +77,17 @@ export async function saveCase(_prev: SaveCaseState, formData: FormData): Promis
     price_grosze: price,
     sort_order: int(formData.get('sort_order'), 0, -1000, 1000),
     is_published: formData.get('is_published') === 'on',
-    seo_title: String(formData.get('seo_title') ?? '').trim() || null,
-    seo_description: String(formData.get('seo_description') ?? '').trim() || null,
-    tags: formData.getAll('tags').map(String).filter(isCaseTag),
     online_enabled: formData.get('online_enabled') === 'on',
     online_price_grosze: String(formData.get('online_price') ?? '').trim() ? parsePriceToGrosze(String(formData.get('online_price'))) : null,
-    city: String(formData.get('city') ?? '').trim().slice(0, 60) || null,
   };
+  // SEO, działy, miasto, listy i fragmenty edytuje się w Supabase — zapisujemy je tylko, gdy formularz je wysłał
+  if (formData.has('highlights')) payload.highlights = lines(formData.get('highlights'));
+  if (formData.has('contents')) payload.contents = lines(formData.get('contents'));
+  if (formData.has('excerpts')) payload.excerpts = parseExcerpts(formData.get('excerpts'));
+  if (formData.has('seo_title')) payload.seo_title = String(formData.get('seo_title') ?? '').trim() || null;
+  if (formData.has('seo_description')) payload.seo_description = String(formData.get('seo_description') ?? '').trim() || null;
+  if (formData.has('tags')) payload.tags = formData.getAll('tags').map(String).filter(isCaseTag);
+  if (formData.has('city')) payload.city = String(formData.get('city') ?? '').trim().slice(0, 60) || null;
 
   const db = createAdminClient();
   if (id) {
@@ -120,6 +121,9 @@ export async function deleteCase(formData: FormData) {
   const id = String(formData.get('id'));
   if (!isUuid(id)) return;
   const db = createAdminClient();
+  // Potwierdzenie: trzeba wpisać numer sprawy
+  const { data: check } = await db.from('cases').select('case_number').eq('id', id).maybeSingle();
+  if (!check || String(formData.get('confirm') ?? '').trim().replace(/^#/, '') !== String(check.case_number)) redirect(`/admin/sprawy/${id}?blad=potwierdzenie`);
   const { count } = await db.from('entitlements').select('case_id', { count: 'exact', head: true }).eq('case_id', id);
   if (count && count > 0) redirect(`/admin/sprawy/${id}?blad=sprzedana`);
 

@@ -1,80 +1,27 @@
-'use client';
+import { setSiteOpen } from '@/app/admin/extra-actions';
 
-import Link from 'next/link';
-import { useActionState } from 'react';
-import { saveSiteSettings, setSiteOpen, type SiteSettingsState } from '@/app/admin/extra-actions';
-
-export interface SiteSettingsView {
-  is_open: boolean;
-  headline: string;
-  message: string;
-  launch_label: string | null;
-  has_password: boolean;
-}
-
-export function SiteStatusCard({ s, missingTable }: { s: SiteSettingsView; missingTable: boolean }) {
-  const [state, action, pending] = useActionState<SiteSettingsState, FormData>(saveSiteSettings, {});
+/** Status sklepu: jeden włącznik ON / OFF. */
+export function SiteStatusCard({ isOpen, missingTable }: { isOpen: boolean; missingTable: boolean }) {
   return (
-    <section className={`card p-6 ${s.is_open ? '' : 'border-brass-500/60'}`}>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="font-serif text-xl font-semibold">Status sklepu</h2>
-          <p className="mt-1 text-sm">
-            {s.is_open ? (
-              <span className="text-emerald-300">● Otwarty — widzą go wszyscy</span>
-            ) : (
-              <span className="text-brass-300">● Zamknięty — goście widzą stronę „Wkrótce start”{s.has_password ? ', wejście na hasło' : ''}</span>
-            )}
-          </p>
-        </div>
-        <form action={setSiteOpen}>
-          <input type="hidden" name="open" value={s.is_open ? 'false' : 'true'} />
-          <button className={s.is_open ? 'btn-secondary' : 'btn-primary'} disabled={missingTable}>
-            {s.is_open ? 'Zamknij sklep' : 'Otwórz sklep dla wszystkich'}
-          </button>
-        </form>
+    <section className="card flex flex-wrap items-center justify-between gap-4 p-6">
+      <div>
+        <h2 className="font-serif text-xl font-semibold">Status sklepu</h2>
+        <p className={`mt-1 text-sm ${isOpen ? 'text-emerald-300' : 'text-brass-300'}`}>{isOpen ? 'Sklep włączony' : 'Sklep wyłączony'}</p>
+        {missingTable && <p className="mt-2 text-sm text-stamp-500">Brak tabeli ustawień — uruchom supabase/schema.sql w Supabase.</p>}
       </div>
-      {missingTable && <p className="mt-3 text-sm text-stamp-500">Brak tabeli ustawień — uruchom cały plik supabase/schema.sql w Supabase (SQL Editor).</p>}
-
-      <details className="mt-5 rounded-lg border border-ink-700">
-        <summary className="cursor-pointer px-4 py-3 text-sm text-paper-100">Treść strony „Wkrótce” i hasło dostępu</summary>
-        <form action={action} className="space-y-4 border-t border-ink-800 p-4">
-          <label className="block">
-            <span className="label">Nagłówek</span>
-            <input name="headline" defaultValue={s.headline} className="input" maxLength={120} required />
-          </label>
-          <label className="block">
-            <span className="label">Opis</span>
-            <textarea name="message" defaultValue={s.message} className="input" rows={3} maxLength={1000} required />
-          </label>
-          <label className="block">
-            <span className="label">Data startu (opcjonalnie, np. „1 listopada”)</span>
-            <input name="launch_label" defaultValue={s.launch_label ?? ''} className="input" maxLength={60} />
-          </label>
-          <label className="block">
-            <span className="label">{s.has_password ? 'Nowe hasło dostępu (puste = bez zmian)' : 'Hasło dostępu (puste = brak wejścia na hasło)'}</span>
-            <input name="password" type="text" autoComplete="off" className="input" minLength={6} placeholder="min. 6 znaków" />
-          </label>
-          {s.has_password && (
-            <label className="flex items-center gap-2 text-sm text-paper-200">
-              <input type="checkbox" name="remove_password" className="accent-stamp-500" /> Wyłącz wejście na hasło
-            </label>
-          )}
-          <div className="flex flex-wrap items-center gap-3">
-            <button className="btn-primary" disabled={pending}>
-              {pending ? 'Zapisuję…' : 'Zapisz'}
-            </button>
-            <Link href="/wkrotce?podglad=1" target="_blank" className="text-sm text-brass-300 hover:underline">
-              Podgląd strony „Wkrótce” ↗
-            </Link>
-          </div>
-          {state.error && <p className="text-sm text-stamp-500">{state.error}</p>}
-          {state.ok && <p className="text-sm text-emerald-300">{state.ok}</p>}
-          <p className="text-xs text-muted">
-            Jako zalogowany admin zawsze widzisz cały sklep. Osoby z hasłem wpisują je raz — dostęp pamięta przeglądarka przez 30 dni. Zmiana hasła wylogowuje wszystkich z podglądu. Zmiany działają w ciągu ok. 20 sekund.
-          </p>
-        </form>
-      </details>
+      <form action={setSiteOpen}>
+        <input type="hidden" name="open" value={isOpen ? 'false' : 'true'} />
+        <button
+          role="switch"
+          aria-checked={isOpen}
+          aria-label={isOpen ? 'Wyłącz sklep' : 'Włącz sklep'}
+          disabled={missingTable}
+          className={`relative inline-flex h-10 w-[104px] items-center rounded-full border transition-colors ${isOpen ? 'border-emerald-500 bg-emerald-600/80' : 'border-ink-600 bg-ink-800'}`}
+        >
+          <span className={`absolute font-mono text-xs font-bold ${isOpen ? 'left-4 text-white' : 'right-4 text-muted'}`}>{isOpen ? 'ON' : 'OFF'}</span>
+          <span className={`absolute h-8 w-8 rounded-full bg-paper-50 shadow transition-all ${isOpen ? 'left-[66px]' : 'left-1'}`} />
+        </button>
+      </form>
     </section>
   );
 }

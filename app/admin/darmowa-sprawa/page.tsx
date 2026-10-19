@@ -3,6 +3,24 @@ import { formatBytes } from '@/lib/format';
 import { FREE_CASE, FREE_CASE_FOLDER, listFreeFiles } from '@/lib/newsletter';
 import { deleteFreeFile } from '../extra-actions';
 import { requireAdmin } from '@/lib/auth';
+import { getAdmins } from '@/lib/admins';
+import { createAdminClient } from '@/lib/supabase/admin';
+
+async function getCounts() {
+  const db = createAdminClient();
+  const admins = await getAdmins();
+  const full = await db.from('newsletter_subscribers').select('email, status, free_downloads, free_downloaded_at').neq('status', 'pending').limit(50000);
+  const res = full.error ? await db.from('newsletter_subscribers').select('email, status').neq('status', 'pending').limit(50000) : full;
+  const rows = ((res.data ?? []) as { email: string; free_downloads?: number; free_downloaded_at?: string | null }[]).filter((r) => !admins.emails.has(r.email));
+  const weekAgo = Date.now() - 7 * 864e5;
+  return {
+    tracking: !full.error,
+    received: rows.length,
+    people: rows.filter((r) => r.free_downloaded_at).length,
+    week: rows.filter((r) => r.free_downloaded_at && new Date(r.free_downloaded_at).getTime() >= weekAgo).length,
+    files: rows.reduce((s, r) => s + (r.free_downloads ?? 0), 0),
+  };
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +28,7 @@ const KIND = { material: 'materiał', hint: '💡 wskazówki', solution: '🔐 o
 
 export default async function AdminFreeCasePage() {
   await requireAdmin(); // każda strona panelu sprawdza uprawnienia sama (layout nie zawsze się wykonuje)
-  const files = await listFreeFiles();
+  const [files, n] = await Promise.all([listFreeFiles(), getCounts()]);
   return (
     <div className="max-w-3xl">
       <h1 className="text-3xl font-bold">Darmowa sprawa (newsletter)</h1>
@@ -18,6 +36,21 @@ export default async function AdminFreeCasePage() {
         AKTA #{FREE_CASE.number} — {FREE_CASE.title}. Te pliki dostaje każdy, kto potwierdzi zapis na stronie „Za darmo”. Tytuł, opis i punkty na stronie
         /darmowa-sprawa zmieniasz w pliku <code className="text-brass-300">lib/newsletter.ts</code>.
       </p>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-4">
+        {[
+          ['Pobrało osób', n.tracking ? String(n.people) : '—'],
+          ['W tym tygodniu', n.tracking ? String(n.week) : '—'],
+          ['Pobrań plików', n.tracking ? String(n.files) : '—'],
+          ['Dostało maila', String(n.received)],
+        ].map(([label, value]) => (
+          <div key={label} className="card p-4">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-muted">{label}</p>
+            <p className="mt-1 font-serif text-3xl font-bold text-paper-50">{value}</p>
+          </div>
+        ))}
+      </div>
+      {!n.tracking && <p className="mt-2 text-xs text-stamp-500">Licznik pobrań zacznie działać po uruchomieniu supabase/panel-admina.sql.</p>}
 
       <ul className="card mt-6 divide-y divide-ink-800">
         {files.length === 0 && <li className="px-5 py-4 text-sm text-stamp-500">Brak plików — link z e-maila nic nie pobierze. Wgraj PDF-y poniżej.</li>}

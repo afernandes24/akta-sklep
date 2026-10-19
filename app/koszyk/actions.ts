@@ -76,7 +76,9 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
       orderIdForCleanup = result.order.id;
       // Przybliżona lokalizacja kupującego (kraj / województwo / miasto) — do mapy w statystykach
       const geo = geoFromHeaders(await headers());
-      await createAdminClient().from('orders').update({ geo_country: geo.country, geo_region: geo.region, geo_city: geo.city }).eq('id', result.order.id);
+      const geoRow = { geo_country: geo.country, geo_region: geo.region, geo_city: geo.city };
+      const geoRes = await createAdminClient().from('orders').update({ ...geoRow, geo_lat: geo.lat, geo_lon: geo.lon }).eq('id', result.order.id);
+      if (geoRes.error) await createAdminClient().from('orders').update(geoRow).eq('id', result.order.id);
       const { redirectUrl, providerRef } = await provider.createCheckout({
         order: result.order,
         items: result.items,

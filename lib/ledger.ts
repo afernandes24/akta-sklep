@@ -1,5 +1,12 @@
 import 'server-only';
 import { createAdminClient } from './supabase/admin';
+import { getAdmins, isAdminOrder } from './admins';
+
+/** Wpisy z zamówień adminów (testy) nie są pokazywane ani eksportowane. */
+async function withoutAdmins<T extends { orders?: unknown }>(rows: T[]): Promise<T[]> {
+  const admins = await getAdmins();
+  return rows.filter((r) => !isAdminOrder(r.orders as { user_id: string | null; email: string } | null, admins));
+}
 
 /**
  * UPROSZCZONA EWIDENCJA SPRZEDAŻY (działalność nierejestrowana).
@@ -76,7 +83,7 @@ function lastDayOfMonth(month: string): string {
 export async function getLedgerMonth(month: string): Promise<LedgerMonth> {
   const { data, error } = await createAdminClient()
     .from('sales_ledger')
-    .select('entry_date, kind, amount_grosze, order_number, occurred_at')
+    .select('entry_date, kind, amount_grosze, order_number, occurred_at, orders(user_id, email)')
     .gte('entry_date', `${month}-01`)
     .lte('entry_date', lastDayOfMonth(month))
     .order('entry_date', { ascending: true })
@@ -84,7 +91,7 @@ export async function getLedgerMonth(month: string): Promise<LedgerMonth> {
   if (error) throw new Error(error.message);
 
   const byDay = new Map<string, LedgerDay>();
-  for (const r of data ?? []) {
+  for (const r of await withoutAdmins(data ?? [])) {
     const date = r.entry_date as string;
     const day = byDay.get(date) ?? { lp: 0, date, salesGrosze: 0, refundsGrosze: 0, netGrosze: 0, cumulativeGrosze: 0, orders: [] };
     const amount = r.amount_grosze as number;
@@ -135,8 +142,8 @@ export async function getQuarterNet(): Promise<number> {
   const y = Number(today.slice(0, 4));
   const qStartMonth = Math.floor((Number(today.slice(5, 7)) - 1) / 3) * 3 + 1;
   const from = `${y}-${String(qStartMonth).padStart(2, '0')}-01`;
-  const { data } = await createAdminClient().from('sales_ledger').select('amount_grosze').gte('entry_date', from).lte('entry_date', today);
-  return (data ?? []).reduce((s, r) => s + (r.amount_grosze as number), 0);
+  const { data } = await createAdminClient().from('sales_ledger').select('amount_grosze, orders(user_id, email)').gte('entry_date', from).lte('entry_date', today);
+  return (await withoutAdmins(data ?? [])).reduce((s, r) => s + (r.amount_grosze as number), 0);
 }
 
 const MONTHS = ['styczeń', 'luty', 'marzec', 'kwiecień', 'maj', 'czerwiec', 'lipiec', 'sierpień', 'wrzesień', 'październik', 'listopad', 'grudzień'];
