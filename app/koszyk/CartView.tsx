@@ -41,9 +41,9 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
   );
   const nextTier = [...VOLUME_TIERS].reverse().find((t) => t.minItems > items.length);
 
-  const applyCode = () =>
+  const applyCode = (raw?: string) =>
     startChecking(async () => {
-      const res = await checkCoupon(codeInput);
+      const res = await checkCoupon(raw ?? codeInput);
       if (res.coupon) {
         setCoupon(res.coupon);
         setCodeError(null);
@@ -52,6 +52,25 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
         setCodeError(res.error ?? 'Nieprawidłowy kod.');
       }
     });
+
+  // Kod z banera promocji na stronie głównej (albo z linku ?kod=) wpisuje się sam
+  const [autoCode, setAutoCode] = useState(false);
+  useEffect(() => {
+    if (!ready || autoCode || !items.length) return;
+    setAutoCode(true);
+    let code: string | null = null;
+    try {
+      code = new URLSearchParams(window.location.search).get('kod') ?? window.sessionStorage.getItem('akta-kod');
+      window.sessionStorage.removeItem('akta-kod');
+    } catch {
+      code = null;
+    }
+    if (code) {
+      setCodeInput(code.toUpperCase());
+      applyCode(code);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, autoCode, items.length]);
 
   if (!ready) return <div className="card h-48 animate-pulse" />;
 
@@ -152,7 +171,7 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
                   aria-label="Kod rabatowy"
                   maxLength={32}
                 />
-                <button type="button" onClick={applyCode} disabled={checking || !codeInput.trim()} className="btn-secondary py-2">
+                <button type="button" onClick={() => applyCode()} disabled={checking || !codeInput.trim()} className="btn-secondary py-2">
                   {checking ? '…' : 'Użyj'}
                 </button>
               </div>

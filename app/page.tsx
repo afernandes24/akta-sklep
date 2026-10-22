@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CaseCard, ComingSoonCard } from '@/components/case/CaseCard';
+import { CaseCardMini } from '@/components/case/CaseCardMini';
 import { HeroVisual } from '@/components/home/HeroVisual';
 import { HowItWorks } from '@/components/home/HowItWorks';
 import { InvestigationFlow } from '@/components/home/InvestigationFlow';
@@ -10,12 +11,17 @@ import { getCaseRatings } from '@/lib/reviews';
 import { BundlesSection } from '@/components/cart/BundlesSection';
 import { FreeCaseCta } from '@/components/newsletter/FreeCaseCta';
 import { siteConfig } from '@/lib/config';
+import { PromoBanner } from '@/components/home/PromoBanner';
+import { getBestsellers, getHomePromo, HOME_PROMO } from '@/lib/promo';
 
 export const revalidate = 60;
 
 export default async function HomePage() {
   const [cases, ratings] = await Promise.all([getPublishedCases(), getCaseRatings()]);
   const first = cases[0];
+  const [promo, bestsellers] = await Promise.all([getHomePromo(cases).catch(() => null), getBestsellers(cases).catch(() => cases.slice(0, 3))]);
+  const bestIds = new Set(bestsellers.map((c) => c.id));
+  const others = cases.filter((c) => !bestIds.has(c.id)).slice(0, 3);
 
   return (
     <>
@@ -29,6 +35,18 @@ export default async function HomePage() {
           ...(siteConfig.contactEmail ? { email: siteConfig.contactEmail } : {}),
         }}
       />
+
+      {/* PROMOCJA (znika sama, gdy kod wygaśnie) */}
+      {promo && (
+        <PromoBanner
+          eyebrow={HOME_PROMO.eyebrow}
+          code={promo.code}
+          percentOff={promo.percentOff}
+          amountOffGrosze={promo.amountOffGrosze}
+          validUntil={promo.validUntil}
+          c={promo.case}
+        />
+      )}
 
       {/* HERO */}
       <section className="container-page grid items-center gap-12 pb-16 pt-12 sm:pt-20 lg:grid-cols-[1.1fr_1fr] lg:gap-8">
@@ -61,6 +79,26 @@ export default async function HomePage() {
         <HeroVisual />
       </section>
 
+      {/* BESTSELLERY */}
+      {bestsellers.length > 0 && (
+        <section className="container-page pb-4 pt-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="eyebrow">Najczęściej wybierane</p>
+              <h2 className="mt-2 text-3xl font-bold sm:text-4xl">Bestsellery</h2>
+            </div>
+            <Link href="/sprawy" className="text-sm text-brass-300 underline-offset-4 hover:underline">
+              Wszystkie sprawy →
+            </Link>
+          </div>
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {bestsellers.map((c, i) => (
+              <CaseCardMini key={c.id} c={c} rank={i + 1} rating={ratings[c.id]} />
+            ))}
+          </div>
+        </section>
+      )}
+
       <HowItWorks />
 
       {/* SPRAWY */}
@@ -74,12 +112,14 @@ export default async function HomePage() {
             Wszystkie sprawy →
           </Link>
         </div>
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {cases.slice(0, 3).map((c, i) => (
-            <CaseCard key={c.id} c={c} priority={i === 0} rating={ratings[c.id]} />
-          ))}
-          {cases.length < 3 && <ComingSoonCard />}
-        </div>
+        {others.length > 0 && (
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {others.map((c) => (
+              <CaseCard key={c.id} c={c} rating={ratings[c.id]} />
+            ))}
+            {others.length < 3 && <ComingSoonCard />}
+          </div>
+        )}
         <div className="mt-16">
           <BundlesSection cases={cases} />
         </div>
