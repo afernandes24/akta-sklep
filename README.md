@@ -1,4 +1,42 @@
-# Akta Detektywa — sklep z grami detektywistycznymi PDF
+# Akta Detektywa — sklep z grami detektywistycznymi
+
+Mój własny sklep internetowy ([aktadetektywa.pl](https://aktadetektywa.pl)) sprzedający gry detektywistyczne do wydruku w PDF. Projekt od zera do produkcji: sklep, płatności, konta klientów, panel admina, e-maile i zgodność z prawem e-commerce.
+
+![Strona główna](docs/screenshots/strona-glowna.png)
+
+## Funkcje
+
+**Dla klienta**
+- 🛒 Katalog z filtrami (dział, poziom trudności, czas gry), koszyk, pakiety i kody rabatowe
+- 💳 Płatności Stripe (karty, BLIK) lub Przelewy24, zakup także bez zakładania konta
+- 📥 Konto z biblioteką zakupionych spraw, PDF-y ze znakiem wodnym (e-mail + nr zamówienia)
+- 🌐 Wersja online akt w przeglądarce, nagrania audio, opinie klientów
+- ✉️ Potwierdzenia zamówień e-mailem (Resend), newsletter z darmową sprawą
+
+**Panel administratora**
+- 📦 Zarządzanie sprawami, plikami, zamówieniami, rabatami i opiniami
+- 📊 Statystyki odwiedzin bez cookies, mapa sprzedaży, ewidencja sprzedaży
+- 📱 Powiadomienia o zamówieniach na Telegram, kody QR z licznikiem skanów
+
+**Prawo i bezpieczeństwo**
+- 🔐 Supabase Auth + Row Level Security, klucze tylko po stronie serwera, rate limiting
+- 🍪 Baner zgód (Google Analytics i Meta Pixel ładowane dopiero po zgodzie), regulamin, polityka prywatności
+
+## Zrzuty ekranu
+
+| Katalog | Strona sprawy |
+|---|---|
+| ![Katalog](docs/screenshots/katalog.png) | ![Sprawa](docs/screenshots/sprawa.png) |
+
+<p align="center"><img src="docs/screenshots/mobile.png" alt="Wersja mobilna" width="300"></p>
+
+## Technologie
+
+**Next.js 15** (App Router, Server Actions) · **TypeScript** · **Tailwind CSS** · **Supabase** (PostgreSQL, Auth, Storage) · **Stripe** / **Przelewy24** · **Resend** · **Railway** · **Cloudflare**
+
+---
+
+# Dokumentacja techniczna
 
 Next.js 15 + Supabase (baza, konta, pliki) + Stripe lub Przelewy24.
 
