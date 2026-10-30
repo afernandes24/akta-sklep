@@ -9,6 +9,7 @@ type Code = {
   code: string;
   percent_off: number | null;
   amount_off_grosze: number | null;
+  second_percent_off?: number | null;
   min_items: number;
   valid_until: string | null;
   max_uses: number | null;
@@ -56,7 +57,7 @@ export default async function AdminDiscountsPage() {
                   <span className="font-mono font-bold text-brass-300">{c.code}</span>
                   {c.note && <span className="block text-xs text-muted">{c.note}</span>}
                 </td>
-                <td>{c.percent_off ? `−${c.percent_off}%` : `−${formatPrice(c.amount_off_grosze ?? 0)}`}</td>
+                <td>{c.second_percent_off ? `druga sprawa −${c.second_percent_off}%` : c.percent_off ? `−${c.percent_off}%` : `−${formatPrice(c.amount_off_grosze ?? 0)}`}</td>
                 <td className="text-xs text-paper-200">
                   od {c.min_items} {c.min_items === 1 ? 'sprawy' : 'spraw'}
                   {c.one_per_user ? ' · 1× na klienta' : ''}

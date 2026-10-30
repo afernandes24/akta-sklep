@@ -28,11 +28,13 @@ export function DiscountCodeForm() {
         <select name="type" className="input">
           <option value="percent">Procent (%)</option>
           <option value="amount">Kwota (zł)</option>
+          <option value="second">Druga sprawa taniej (%)</option>
         </select>
       </label>
       <label>
         <span className="label">Wartość</span>
         <input name="value" required className="input" placeholder="10" inputMode="decimal" />
+        <span className="mt-1 block text-xs text-muted">Przy „druga sprawa taniej”: np. 50 = tańsza z każdej pary za pół ceny (min. 2 sprawy).</span>
       </label>
       <label>
         <span className="label">Min. liczba spraw</span>

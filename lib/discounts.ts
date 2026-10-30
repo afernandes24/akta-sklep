@@ -9,11 +9,11 @@ export async function findValidCoupon(rawCode: string, userId?: string | null, e
   const code = normalizeCode(rawCode);
   if (!/^[A-Z0-9_-]{3,32}$/.test(code)) return { ok: false, error: 'Nieprawidłowy kod rabatowy.' };
   const db = createAdminClient();
-  const { data: c, error } = await db
-    .from('discount_codes')
-    .select('code, percent_off, amount_off_grosze, min_items, valid_until, max_uses, used_count, one_per_user, is_active')
-    .eq('code', code)
-    .maybeSingle();
+  const COLS = 'code, percent_off, amount_off_grosze, min_items, valid_until, max_uses, used_count, one_per_user, is_active';
+  let res = await db.from('discount_codes').select(`${COLS}, second_percent_off`).eq('code', code).maybeSingle();
+  // Baza bez kolumny second_percent_off (nie uruchomiono supabase/rabat-druga-sprawa.sql) — działamy po staremu
+  if (res.error) res = (await db.from('discount_codes').select(COLS).eq('code', code).maybeSingle()) as typeof res;
+  const { data: c, error } = res;
   if (error || !c || !c.is_active) return { ok: false, error: 'Taki kod nie istnieje albo jest nieaktywny.' };
   if (c.valid_until && new Date(c.valid_until as string) < new Date()) return { ok: false, error: 'Ten kod wygasł.' };
   if (c.max_uses) {
@@ -45,6 +45,7 @@ export async function findValidCoupon(rawCode: string, userId?: string | null, e
       code,
       percent_off: (c.percent_off as number | null) ?? null,
       amount_off_grosze: (c.amount_off_grosze as number | null) ?? null,
+      second_percent_off: ((c as { second_percent_off?: number | null }).second_percent_off as number | null) ?? null,
       min_items: c.min_items as number,
     },
   };

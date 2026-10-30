@@ -39,7 +39,12 @@ export async function createDiscountCode(_prev: CodeState, formData: FormData): 
 
   let percent_off: number | null = null;
   let amount_off_grosze: number | null = null;
-  if (type === 'percent') {
+  let second_percent_off: number | null = null;
+  if (type === 'second') {
+    const n = parseInt(value, 10);
+    if (!(n >= 1 && n <= 100)) return { error: 'Rabat na drugą sprawę: od 1 do 100 (%).' };
+    second_percent_off = n;
+  } else if (type === 'percent') {
     const n = parseInt(value, 10);
     if (!(n >= 1 && n <= 100)) return { error: 'Rabat procentowy: od 1 do 100.' };
     percent_off = n;
@@ -48,7 +53,7 @@ export async function createDiscountCode(_prev: CodeState, formData: FormData): 
     if (!g) return { error: 'Podaj kwotę rabatu, np. 10,00.' };
     amount_off_grosze = g;
   }
-  const minItems = Math.max(1, parseInt(String(formData.get('min_items') ?? '1'), 10) || 1);
+  const minItems = Math.max(second_percent_off ? 2 : 1, parseInt(String(formData.get('min_items') ?? '1'), 10) || 1);
   const maxUsesRaw = parseInt(String(formData.get('max_uses') ?? ''), 10);
   const until = String(formData.get('valid_until') ?? '');
 
@@ -56,13 +61,19 @@ export async function createDiscountCode(_prev: CodeState, formData: FormData): 
     code,
     percent_off,
     amount_off_grosze,
+    ...(second_percent_off ? { second_percent_off } : {}),
     min_items: minItems,
     max_uses: maxUsesRaw > 0 ? maxUsesRaw : null,
     valid_until: until ? new Date(`${until}T23:59:59+02:00`).toISOString() : null,
     one_per_user: formData.get('one_per_user') === 'on',
     note: String(formData.get('note') ?? '').trim() || null,
   });
-  if (error) return { error: error.code === '23505' ? 'Taki kod już istnieje.' : error.message };
+  if (error) {
+    if (error.code === '23505') return { error: 'Taki kod już istnieje.' };
+    if (second_percent_off && /second_percent_off|check constraint/i.test(error.message))
+      return { error: 'Najpierw uruchom w Supabase plik supabase/rabat-druga-sprawa.sql (nowy rodzaj rabatu).' };
+    return { error: error.message };
+  }
   revalidatePath('/admin/rabaty');
   return { ok: `Dodano kod ${code}.` };
 }

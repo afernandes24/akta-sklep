@@ -14,6 +14,8 @@ export interface CouponRule {
   code: string;
   percent_off: number | null;
   amount_off_grosze: number | null;
+  /** „Druga sprawa taniej”: co druga sprawa (tańsza z pary) −X%. */
+  second_percent_off?: number | null;
   min_items: number;
 }
 
@@ -34,7 +36,19 @@ export function volumeDiscount(subtotal: number, count: number) {
   return { amount: Math.round((subtotal * tier.percent) / 100), label: `Rabat ilościowy −${tier.percent}% (${count} ${count >= 5 ? 'spraw' : 'sprawy'})` };
 }
 
-export function couponDiscount(subtotal: number, count: number, c: CouponRule) {
+/** Rabat „druga sprawa taniej”: ceny od najwyższej, co druga pozycja (tańsza z każdej pary) −X%. */
+export function secondItemDiscount(prices: number[], percent: number) {
+  return [...prices].sort((a, b) => b - a).reduce((s, p, i) => (i % 2 === 1 ? s + Math.round((p * percent) / 100) : s), 0);
+}
+
+export function couponDiscount(prices: number[], c: CouponRule) {
+  const subtotal = prices.reduce((s, p) => s + p, 0);
+  const count = prices.length;
+  if (c.second_percent_off) {
+    const need = Math.max(2, c.min_items);
+    if (count < need) return { amount: 0, label: '', error: `Kod ${c.code} działa od ${need} spraw w koszyku — dodaj drugą sprawę.` };
+    return { amount: secondItemDiscount(prices, c.second_percent_off), label: `Kod ${c.code} (druga sprawa −${c.second_percent_off}%)` };
+  }
   if (count < c.min_items) return { amount: 0, label: '', error: `Kod ${c.code} działa od ${c.min_items} spraw w koszyku.` };
   const amount = c.percent_off ? Math.round((subtotal * c.percent_off) / 100) : Math.min(subtotal, c.amount_off_grosze ?? 0);
   const what = c.percent_off ? `−${c.percent_off}%` : `−${((c.amount_off_grosze ?? 0) / 100).toFixed(2).replace('.', ',')} zł`;
@@ -45,7 +59,7 @@ export function priceCart(prices: number[], coupon?: CouponRule | null): PriceBr
   const subtotal = prices.reduce((s, p) => s + p, 0);
   const count = prices.length;
   const vol = volumeDiscount(subtotal, count);
-  const cp = coupon ? couponDiscount(subtotal, count, coupon) : null;
+  const cp = coupon ? couponDiscount(prices, coupon) : null;
 
   let best: { amount: number; label: string; source: 'volume' | 'coupon' } | null = null;
   if (vol) best = { ...vol, source: 'volume' };
