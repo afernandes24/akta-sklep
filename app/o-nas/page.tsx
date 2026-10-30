@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 export const metadata: Metadata = {
-  title: 'O nas',
+  title: 'O nas – twórcy gier kryminalnych z Gdyni',
   description: 'Mały zespół z Gdyni, który tworzy fabularne gry detektywistyczne do druku: realistyczne akta, logiczne zagadki i jedno uczciwe rozwiązanie.',
   alternates: { canonical: '/o-nas' },
 };
@@ -28,7 +28,7 @@ const principles = [
 export default function AboutPage() {
   return (
     <>
-      <PageHeader eyebrow="Kim jesteśmy" title="O nas">
+      <PageHeader eyebrow="O nas" title="Twórcy gier detektywistycznych z Gdyni">
         Jesteśmy małym zespołem z Gdyni i tworzymy fabularne sprawy detektywistyczne do samodzielnego wydrukowania. Chcemy, żebyś po odłożeniu ostatniej
         kartki miał poczucie, że to ty rozwiązałeś sprawę — nie gra.
       </PageHeader>

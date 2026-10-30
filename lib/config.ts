@@ -6,6 +6,10 @@ export const siteConfig = {
     'Fabularne gry detektywistyczne do druku. Pobierz akta sprawy w PDF, wydrukuj dowody, przesłuchaj podejrzanych i sam wskaż winnego.',
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'afernandes2004@icloud.com',
   locale: 'pl_PL',
+  /** Profile w mediach społecznościowych (JSON-LD sameAs). Ustaw w zmiennych środowiskowych, np. NEXT_PUBLIC_TIKTOK_URL=https://www.tiktok.com/@... */
+  social: [process.env.NEXT_PUBLIC_TIKTOK_URL, process.env.NEXT_PUBLIC_INSTAGRAM_URL, process.env.NEXT_PUBLIC_FACEBOOK_URL].filter(
+    (u): u is string => Boolean(u && /^https:\/\//.test(u)),
+  ),
 };
 
 export function isSupabaseConfigured(): boolean {

@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { CookieSettingsLink } from '../consent/CookieBanner';
 import { siteConfig } from '@/lib/config';
+import { GUIDES } from '@/lib/guides';
 import { Logo } from './Logo';
 
 export function Footer() {
   return (
     <footer className="mt-24 border-t border-ink-800 bg-ink-950">
-      <div className="container-page grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="container-page grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-[1.6fr_repeat(4,minmax(0,1fr))]">
         <div className="sm:col-span-2 lg:col-span-1">
           <Logo />
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">
@@ -22,6 +23,7 @@ export function Footer() {
             ['/koszyk', 'Koszyk'],
           ]}
         />
+        <FooterCol title="Poradniki" links={GUIDES.map((g) => [g.href, g.label] as [string, string])} />
         <FooterCol
           title="Konto"
           links={[
@@ -57,7 +59,7 @@ export function Footer() {
 function FooterCol({ title, links }: { title: string; links: [string, string][] }) {
   return (
     <div>
-      <h2 className="eyebrow mb-4 font-mono">{title}</h2>
+      <p className="eyebrow mb-4 font-mono">{title}</p>
       <ul className="space-y-2.5 text-sm">
         {links.map(([href, label]) => (
           <li key={href}>

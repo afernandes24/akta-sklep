@@ -37,7 +37,23 @@ export const faq: { q: string; a: string }[] = [
   },
   {
     q: 'Ile osób może grać?',
-    a: 'Sprawę można rozwiązać samodzielnie lub w małej grupie — najlepiej sprawdza się w 1–4 osoby. Przy większej grupie warto wydrukować akta w dwóch kopiach.',
+    a: 'Sprawę można rozwiązać samodzielnie lub w grupie — w zależności od sprawy od 1 do 4 albo do 6 osób (liczba graczy jest podana przy każdej sprawie). Przy większej grupie warto wydrukować akta w dwóch kopiach.',
+  },
+  {
+    q: 'Czy to dobra gra dla dwojga?',
+    a: 'Tak — to jeden z najczęstszych sposobów grania. We dwoje dzielicie się aktami, porównujecie zeznania i spieracie o to, kto kłamie. Sprawa zajmuje zwykle 1–3 godziny, więc to gotowy pomysł na wieczór we dwoje.',
+  },
+  {
+    q: 'Czy sprawa nadaje się na prezent?',
+    a: 'Tak. Pliki dostajesz od razu po płatności, więc to dobry prezent także na ostatnią chwilę. Możesz wydrukować akta, włożyć je do koperty lub teczki i wręczyć jak prawdziwe dossier.',
+  },
+  {
+    q: 'Czym różni się od planszowej gry detektywistycznej?',
+    a: 'Rozgrywka jest podobna — analizujesz dowody, przesłuchania i szukasz winnego — ale nie czekasz na przesyłkę i nie płacisz za pudełko. Kupujesz PDF, drukujesz w domu i zaczynasz od razu, a akta możesz wydrukować ponownie, gdy chcesz zagrać z kimś innym.',
+  },
+  {
+    q: 'Czy gra nadaje się dla dzieci?',
+    a: 'Nie. Nasze sprawy są dla osób od 16 lat — to historie kryminalne, w których pojawia się śmierć, przemoc i trudne tematy. Dla młodszych graczy nie mamy obecnie osobnych spraw.',
   },
   {
     q: 'Ile trwa rozwiązanie sprawy?',

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CaseCard, ComingSoonCard } from '@/components/case/CaseCard';
 import { CaseCardMini } from '@/components/case/CaseCardMini';
@@ -16,6 +17,13 @@ import { getBestsellers, getHomePromo, HOME_PROMO } from '@/lib/promo';
 
 export const revalidate = 60;
 
+export const metadata: Metadata = {
+  title: { absolute: 'Gra detektywistyczna do druku PDF – Akta Detektywa' },
+  description:
+    'Gry kryminalne do druku w PDF: kup, pobierz, wydrukuj i rozwiąż sprawę. 1–6 graczy, 16+, 1–3 h. Na wieczór we dwoje, ze znajomymi i na prezent.',
+  alternates: { canonical: '/' },
+};
+
 export default async function HomePage() {
   const [cases, ratings] = await Promise.all([getPublishedCases(), getCaseRatings()]);
   const first = cases[0];
@@ -33,8 +41,10 @@ export default async function HomePage() {
           url: siteConfig.url,
           logo: `${siteConfig.url}/icon.svg`,
           ...(siteConfig.contactEmail ? { email: siteConfig.contactEmail } : {}),
+          ...(siteConfig.social.length ? { sameAs: siteConfig.social } : {}),
         }}
       />
+      <JsonLd data={{ '@context': 'https://schema.org', '@type': 'WebSite', name: siteConfig.name, url: siteConfig.url, inLanguage: 'pl-PL' }} />
 
       {/* PROMOCJA (znika sama, gdy kod wygaśnie) */}
       {promo && (
@@ -51,14 +61,14 @@ export default async function HomePage() {
       {/* HERO */}
       <section className="container-page grid items-center gap-12 pb-16 pt-12 sm:pt-20 lg:grid-cols-[1.1fr_1fr] lg:gap-8">
         <div>
-          <p className="eyebrow">Gry detektywistyczne do druku · PDF</p>
-          <h1 className="mt-4 text-5xl font-bold leading-[1.05] sm:text-6xl lg:text-7xl">
+          <h1 className="eyebrow">Gry detektywistyczne do druku · PDF</h1>
+          <p className="mt-4 font-serif text-5xl font-bold leading-[1.05] text-paper-50 [text-wrap:balance] sm:text-6xl lg:text-7xl">
             Twoja sprawa.
             <br />
             Twoje śledztwo.
             <br />
             <span className="text-brass-400">Twoja dedukcja.</span>
-          </h1>
+          </p>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-paper-200 sm:text-xl">
             Wydrukuj akta, przeanalizuj dowody, przesłuchaj podejrzanych i odkryj prawdę.
           </p>

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { getPublishedCases } from '@/lib/cases';
 import { siteConfig } from '@/lib/config';
+import { GUIDES } from '@/lib/guides';
 
 export const revalidate = 3600;
 
@@ -13,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly' as const,
       priority: p === '' ? 1 : p === '/sprawy' ? 0.9 : 0.5,
     })),
+    ...GUIDES.map((g) => ({ url: `${siteConfig.url}${g.href}`, changeFrequency: 'monthly' as const, priority: 0.7 })),
     ...cases.map((c) => ({
       url: `${siteConfig.url}/sprawy/${c.slug}`,
       lastModified: new Date(c.updated_at),

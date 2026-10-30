@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AddToCartButtons } from '@/components/cart/AddToCartButtons';
@@ -29,7 +30,9 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const c = await getPublishedCaseBySlug(slug);
   if (!c) return { title: 'Nie znaleziono sprawy' };
-  const title = c.seo_title || `AKTA #${c.case_number} — ${c.title} | gra detektywistyczna PDF`;
+  // Domyślny tytuł (gdy w bazie brak seo_title) — max ok. 60 znaków
+  const long = `${c.title} – gra detektywistyczna do druku | AKTA #${c.case_number}`;
+  const title = c.seo_title || (long.length <= 60 ? long : `${c.title} – gra detektywistyczna PDF | AKTA #${c.case_number}`);
   const description = c.seo_description || c.tagline;
   const cover = publicStorageUrl('covers', c.cover_path);
   return {
@@ -144,7 +147,10 @@ export default async function CasePage({ params }: Params) {
         </div>
         <div>
           <p className="eyebrow">Akta #{c.case_number}</p>
-          <h1 className="mt-2 text-4xl font-bold leading-tight sm:text-5xl">{c.title}</h1>
+          <h1 className="mt-2 text-4xl font-bold leading-tight sm:text-5xl">
+            {c.title}
+            <span className="mt-2 block font-sans text-lg font-normal text-muted">– sprawa kryminalna do druku</span>
+          </h1>
           {rating && (
             <a href="#opinie" className="mt-3 inline-block hover:opacity-80">
               <RatingBadge rating={rating} />
@@ -237,8 +243,15 @@ export default async function CasePage({ params }: Params) {
               <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 {images.map((img) => (
                   <figure key={img.id} className="overflow-hidden rounded-lg border border-ink-700 bg-ink-950">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={publicStorageUrl('previews', img.path)!} alt={img.caption || `Przykładowa strona — ${c.title}`} loading="lazy" className="w-full" />
+                    <Image
+                      src={publicStorageUrl('previews', img.path)!}
+                      alt={img.caption || `Przykładowa strona akt — ${c.title}`}
+                      width={1240}
+                      height={1754}
+                      sizes="(min-width:1024px) 25vw, (min-width:640px) 50vw, 100vw"
+                      loading="lazy"
+                      className="h-auto w-full"
+                    />
                     {img.caption && <figcaption className="px-4 py-3 text-sm text-muted">{img.caption}</figcaption>}
                   </figure>
                 ))}

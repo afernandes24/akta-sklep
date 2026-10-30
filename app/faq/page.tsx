@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { faq } from '@/lib/content/faq';
 
 export const metadata: Metadata = {
-  title: 'FAQ — najczęściej zadawane pytania',
+  title: 'FAQ – gry detektywistyczne do druku',
   description: 'Jak pobrać i wydrukować grę detektywistyczną PDF, ile trwa rozgrywka, ile osób może grać i co zrobić, gdy utkniesz w śledztwie.',
   alternates: { canonical: '/faq' },
 };
@@ -20,7 +20,7 @@ export default function FaqPage() {
           mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
         }}
       />
-      <PageHeader eyebrow="Pytania i odpowiedzi" title="FAQ" />
+      <PageHeader eyebrow="FAQ" title="Pytania o gry detektywistyczne do druku" />
       <section className="container-page max-w-3xl">
         <div className="divide-y divide-ink-800 rounded-xl border border-ink-700 bg-ink-900/60">
           {faq.map((f) => (
