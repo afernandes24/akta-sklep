@@ -1,31 +1,37 @@
 import { requireAdmin } from '@/lib/auth';
+import { getCampaignSends, getSubscribers } from '@/lib/campaign';
 import { formatDate } from '@/lib/format';
 import { getBuyers, getFollowupSettings } from '@/lib/followup';
-import { AutoForm, MailForms } from './MailForms';
+import { AutoForm, CampaignForm, MailForms } from './MailForms';
 
 export const dynamic = 'force-dynamic';
 
+const preview = (typ: string, e: string) => `/admin/maile/podglad?typ=${typ}&e=${encodeURIComponent(e)}`;
+
 export default async function AdminMailsPage() {
   await requireAdmin();
-  const [{ buyers, ready }, settings] = await Promise.all([getBuyers(), getFollowupSettings()]);
+  const [{ buyers, ready }, settings, subs, { sends }] = await Promise.all([getBuyers(), getFollowupSettings(), getSubscribers(), getCampaignSends()]);
   const pending = buyers.filter((b) => b.pendingOrderIds.length);
+  const sentBuyers = buyers.filter((b) => b.sentAt).sort((a, b) => (b.sentAt ?? '').localeCompare(a.sentAt ?? ''));
   const withConsent = pending.filter((b) => b.consentToken).length;
+  const campaignSent = sends.filter((s) => s.campaign === 'DRUGAGRATIS').length;
 
   return (
     <div className="max-w-3xl space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Maile do kupujących</h1>
+        <h1 className="text-3xl font-bold">Maile</h1>
         <p className="mt-2 text-sm text-muted">
-          Podziękowanie + prośba o opinię (link bez logowania). Osoby ze zgodą na newsletter dostają dodatkowo kod rabatowy i polecane sprawy — bez zgody
-          wysyłanie promocji mailem jest niezgodne z prawem. Każdy kupujący dostaje maila raz po zakupie — z sprawami, które sam kupił, i poleceniami tych, których jeszcze nie ma.
+          Mail po zakupie: podziękowanie + prośba o opinię (link bez logowania) — ze sprawami, które dana osoba kupiła. Kod rabatowy i polecenia dostają tylko
+          osoby ze zgodą na newsletter.
         </p>
       </div>
       {!ready && <p className="text-sm text-stamp-500">Najpierw uruchom w Supabase plik supabase/maile-po-zakupie.sql.</p>}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-4">
         {[
-          ['Kupujących razem', buyers.length],
+          ['Kupujących', buyers.length],
           ['Czeka na maila', pending.length],
-          ['W tym z kodem rabatowym', withConsent],
+          ['Wysłano po zakupie', sentBuyers.length],
+          ['Subskrybentów', subs.length],
         ].map(([l, v]) => (
           <div key={l} className="card p-4">
             <p className="font-mono text-[11px] uppercase tracking-widest text-muted">{l}</p>
@@ -33,17 +39,64 @@ export default async function AdminMailsPage() {
           </div>
         ))}
       </div>
+
       <AutoForm auto={settings.auto} code={settings.code} days={settings.days} ready={settings.ready} />
       <MailForms defaultCode={settings.code || 'DZIEKUJE30'} pending={pending.length} />
+
       {pending.length > 0 && (
         <section className="card p-5">
-          <h2 className="font-serif text-lg font-semibold">Kto dostanie maila</h2>
+          <h2 className="font-serif text-lg font-semibold">Czeka na maila po zakupie ({pending.length}{withConsent ? `, z kodem: ${withConsent}` : ''})</h2>
           <ul className="mt-3 divide-y divide-ink-800 text-sm">
             {pending.map((b) => (
-              <li key={b.email} className="flex flex-wrap justify-between gap-2 py-2">
+              <li key={b.email} className="flex flex-wrap items-center justify-between gap-2 py-2">
                 <span className="text-paper-100">{b.email}</span>
                 <span className="text-muted">
-                  {b.cases.map((c) => c.title).join(', ')} · {formatDate(b.lastPaidAt)} {b.consentToken ? '· 🎟 kod' : ''}
+                  {b.cases.map((c) => c.title).join(', ')} · kupione {formatDate(b.lastPaidAt)} {b.consentToken ? '· 🎟 kod' : ''} ·{' '}
+                  <a href={preview('zakup', b.email)} target="_blank" className="text-brass-300 hover:underline">
+                    podgląd
+                  </a>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="card p-5">
+        <h2 className="font-serif text-lg font-semibold">Wysłane maile po zakupie ({sentBuyers.length})</h2>
+        {sentBuyers.length === 0 ? (
+          <p className="mt-2 text-sm text-muted">Jeszcze nic nie wysłano.</p>
+        ) : (
+          <ul className="mt-3 divide-y divide-ink-800 text-sm">
+            {sentBuyers.map((b) => (
+              <li key={b.email} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <span className="text-paper-100">{b.email}</span>
+                <span className="text-muted">
+                  {b.cases.map((c) => c.title).join(', ')} · wysłano {formatDate(b.sentAt!)} {b.consentToken ? '· 🎟 z kodem' : '· bez kodu'} ·{' '}
+                  <a href={preview('zakup', b.email)} target="_blank" className="text-brass-300 hover:underline">
+                    podgląd
+                  </a>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <CampaignForm subscribers={subs.length} sent={campaignSent} />
+
+      {sends.length > 0 && (
+        <section className="card p-5">
+          <h2 className="font-serif text-lg font-semibold">Wysłane kampanie newslettera ({sends.length})</h2>
+          <ul className="mt-3 divide-y divide-ink-800 text-sm">
+            {sends.map((s) => (
+              <li key={s.campaign + s.email} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <span className="text-paper-100">{s.email}</span>
+                <span className="text-muted">
+                  <span className="font-mono">{s.campaign}</span> · {formatDate(s.sent_at)} ·{' '}
+                  <a href={`${preview('newsletter', s.email)}&kod=${s.campaign}`} target="_blank" className="text-brass-300 hover:underline">
+                    podgląd
+                  </a>
                 </span>
               </li>
             ))}

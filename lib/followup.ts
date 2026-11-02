@@ -25,6 +25,7 @@ export const reviewUrl = (email: string, extra = '') =>
 export interface Buyer {
   email: string;
   orderIds: string[];
+  sentAt: string | null; // kiedy ostatnio wysłano mail po zakupie
   pendingOrderIds: string[]; // zamówienia bez wysłanego maila
   cases: { id: string; slug: string; title: string }[];
   lastPaidAt: string;
@@ -52,9 +53,10 @@ export async function getBuyers(opts: { includeAdmins?: boolean } = {}): Promise
   for (const o of (res.data ?? []) as unknown as OrderRow[]) {
     if (!opts.includeAdmins && isAdminOrder(o, admins)) continue;
     const email = o.email.toLowerCase();
-    const b = map.get(email) ?? { email, orderIds: [], pendingOrderIds: [], cases: [], lastPaidAt: o.paid_at ?? '', consentToken: consent.get(email) ?? null };
+    const b = map.get(email) ?? { email, orderIds: [], sentAt: null, pendingOrderIds: [], cases: [], lastPaidAt: o.paid_at ?? '', consentToken: consent.get(email) ?? null };
     b.orderIds.push(o.id);
     if (!o.followup_sent_at) b.pendingOrderIds.push(o.id);
+    else if (!b.sentAt || o.followup_sent_at > b.sentAt) b.sentAt = o.followup_sent_at;
     if (o.paid_at && o.paid_at > b.lastPaidAt) b.lastPaidAt = o.paid_at;
     for (const it of o.order_items ?? []) if (it.cases && !b.cases.some((c) => c.id === it.cases!.id)) b.cases.push(it.cases);
     map.set(email, b);

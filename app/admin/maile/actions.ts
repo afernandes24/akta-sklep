@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/auth';
 import { getPublishedCases } from '@/lib/cases';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { campaignHtml, loadCases, sendCampaign } from '@/lib/campaign';
+import { sendEmail } from '@/lib/email';
 import { getBuyers, loadPromo, sendDueFollowups, sendFollowup, type Rec } from '@/lib/followup';
 
 export type MailState = { error?: string; ok?: string };
@@ -54,4 +56,29 @@ export async function saveAutoSettings(_prev: MailState, formData: FormData): Pr
   if (error) return { error: 'Najpierw uruchom w Supabase plik supabase/maile-automatyczne.sql.' };
   revalidatePath('/admin/maile');
   return { ok: auto ? `Włączone: mail wyjdzie sam ${days} ${days === 1 ? 'dzień' : 'dni'} po zakupie${code ? `, z kodem ${code}` : ''}.` : 'Automatyczne maile wyłączone.' };
+}
+
+// ─── Kampania do newslettera ─────────────────────────────────────────
+
+export async function sendCampaignTest(_prev: MailState, formData: FormData): Promise<MailState> {
+  const { user } = await requireAdmin();
+  const p = await promoFrom(formData);
+  if ('error' in p) return { error: p.error };
+  if (!p.promo) return { error: 'Podaj kod rabatowy kampanii.' };
+  const { subject, html } = campaignHtml({ email: user.email!, token: 'podglad' }, p.promo, await loadCases());
+  const ok = await sendEmail(user.email!, subject, html);
+  return ok ? { ok: `Wysłano próbny mail na ${user.email}.` } : { error: 'Nie udało się wysłać — sprawdź RESEND_API_KEY i EMAIL_FROM.' };
+}
+
+export async function sendCampaignAll(_prev: MailState, formData: FormData): Promise<MailState> {
+  await requireAdmin();
+  const p = await promoFrom(formData);
+  if ('error' in p) return { error: p.error };
+  if (!p.promo) return { error: 'Podaj kod rabatowy kampanii.' };
+  const r = await sendCampaign(p.promo, 60);
+  revalidatePath('/admin/maile');
+  if (!r.ready) return { error: 'Najpierw uruchom w Supabase plik supabase/kampania-newsletter.sql.' };
+  if (!r.sent && !r.failed) return { ok: 'Wszyscy subskrybenci dostali już tę kampanię.' };
+  const more = r.left ? ` Zostało jeszcze ${r.left} — kliknij ponownie.` : '';
+  return r.failed ? { error: `Wysłano ${r.sent}, nie udało się ${r.failed}. Kliknij ponownie.${more}` } : { ok: `Wysłano ${r.sent} maili.${more}` };
 }

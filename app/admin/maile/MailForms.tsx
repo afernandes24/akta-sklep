@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react';
 import { Notice } from '@/components/ui/PageHeader';
-import { type MailState, saveAutoSettings, sendFollowups, sendTestMail } from './actions';
+import { type MailState, saveAutoSettings, sendCampaignAll, sendCampaignTest, sendFollowups, sendTestMail } from './actions';
 
 function Msg({ s }: { s: MailState }) {
   return (
@@ -71,6 +71,42 @@ export function MailForms({ defaultCode, pending }: { defaultCode: string; pendi
           }}
         >
           {busy ? 'Wysyłam… (nie zamykaj strony)' : `2. Wyślij do kupujących (${pending})`}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+export function CampaignForm({ subscribers, sent }: { subscribers: number; sent: number }) {
+  const [t, tAction, tBusy] = useActionState<MailState, FormData>(sendCampaignTest, {});
+  const [a, aAction, aBusy] = useActionState<MailState, FormData>(sendCampaignAll, {});
+  const left = Math.max(0, subscribers - sent);
+  return (
+    <form className="card space-y-4 p-6">
+      <h2 className="font-serif text-xl font-semibold">Kampania do newslettera: druga sprawa za 0 zł</h2>
+      <p className="text-sm text-muted">
+        Do osób z potwierdzonym zapisem ({subscribers}). Kod <span className="font-mono text-brass-300">DRUGAGRATIS</span>: przy 2 sprawach tańsza za 0 zł. Każdy
+        dostaje tę kampanię raz — wysłano już: {sent}.
+      </p>
+      <label className="block">
+        <span className="label">Kod kampanii</span>
+        <input name="code" defaultValue="DRUGAGRATIS" className="input max-w-xs font-mono uppercase" />
+      </label>
+      <Msg s={t} />
+      <Msg s={a} />
+      <div className="flex flex-wrap gap-3">
+        <button formAction={tAction} className="btn-secondary" disabled={tBusy || aBusy}>
+          {tBusy ? 'Wysyłam…' : '1. Wyślij próbny do mnie'}
+        </button>
+        <button
+          formAction={aAction}
+          className="btn-primary"
+          disabled={aBusy || tBusy || left === 0}
+          onClick={(e) => {
+            if (!confirm(`Wysłać kampanię do ${left} subskrybentów?`)) e.preventDefault();
+          }}
+        >
+          {aBusy ? 'Wysyłam… (nie zamykaj strony)' : `2. Wyślij do subskrybentów (${left})`}
         </button>
       </div>
     </form>
