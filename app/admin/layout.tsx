@@ -18,6 +18,7 @@ const nav = [
   ['/admin/uzytkownicy', 'Użytkownicy'],
   ['/admin/opinie', 'Opinie'],
   ['/admin/rabaty', 'Rabaty'],
+  ['/admin/maile', 'Maile'],
   ['/admin/newsletter', 'Newsletter'],
   ['/admin/darmowa-sprawa', 'Darmowa sprawa'],
   ['/admin/qr', 'Kody QR'],

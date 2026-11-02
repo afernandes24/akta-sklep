@@ -223,10 +223,10 @@ export function regulamin(): LegalDoc {
           {
             ordered: true,
             list: [
-              'Opinię o Produkcie może dodać wyłącznie Klient, który kupił dany Produkt. Sprzedawca weryfikuje to automatycznie — formularz opinii jest dostępny tylko przy Produktach przypisanych do Konta na podstawie opłaconego zamówienia. Przy opublikowanej opinii widnieje oznaczenie „Zweryfikowany zakup”.',
+              'Opinię o Produkcie może dodać wyłącznie Klient, który kupił dany Produkt. Sprzedawca weryfikuje to automatycznie — formularz opinii jest dostępny tylko przy Produktach przypisanych do Konta na podstawie opłaconego zamówienia albo pod osobistym linkiem wysłanym po zakupie na adres e-mail podany w opłaconym zamówieniu. Przy opublikowanej opinii widnieje oznaczenie „Zweryfikowany zakup”.',
               'Opinia zawiera ocenę w skali 1–5, treść oraz podpis wybrany przez autora. Sprzedawca nie zmienia treści opinii i nie płaci za ich wystawianie.',
               'Przed publikacją opinie są sprawdzane pod kątem zgodności z niniejszym paragrafem. Sprzedawca publikuje wszystkie opinie zgodne z Regulaminem — zarówno pozytywne, jak i negatywne.',
-              'Sprzedawca może odmówić publikacji lub usunąć opinię, która: zdradza rozwiązanie sprawy, zawiera wulgaryzmy, treści obraźliwe lub bezprawne, dane osobowe osób trzecich, reklamy lub linki albo nie dotyczy Produktu. O odmowie autor jest informowany w zakładce „Moje sprawy”.',
+              'Sprzedawca może odmówić publikacji lub usunąć opinię, która: zdradza rozwiązanie sprawy, zawiera wulgaryzmy, treści obraźliwe lub bezprawne, dane osobowe osób trzecich, reklamy lub linki albo nie dotyczy Produktu. O odmowie autor jest informowany w zakładce „Moje sprawy” lub e-mailem.',
               'Autor może w każdej chwili edytować lub usunąć swoją opinię (usunięcie — na prośbę e-mailową). Edytowana opinia ponownie przechodzi weryfikację.',
             ],
           },

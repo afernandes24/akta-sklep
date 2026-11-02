@@ -1,3 +1,4 @@
+import { CodeFromUrl } from '@/components/cart/CodeFromUrl';
 import './globals.css';
 import localFont from 'next/font/local';
 
@@ -85,6 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CookieBanner />
           <Trackers />
           <PageBeacon />
+          <CodeFromUrl />
         </CartProvider>
       </body>
     </html>
