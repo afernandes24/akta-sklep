@@ -1,13 +1,13 @@
 import { requireAdmin } from '@/lib/auth';
 import { formatDate } from '@/lib/format';
-import { getBuyers } from '@/lib/followup';
-import { MailForms } from './MailForms';
+import { getBuyers, getFollowupSettings } from '@/lib/followup';
+import { AutoForm, MailForms } from './MailForms';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminMailsPage() {
   await requireAdmin();
-  const { buyers, ready } = await getBuyers();
+  const [{ buyers, ready }, settings] = await Promise.all([getBuyers(), getFollowupSettings()]);
   const pending = buyers.filter((b) => b.pendingOrderIds.length);
   const withConsent = pending.filter((b) => b.consentToken).length;
 
@@ -17,7 +17,7 @@ export default async function AdminMailsPage() {
         <h1 className="text-3xl font-bold">Maile do kupujących</h1>
         <p className="mt-2 text-sm text-muted">
           Podziękowanie + prośba o opinię (link bez logowania). Osoby ze zgodą na newsletter dostają dodatkowo kod rabatowy i polecane sprawy — bez zgody
-          wysyłanie promocji mailem jest niezgodne z prawem. Każdy kupujący dostaje maila tylko raz (po kolejnym zakupie — znowu).
+          wysyłanie promocji mailem jest niezgodne z prawem. Każdy kupujący dostaje maila raz po zakupie — z sprawami, które sam kupił, i poleceniami tych, których jeszcze nie ma.
         </p>
       </div>
       {!ready && <p className="text-sm text-stamp-500">Najpierw uruchom w Supabase plik supabase/maile-po-zakupie.sql.</p>}
@@ -33,7 +33,8 @@ export default async function AdminMailsPage() {
           </div>
         ))}
       </div>
-      <MailForms defaultCode="DZIEKUJE30" pending={pending.length} />
+      <AutoForm auto={settings.auto} code={settings.code} days={settings.days} ready={settings.ready} />
+      <MailForms defaultCode={settings.code || 'DZIEKUJE30'} pending={pending.length} />
       {pending.length > 0 && (
         <section className="card p-5">
           <h2 className="font-serif text-lg font-semibold">Kto dostanie maila</h2>

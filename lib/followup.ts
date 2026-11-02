@@ -37,7 +37,7 @@ type OrderRow = {
 };
 
 /** Kupujący pogrupowani po e-mailu (opłacone zamówienia, bez zwrotów i bez kont adminów). */
-export async function getBuyers(): Promise<{ buyers: Buyer[]; ready: boolean }> {
+export async function getBuyers(opts: { includeAdmins?: boolean } = {}): Promise<{ buyers: Buyer[]; ready: boolean }> {
   const db = createAdminClient();
   const cols = 'id, email, user_id, paid_at, order_items(case_id, cases(id, slug, title))';
   let res = await db.from('orders').select(`${cols}, followup_sent_at`).eq('status', 'paid').order('paid_at', { ascending: true }).limit(5000);
@@ -50,7 +50,7 @@ export async function getBuyers(): Promise<{ buyers: Buyer[]; ready: boolean }> 
   const consent = new Map((subs.data ?? []).map((s) => [String(s.email).toLowerCase(), String(s.token)]));
   const map = new Map<string, Buyer>();
   for (const o of (res.data ?? []) as unknown as OrderRow[]) {
-    if (isAdminOrder(o, admins)) continue;
+    if (!opts.includeAdmins && isAdminOrder(o, admins)) continue;
     const email = o.email.toLowerCase();
     const b = map.get(email) ?? { email, orderIds: [], pendingOrderIds: [], cases: [], lastPaidAt: o.paid_at ?? '', consentToken: consent.get(email) ?? null };
     b.orderIds.push(o.id);
@@ -168,12 +168,74 @@ export function recommendationsFor(b: Buyer, all: Rec[]): Rec[] {
   return all.filter((r) => !owned.has(r.slug)).slice(0, 3);
 }
 
+/**
+ * Wysyłka jednego maila. Zamówienia są najpierw „rezerwowane” (followup_sent_at),
+ * więc ten sam klient nie dostanie dwóch maili, nawet gdy wysyłka ruszy równolegle.
+ * Z parametrem `to` (mail próbny) nic nie jest zapisywane.
+ */
 export async function sendFollowup(b: Buyer, promo: Promo | null, all: Rec[], to?: string): Promise<boolean> {
   const recs = recommendationsFor(b, all);
   const { subject, html } = followupHtml(b, promo, recs);
-  const ok = await sendEmail(to ?? b.email, subject, html);
-  if (ok && !to && b.pendingOrderIds.length) {
-    await createAdminClient().from('orders').update({ followup_sent_at: new Date().toISOString() }).in('id', b.pendingOrderIds);
-  }
+  if (to) return sendEmail(to, subject, html);
+  if (!b.pendingOrderIds.length) return false;
+  const db = createAdminClient();
+  const now = new Date().toISOString();
+  const { data: claimed } = await db.from('orders').update({ followup_sent_at: now }).in('id', b.pendingOrderIds).is('followup_sent_at', null).select('id');
+  if (!claimed?.length) return false; // ktoś inny już wysłał
+  const ok = await sendEmail(b.email, subject, html).catch(() => false);
+  if (!ok) await db.from('orders').update({ followup_sent_at: null }).in('id', claimed.map((c) => c.id as string));
   return ok;
+}
+
+export interface FollowupSettings {
+  auto: boolean;
+  code: string;
+  days: number;
+}
+
+const DEFAULTS: FollowupSettings = { auto: false, code: 'DZIEKUJE30', days: 2 };
+
+export async function getFollowupSettings(): Promise<FollowupSettings & { ready: boolean }> {
+  const { data, error } = await createAdminClient().from('site_settings').select('followup_auto, followup_code, followup_days').eq('id', 1).maybeSingle();
+  if (error || !data) return { ...DEFAULTS, ready: !error };
+  return { auto: Boolean(data.followup_auto), code: String(data.followup_code ?? DEFAULTS.code), days: Number(data.followup_days ?? DEFAULTS.days), ready: true };
+}
+
+/** Wysyła maila wszystkim, którym się należy (kupili ≥ `days` dni temu i jeszcze nie dostali). */
+export async function sendDueFollowups(opts: { code: string; days: number; limit: number }) {
+  const [{ buyers, ready }, promo, cases] = await Promise.all([
+    getBuyers(),
+    loadPromo(opts.code),
+    createAdminClient().from('cases').select('slug, title, tagline, price_grosze, cover_path, case_number').eq('is_published', true).order('sort_order'),
+  ]);
+  if (!ready) return { ready, sent: 0, failed: 0, left: 0 };
+  const recs = (cases.data ?? []) as Rec[];
+  const cutoff = Date.now() - opts.days * 864e5;
+  const due = buyers.filter((b) => b.pendingOrderIds.length && b.lastPaidAt && new Date(b.lastPaidAt).getTime() <= cutoff);
+  let sent = 0, failed = 0;
+  for (const b of due.slice(0, opts.limit)) {
+    (await sendFollowup(b, promo, recs)) ? sent++ : failed++;
+    await new Promise((r) => setTimeout(r, 600)); // limit Resend: ok. 2 maile na sekundę
+  }
+  return { ready, sent, failed, left: Math.max(0, due.length - opts.limit) };
+}
+
+let lastAutoRun = 0;
+/**
+ * Automatyczne maile po zakupie — uruchamiane „przy okazji” ruchu na stronie,
+ * najwyżej raz na 30 minut. Nie wymaga osobnego crona.
+ */
+export function maybeRunAutoFollowups() {
+  if (Date.now() - lastAutoRun < 30 * 60 * 1000) return;
+  lastAutoRun = Date.now();
+  void (async () => {
+    try {
+      const s = await getFollowupSettings();
+      if (!s.ready || !s.auto) return;
+      const r = await sendDueFollowups({ code: s.code, days: s.days, limit: 20 });
+      if (r.sent || r.failed) console.log('[followup] auto', r);
+    } catch (e) {
+      console.error('[followup] auto', e);
+    }
+  })();
 }

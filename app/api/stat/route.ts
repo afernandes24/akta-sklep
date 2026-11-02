@@ -7,6 +7,7 @@ import { EXCLUDE_COOKIE, EXCLUDE_MAX_AGE } from '@/lib/exclude';
 import { getUser } from '@/lib/auth';
 import { isAdminUser } from '@/lib/online';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { maybeRunAutoFollowups } from '@/lib/followup';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -76,6 +77,8 @@ export async function POST(req: Request) {
   // lat/lon (punkty miast na mapie) — jeśli baza nie ma jeszcze tych kolumn, zapis idzie bez nich
   const { error } = await db.from('page_views').insert({ ...row, lat: geo.lat, lon: geo.lon });
   if (error) await db.from('page_views').insert(row);
+  // Przy okazji ruchu: automatyczne maile po zakupie (najwyżej raz na 30 min)
+  maybeRunAutoFollowups();
   // Raz na jakiś czas sprzątamy dane starsze niż 13 miesięcy (tak mówi polityka prywatności)
   if (Math.random() < 0.01) await db.from('page_views').delete().lt('at', new Date(Date.now() - 400 * 864e5).toISOString());
   return ok();
