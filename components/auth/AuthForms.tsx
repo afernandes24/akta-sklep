@@ -1,5 +1,6 @@
 'use client';
 
+import { EmailTypoHint } from '@/components/ui/EmailTypoHint';
 import Link from 'next/link';
 import { useActionState } from 'react';
 import { type AuthState, requestPasswordReset, signIn, signUp, updatePassword } from '@/app/auth/actions';
@@ -62,6 +63,7 @@ export function RegisterForm({ next }: { next: string }) {
           E-mail
         </label>
         <input id="email" name="email" type="email" required autoComplete="email" className="input" />
+        <EmailTypoHint inputId="email" />
       </div>
       <div>
         <label htmlFor="password" className="label">

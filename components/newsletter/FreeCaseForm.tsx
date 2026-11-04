@@ -1,5 +1,6 @@
 'use client';
 
+import { EmailTypoHint } from '@/components/ui/EmailTypoHint';
 import Link from 'next/link';
 import { useActionState } from 'react';
 import { type SubscribeState, subscribe } from '@/app/darmowa-sprawa/actions';
@@ -46,6 +47,7 @@ export function FreeCaseForm({ source = 'darmowa-sprawa', consentText, compact =
           {pending ? 'Wysyłam…' : 'Wyślij mi sprawę'}
         </button>
       </div>
+      <EmailTypoHint inputId={`nl-${source}`} />
     </form>
   );
 }

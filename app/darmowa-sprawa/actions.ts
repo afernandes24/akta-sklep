@@ -5,6 +5,7 @@ import { isServiceRoleConfigured } from '@/lib/config';
 import { NEWSLETTER_CONSENT_TEXT, sendConfirmationEmail, sendFreeCaseEmail } from '@/lib/newsletter';
 import { allow, clientIp } from '@/lib/rate-limit';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { hasImpossibleTld, suggestEmail } from '@/lib/email-typo';
 
 export type SubscribeState = { error?: string; ok?: boolean };
 
@@ -17,6 +18,10 @@ export async function subscribe(_prev: SubscribeState, formData: FormData): Prom
 
   const email = String(formData.get('email') ?? '').trim().toLowerCase();
   if (!EMAIL_RE.test(email) || email.length > 200) return { error: 'Podaj poprawny adres e-mail.' };
+  if (hasImpossibleTld(email)) {
+    const fix = suggestEmail(email);
+    return { error: `Adres ma literówkę${fix ? ` — chodziło o ${fix}?` : '.'}` };
+  }
   if (formData.get('consent') !== 'on') return { error: 'Zaznacz zgodę na newsletter — bez niej nie możemy wysłać sprawy.' };
 
   // Ochrona przed zasypywaniem cudzej skrzynki mailami: 1 wiadomość na adres na 10 min, 5 zapisów z jednego IP na godzinę.

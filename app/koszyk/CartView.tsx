@@ -1,5 +1,6 @@
 'use client';
 
+import { EmailTypoHint } from '@/components/ui/EmailTypoHint';
 import Link from 'next/link';
 import { useActionState, useState, useTransition, useEffect } from 'react';
 import { useCart } from '@/components/cart/CartProvider';
@@ -71,7 +72,7 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
     let code: string | null = null;
     try {
       code = new URLSearchParams(window.location.search).get('kod') ?? window.sessionStorage.getItem('akta-kod');
-      window.sessionStorage.removeItem('akta-kod');
+      // Kod zostaje w pamięci karty — gdy klient wróci po drugą sprawę, koszyk wpisze go ponownie
     } catch {
       code = null;
     }
@@ -221,6 +222,7 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
                   className="input"
                   maxLength={200}
                 />
+                <EmailTypoHint inputId="checkout-email" />
                 <p className="mt-1.5 text-xs text-muted">
                   Bez zakładania konta. Po płatności od razu pobierzesz pliki, a link do nich wyślemy też na ten adres.{' '}
                   <Link href="/logowanie?next=/koszyk" className="text-brass-300 underline underline-offset-2">

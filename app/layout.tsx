@@ -79,6 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <CartProvider>
           <Header />
+          <CodeFromUrl />
           <main id="tresc" className="flex-1">
             {children}
           </main>
@@ -86,7 +87,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CookieBanner />
           <Trackers />
           <PageBeacon />
-          <CodeFromUrl />
         </CartProvider>
       </body>
     </html>

@@ -14,6 +14,7 @@ import type { CouponRule } from '@/lib/pricing';
 import { getPaymentProvider, getPaymentProviderId } from '@/lib/payments';
 import { channelOf, parseTouch, type Touch } from '@/lib/attribution';
 import { visitorHash } from '@/lib/visitor';
+import { hasImpossibleTld, suggestEmail } from '@/lib/email-typo';
 
 export type CheckoutState = { error?: string };
 
@@ -30,6 +31,10 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
   const buyerEmail = user?.email ?? guestEmail;
   if (!user) {
     if (!EMAIL_RE.test(guestEmail)) return { error: 'Podaj poprawny adres e-mail — wyślemy na niego link do plików.' };
+    if (hasImpossibleTld(guestEmail)) {
+      const fix = suggestEmail(guestEmail);
+      return { error: `Adres e-mail ma literówkę na końcu${fix ? ` — chodziło o ${fix}?` : '.'} Popraw go, żeby link do plików na pewno doszedł.` };
+    }
     if (!allow(`guest-checkout:${await clientIp()}`, 10, 60 * 60 * 1000)) return { error: 'Zbyt wiele prób. Spróbuj ponownie za chwilę.' };
   }
 

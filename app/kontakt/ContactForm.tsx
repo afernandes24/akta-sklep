@@ -1,5 +1,6 @@
 'use client';
 
+import { EmailTypoHint } from '@/components/ui/EmailTypoHint';
 import { useActionState } from 'react';
 import { Notice } from '@/components/ui/PageHeader';
 import { type ContactState, sendContactMessage } from './actions';
@@ -26,6 +27,7 @@ export function ContactForm() {
             E-mail
           </label>
           <input id="email" name="email" type="email" required autoComplete="email" className="input" />
+          <EmailTypoHint inputId="email" />
         </div>
       </div>
       <div>
