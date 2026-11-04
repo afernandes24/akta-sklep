@@ -12,6 +12,8 @@ import { allow, clientIp } from '@/lib/rate-limit';
 import { createOrder, fulfillOrder, markOrderStatus, setProviderRef } from '@/lib/orders';
 import type { CouponRule } from '@/lib/pricing';
 import { getPaymentProvider, getPaymentProviderId } from '@/lib/payments';
+import { channelOf, parseTouch, type Touch } from '@/lib/attribution';
+import { visitorHash } from '@/lib/visitor';
 
 export type CheckoutState = { error?: string };
 
@@ -75,10 +77,13 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
     } else {
       orderIdForCleanup = result.order.id;
       // Przybliżona lokalizacja kupującego (kraj / województwo / miasto) — do mapy w statystykach
-      const geo = geoFromHeaders(await headers());
+      const h = await headers();
+      const geo = geoFromHeaders(h);
       const geoRow = { geo_country: geo.country, geo_region: geo.region, geo_city: geo.city };
       const geoRes = await createAdminClient().from('orders').update({ ...geoRow, geo_lat: geo.lat, geo_lon: geo.lon }).eq('id', result.order.id);
       if (geoRes.error) await createAdminClient().from('orders').update(geoRow).eq('id', result.order.id);
+      // Skąd przyszedł kupujący (reklama / mail / Google…) — do statystyk „co sprzedaje”
+      await saveOrderSource(result.order.id, parseTouch(formData.get('src')), h).catch((e) => console.error('[checkout:source]', e));
       const { redirectUrl, providerRef } = await provider.createCheckout({
         order: result.order,
         items: result.items,
@@ -131,4 +136,42 @@ export async function freshCartPrices(keys: string[]): Promise<Record<string, nu
     else out[w.key] = w.format === 'online' ? ((c.online_price_grosze as number | null) ?? (c.price_grosze as number)) : (c.price_grosze as number);
   }
   return out;
+}
+
+/** Zapisuje źródło zamówienia. Gdy przeglądarka nic nie przekazała — szuka dzisiejszego wejścia tej samej osoby w statystykach. */
+async function saveOrderSource(orderId: string, touch: Touch | null, h: Headers) {
+  const db = createAdminClient();
+  const visitor = visitorHash(h);
+  let t = touch;
+  if (!t) {
+    const { data } = await db
+      .from('page_views')
+      .select('path, utm_source, utm_medium, utm_campaign, referrer_host')
+      .eq('visitor', visitor)
+      .order('at', { ascending: true })
+      .limit(200);
+    const rows = (data ?? []) as { path: string; utm_source: string | null; utm_medium: string | null; utm_campaign: string | null; referrer_host: string | null }[];
+    const hit = rows.find((r) => r.utm_source || r.utm_medium || r.utm_campaign || (r.referrer_host && !/stripe\.com$/.test(r.referrer_host)));
+    if (hit) t = { s: hit.utm_source, m: hit.utm_medium, c: hit.utm_campaign, ref: hit.referrer_host, lp: hit.path };
+    else if (rows.length) t = { lp: rows[0].path };
+  }
+  const channel = t && (t.s || t.m || t.c || t.cid || t.ref) ? channelOf(t) : noSourceChannel(t);
+  // Kolumny z supabase/statystyki-zrodla.sql — bez nich zapis po prostu się nie uda (zamówienie działa normalnie)
+  await db
+    .from('orders')
+    .update({
+      src_channel: channel,
+      src_source: t?.s ?? t?.ref ?? null,
+      src_medium: t?.m ?? null,
+      src_campaign: t?.c ?? null,
+      src_content: t?.ct ?? null,
+      src_landing: t?.lp ?? null,
+      visitor,
+    })
+    .eq('id', orderId);
+}
+
+/** Bez żadnej informacji o źródle: ktoś wpisał adres / ma zakładkę (albo przyszedł innego dnia). */
+function noSourceChannel(t: Touch | null): string {
+  return t ? 'Bezpośrednio' : 'Nieznane';
 }

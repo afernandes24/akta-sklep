@@ -9,6 +9,7 @@ import { formatPrice } from '@/lib/format';
 import { DIGITAL_CONSENT_TEXT } from '@/lib/legal/documents';
 import { type CouponRule, priceCart, VOLUME_TIERS } from '@/lib/pricing';
 import { cartKey } from '@/lib/types';
+import { TOUCH_KEY } from '@/lib/attribution';
 import { type CheckoutState, checkCoupon, startCheckout, freshCartPrices } from './actions';
 
 interface Props {
@@ -29,6 +30,15 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
     setSynced(true);
     if (items.length) freshCartPrices(items.map((i) => cartKey(i))).then(sync).catch(() => undefined);
   }, [ready, synced, items, sync]);
+  // Źródło wejścia (reklama / mail / Google…) — tylko z tej karty przeglądarki
+  const [touch, setTouch] = useState('');
+  useEffect(() => {
+    try {
+      setTouch(window.sessionStorage.getItem(TOUCH_KEY) ?? '');
+    } catch {
+      setTouch('');
+    }
+  }, []);
   const [state, action, pending] = useActionState<CheckoutState, FormData>(startCheckout, {});
   const [coupon, setCoupon] = useState<CouponRule | null>(null);
   const [codeInput, setCodeInput] = useState('');
@@ -189,6 +199,7 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
             ))}
             {coupon && price.source === 'coupon' && <input type="hidden" name="coupon" value={coupon.code} />}
             <input type="hidden" name="expectedTotal" value={price.total} />
+            <input type="hidden" name="src" value={touch} />
             {state.error && <Notice tone="error">{state.error}</Notice>}
             {!paymentsReady && <Notice tone="warning">Płatności nie są jeszcze skonfigurowane.</Notice>}
             {testMode && <Notice tone="warning">Tryb testowy — żadne pieniądze nie zostaną pobrane.</Notice>}

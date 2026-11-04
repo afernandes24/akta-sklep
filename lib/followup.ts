@@ -108,7 +108,8 @@ export function followupHtml(b: Buyer, promo: Promo | null, recs: Rec[]): { subj
     .map((n) => `<a href="${reviewUrl(b.email, `&ocena=${n}${main ? `&s=${main.slug}` : ''}`)}" style="text-decoration:none;font-size:36px;color:#c9a227;padding:0 4px" title="${n} z 5">★</a>`)
     .join('');
   const withPromo = Boolean(promo && b.consentToken);
-  const q = withPromo ? `?kod=${encodeURIComponent(promo!.code)}` : '';
+  // utm_* — w statystykach zakupy z tego maila liczą się jako kanał „Mail”
+  const q = `?${withPromo ? `kod=${encodeURIComponent(promo!.code)}&` : ''}utm_source=mail&utm_medium=email&utm_campaign=po-zakupie`;
   const recCells = recs
     .map((r) => {
       const img = publicStorageUrl('covers', r.cover_path);

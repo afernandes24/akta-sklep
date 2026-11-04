@@ -36,7 +36,7 @@ export async function getCampaignSends(campaign?: string) {
 }
 
 export function campaignHtml(sub: Subscriber, promo: Promo, cases: Rec[]): { subject: string; html: string } {
-  const q = `?kod=${encodeURIComponent(promo.code)}`;
+  const q = `?kod=${encodeURIComponent(promo.code)}&utm_source=mail&utm_medium=email&utm_campaign=newsletter-${encodeURIComponent(promo.code.toLowerCase())}`;
   const cell = (r: Rec) => {
     const img = publicStorageUrl('covers', r.cover_path);
     const src = img ? (img.startsWith('http') ? img : siteConfig.url + img) : null;

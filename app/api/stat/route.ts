@@ -1,4 +1,3 @@
-import { createHash } from 'crypto';
 import { NextResponse } from 'next/server';
 import { isServiceRoleConfigured, siteConfig } from '@/lib/config';
 import { classifySource, deviceFromUA, geoFromHeaders } from '@/lib/stats-shared';
@@ -8,11 +7,11 @@ import { getUser } from '@/lib/auth';
 import { isAdminUser } from '@/lib/online';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { maybeRunAutoFollowups } from '@/lib/followup';
+import { BOT_UA, excludedCountries, visitorHash } from '@/lib/visitor';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const BOT = /bot|crawl|spider|slurp|preview|facebookexternalhit|headless|lighthouse|pingdom|uptime|curl|wget|python|axios/i;
 const ok = () => new NextResponse(null, { status: 204 });
 
 export async function POST(req: Request) {
@@ -30,8 +29,11 @@ export async function POST(req: Request) {
     }
   }
   const ua = req.headers.get('user-agent') ?? '';
-  if (!ua || BOT.test(ua)) return ok();
-  let body: { p?: string; q?: string; r?: string };
+  if (!ua || BOT_UA.test(ua)) return ok();
+  // Wejścia z krajów spoza sklepu (domyślnie USA) to prawie zawsze boty sprawdzające reklamy i linki
+  const geo = geoFromHeaders(req.headers);
+  if (geo.country && excludedCountries().has(geo.country)) return ok();
+  let body: { p?: string; q?: string; r?: string; w?: number };
   try {
     body = JSON.parse((await req.text()).slice(0, 2000));
   } catch {
@@ -39,14 +41,10 @@ export async function POST(req: Request) {
   }
   const path = String(body.p ?? '').slice(0, 200);
   if (!path.startsWith('/') || path.startsWith('/admin') || path.startsWith('/api')) return ok();
+  // Przeglądarka sterowana automatycznie (navigator.webdriver) — bot
+  if (body.w === 1) return ok();
 
-  const ip = (req.headers.get('cf-connecting-ip') ?? req.headers.get('x-forwarded-for')?.split(',')[0] ?? '').trim();
-  const day = new Date().toISOString().slice(0, 10);
-  // Dzienny anonimowy identyfikator — adresu IP nie zapisujemy, a skrót zmienia się każdego dnia.
-  const visitor = createHash('sha256')
-    .update(`${day}|${ip}|${ua}|${process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''}`)
-    .digest('hex')
-    .slice(0, 16);
+  const visitor = visitorHash(req.headers);
   if (!allow(`stat:${visitor}`, 120, 10 * 60 * 1000)) return ok();
 
   const qs = new URLSearchParams(String(body.q ?? ''));
@@ -58,7 +56,7 @@ export async function POST(req: Request) {
   } catch {
     refHost = null;
   }
-  const geo = geoFromHeaders(req.headers);
+  const cid = qs.has('fbclid') ? 'fb' : qs.has('gclid') || qs.has('gbraid') || qs.has('wbraid') ? 'g' : qs.has('ttclid') ? 'tt' : null;
 
   const db = createAdminClient();
   const row = {
@@ -74,8 +72,9 @@ export async function POST(req: Request) {
     region: geo.region,
     city: geo.city,
   };
-  // lat/lon (punkty miast na mapie) — jeśli baza nie ma jeszcze tych kolumn, zapis idzie bez nich
-  const { error } = await db.from('page_views').insert({ ...row, lat: geo.lat, lon: geo.lon });
+  // Nowe kolumny (lat/lon, utm_content, click_id) dochodzą z plików SQL — jeśli ich jeszcze nie ma, zapis idzie bez nich
+  let { error } = await db.from('page_views').insert({ ...row, lat: geo.lat, lon: geo.lon, utm_content: qs.get('utm_content')?.trim().slice(0, 120) || null, click_id: cid });
+  if (error) ({ error } = await db.from('page_views').insert({ ...row, lat: geo.lat, lon: geo.lon }));
   if (error) await db.from('page_views').insert(row);
   // Przy okazji ruchu: automatyczne maile po zakupie (najwyżej raz na 30 min)
   maybeRunAutoFollowups();
