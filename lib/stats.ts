@@ -3,7 +3,7 @@ import { createAdminClient } from './supabase/admin';
 import { getAdmins, isAdminOrder } from './admins';
 import { cityCoords } from './pl-cities';
 import { fixText } from './stats-shared';
-import { AD_ONLY_CODES, channelOf, CHANNELS, type Channel } from './attribution';
+import { AD_ONLY_CODES, MAIL_ONLY_CODES, channelOf, CHANNELS, type Channel } from './attribution';
 import { excludedCountries } from './visitor';
 import { powiatAt } from './geo-locate';
 
@@ -206,7 +206,11 @@ export async function getStats(days: number): Promise<Stats> {
   // Kanał zamówienia: zapisany przy zakupie → dzisiejsze wejście tej samej osoby → kod tylko z reklam → nieznany
   const orderChannel = (o: Ord): Channel => {
     let ch: Channel = isChannel(o.src_channel) ? o.src_channel : o.visitor && channelByVisitor.has(o.visitor) ? channelByVisitor.get(o.visitor)! : 'Nieznane';
-    if ((ch === 'Nieznane' || ch === 'Bezpośrednio') && o.discount_code && AD_ONLY_CODES.includes(o.discount_code.toUpperCase())) ch = 'Meta Ads';
+    const code = o.discount_code?.toUpperCase();
+    if ((ch === 'Nieznane' || ch === 'Bezpośrednio') && code && AD_ONLY_CODES.includes(code)) ch = 'Meta Ads';
+    if ((ch === 'Nieznane' || ch === 'Bezpośrednio') && code && MAIL_ONLY_CODES.includes(code)) ch = 'Mail';
+    // Aplikacja Gmail na Androidzie przedstawia się jak Google — to mail, nie wyszukiwarka
+    if (ch === 'Wyszukiwarka' && /android\.gm|outlook/.test(o.src_source ?? '')) ch = 'Mail';
     return ch;
   };
   const orderAd = (o: Ord) => o.src_content ?? (o.visitor ? firstByVisitor.get(o.visitor)?.utm_content : null) ?? null;

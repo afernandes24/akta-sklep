@@ -4,7 +4,7 @@ export function classifySource(utmSource: string | null, refHost: string | null)
   if (!refHost) return 'bezpośrednio';
   const h = refHost.toLowerCase();
   const map: [RegExp, string][] = [
-    [/(^|\.)(mail\.google\.com|poczta\.(onet|wp|interia|o2)\.pl|outlook\.(live|office)\.com|mail\.yahoo\.com|poczta\.gazeta\.pl|mail\.proton\.me)$/, 'mail'],
+    [/(^|\.)(com\.google\.android\.gm|com\.microsoft\.office\.outlook|mail\.google\.com|poczta\.(onet|wp|interia|o2)\.pl|outlook\.(live|office)\.com|mail\.yahoo\.com|poczta\.gazeta\.pl|mail\.proton\.me)$/, 'mail'],
     [/(^|\.)google\./, 'google'],
     [/(^|\.)bing\.com$/, 'bing'],
     [/duckduckgo\.com$/, 'duckduckgo'],

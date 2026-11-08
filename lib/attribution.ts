@@ -22,6 +22,8 @@ export type Channel = (typeof CHANNELS)[number];
 
 /** Kody rabatowe używane tylko w reklamach — zamówienie z takim kodem bez innych danych liczymy jako „Meta Ads”. */
 export const AD_ONLY_CODES = ['DRUGA50'];
+/** Kody wysyłane tylko mailem (newsletter, mail po zakupie) — zamówienie bez innych danych liczymy jako „Mail”. */
+export const MAIL_ONLY_CODES = ['DRUGAGRATIS', 'DZIEKUJE30'];
 
 export interface Touch {
   /** utm_source */
@@ -40,7 +42,7 @@ export interface Touch {
   lp?: string | null;
 }
 
-const MAIL_HOSTS = /(^|\.)(mail\.google\.com|poczta\.(onet|wp|interia|o2)\.pl|outlook\.(live|office)\.com|mail\.yahoo\.com|poczta\.gazeta\.pl|mail\.proton\.me|1poczta\.wp\.pl)$/;
+const MAIL_HOSTS = /(^|\.)(com\.google\.android\.gm|com\.microsoft\.office\.outlook|mail\.google\.com|poczta\.(onet|wp|interia|o2)\.pl|outlook\.(live|office)\.com|mail\.yahoo\.com|poczta\.gazeta\.pl|mail\.proton\.me|1poczta\.wp\.pl)$/;
 
 export function channelOf(t: Touch | null | undefined): Channel {
   if (!t) return 'Nieznane';
