@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react';
 import { Notice } from '@/components/ui/PageHeader';
-import { type MailState, saveAutoSettings, sendCampaignAll, sendCampaignTest, sendFollowups, sendTestMail } from './actions';
+import { type MailState, saveAutoSettings, saveWeeklySettings, sendCampaignAll, sendCampaignTest, sendFollowups, sendTestMail, sendWeeklyNow, sendWeeklyTest } from './actions';
 
 function Msg({ s }: { s: MailState }) {
   return (
@@ -107,6 +107,93 @@ export function CampaignForm({ subscribers, sent }: { subscribers: number; sent:
           }}
         >
           {aBusy ? 'Wysyłam… (nie zamykaj strony)' : `2. Wyślij do subskrybentów (${left})`}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+const DAYS = ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela'];
+
+export function WeeklyForm({
+  auto,
+  code,
+  dow,
+  hour,
+  ready,
+  subscribers,
+  sentThisWeek,
+  week,
+  featured,
+}: {
+  auto: boolean;
+  code: string;
+  dow: number;
+  hour: number;
+  ready: boolean;
+  subscribers: number;
+  sentThisWeek: number;
+  week: string;
+  featured: string | null;
+}) {
+  const [s, sAction, sBusy] = useActionState<MailState, FormData>(saveWeeklySettings, {});
+  const [t, tAction, tBusy] = useActionState<MailState, FormData>(sendWeeklyTest, {});
+  const [n, nAction, nBusy] = useActionState<MailState, FormData>(sendWeeklyNow, {});
+  const left = Math.max(0, subscribers - sentThisWeek);
+  return (
+    <form className="card space-y-4 p-6">
+      <h2 className="font-serif text-xl font-semibold">Newsletter co tydzień: „Sprawa tygodnia”</h2>
+      <p className="text-sm text-muted">
+        Co tydzień inna sprawa na pierwszym planie, porada detektywa i pozostałe sprawy. Bez kodu mail przypomina o rabacie za 3 sprawy. Świeżo zapisani (2 dni)
+        dostają go od kolejnego tygodnia.
+      </p>
+      {!ready && <p className="text-sm text-stamp-500">Najpierw uruchom w Supabase plik supabase/newsletter-co-tydzien.sql.</p>}
+      <p className="text-sm text-paper-200">
+        Ten tydzień (<span className="font-mono">{week}</span>): {featured ? <strong>„{featured}”</strong> : '—'} · wysłano {sentThisWeek} z {subscribers}
+      </p>
+      <label className="flex items-center gap-3 text-sm text-paper-100">
+        <input type="checkbox" name="auto" defaultChecked={auto} className="h-5 w-5 accent-brass-400" />
+        Wysyłaj sam co tydzień
+      </label>
+      <div className="flex flex-wrap gap-4">
+        <label>
+          <span className="label">Dzień</span>
+          <select name="dow" defaultValue={dow} className="input w-40">
+            {DAYS.map((d, i) => (
+              <option key={d} value={i + 1}>
+                {d}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span className="label">Godzina</span>
+          <input name="hour" type="number" min={0} max={23} defaultValue={hour} className="input w-24" />
+        </label>
+        <label>
+          <span className="label">Kod rabatowy (opcjonalnie)</span>
+          <input name="code" defaultValue={code} placeholder="bez kodu" className="input w-48 font-mono uppercase" />
+        </label>
+      </div>
+      <Msg s={s} />
+      <Msg s={t} />
+      <Msg s={n} />
+      <div className="flex flex-wrap gap-3">
+        <button formAction={sAction} className="btn-primary" disabled={sBusy}>
+          {sBusy ? 'Zapisuję…' : 'Zapisz ustawienia'}
+        </button>
+        <button formAction={tAction} className="btn-secondary" disabled={tBusy}>
+          {tBusy ? 'Wysyłam…' : 'Wyślij próbny do mnie'}
+        </button>
+        <button
+          formAction={nAction}
+          className="btn-secondary"
+          disabled={nBusy || left === 0}
+          onClick={(e) => {
+            if (!confirm(`Wysłać newsletter tego tygodnia teraz do ${left} subskrybentów?`)) e.preventDefault();
+          }}
+        >
+          {nBusy ? 'Wysyłam…' : `Wyślij teraz (${left})`}
         </button>
       </div>
     </form>

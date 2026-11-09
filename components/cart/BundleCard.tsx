@@ -8,7 +8,9 @@ import { type CartItem, cartKey } from '@/lib/types';
 import { CaseCover } from '../case/CaseCover';
 import { useCart } from './CartProvider';
 
-export function BundleCard({ title, description, items }: { title: string; description: string; items: CartItem[] }) {
+export function BundleCard({ title, description, items: withCovers }: { title: string; description: string; items: (CartItem & { coverPath?: string | null })[] }) {
+  const items: CartItem[] = withCovers.map(({ coverPath: _c, ...i }) => i);
+  const covers = Object.fromEntries(withCovers.map((i) => [i.id, i.coverPath ?? null]));
   const { add, has, ready } = useCart();
   const router = useRouter();
   const price = priceCart(items.map((i) => i.priceGrosze));
@@ -24,12 +26,20 @@ export function BundleCard({ title, description, items }: { title: string; descr
 
   return (
     <article className="card flex flex-col p-5">
-      <div className="flex justify-center -space-x-6 px-4 pt-2">
-        {items.map((i, n) => (
-          <div key={i.id} className={`w-[34%] ${n === 1 ? 'z-10 -translate-y-2' : n === 0 ? '-rotate-6' : 'rotate-6'}`}>
-            <CaseCover caseNumber={i.caseNumber} title={i.title} size="xs" />
-          </div>
-        ))}
+      <div className={`flex justify-center px-4 pt-2 ${items.length > 3 ? '-space-x-10' : '-space-x-6'}`}>
+        {items.map((i, n) => {
+          const mid = (items.length - 1) / 2;
+          const tilt = items.length > 3 ? '' : n === 1 ? 'z-10 -translate-y-2' : n === 0 ? '-rotate-6' : 'rotate-6';
+          return (
+            <div
+              key={i.id}
+              className={`${items.length > 3 ? 'w-[26%]' : 'w-[34%]'} ${tilt}`}
+              style={items.length > 3 ? { transform: `rotate(${(n - mid) * 4}deg) translateY(${Math.abs(n - mid) * 4}px)`, zIndex: 10 - Math.round(Math.abs(n - mid)) } : undefined}
+            >
+              <CaseCover caseNumber={i.caseNumber} title={i.title} coverPath={covers[i.id]} size="xs" />
+            </div>
+          );
+        })}
       </div>
       <h3 className="mt-6 font-serif text-2xl font-bold">{title}</h3>
       <p className="mt-2 text-sm text-muted">{description}</p>

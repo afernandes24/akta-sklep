@@ -1,4 +1,6 @@
 import { CodeFromUrl } from '@/components/cart/CodeFromUrl';
+import { FreeCasePopup } from '@/components/newsletter/FreeCasePopup';
+import { FREE_CASE, NEWSLETTER_CONSENT_TEXT } from '@/lib/newsletter';
 import './globals.css';
 import localFont from 'next/font/local';
 
@@ -84,6 +86,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </main>
           <Footer />
+          <FreeCasePopup
+            consentText={NEWSLETTER_CONSENT_TEXT}
+            freeCase={{ number: FREE_CASE.number, title: FREE_CASE.title, cover: FREE_CASE.cover, teaser: FREE_CASE.teaser }}
+          />
           <CookieBanner />
           <Trackers />
           <PageBeacon />

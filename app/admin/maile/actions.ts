@@ -7,6 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { campaignHtml, loadCases, sendCampaign } from '@/lib/campaign';
 import { sendEmail } from '@/lib/email';
 import { getBuyers, loadPromo, sendDueFollowups, sendFollowup, type Rec } from '@/lib/followup';
+import { dayName, loadWeeklyCases, sendWeekly, weekKey, weeklyHtml } from '@/lib/weekly';
 
 export type MailState = { error?: string; ok?: string };
 
@@ -81,4 +82,44 @@ export async function sendCampaignAll(_prev: MailState, formData: FormData): Pro
   if (!r.sent && !r.failed) return { ok: 'Wszyscy subskrybenci dostali już tę kampanię.' };
   const more = r.left ? ` Zostało jeszcze ${r.left} — kliknij ponownie.` : '';
   return r.failed ? { error: `Wysłano ${r.sent}, nie udało się ${r.failed}. Kliknij ponownie.${more}` } : { ok: `Wysłano ${r.sent} maili.${more}` };
+}
+
+// ─── Newsletter co tydzień ───────────────────────────────────────────
+
+export async function saveWeeklySettings(_prev: MailState, formData: FormData): Promise<MailState> {
+  await requireAdmin();
+  const auto = formData.get('auto') === 'on';
+  const code = String(formData.get('code') ?? '').trim().toUpperCase();
+  const dow = Math.min(7, Math.max(1, parseInt(String(formData.get('dow') ?? '4'), 10) || 4));
+  const hour = Math.min(23, Math.max(0, parseInt(String(formData.get('hour') ?? '18'), 10) || 0));
+  if (code && !(await loadPromo(code))) return { error: `Kod ${code} nie istnieje, jest wyłączony albo wygasł.` };
+  const { error } = await createAdminClient()
+    .from('site_settings')
+    .update({ weekly_auto: auto, weekly_code: code || null, weekly_dow: dow, weekly_hour: hour })
+    .eq('id', 1);
+  if (error) return { error: 'Najpierw uruchom w Supabase plik supabase/newsletter-co-tydzien.sql.' };
+  revalidatePath('/admin/maile');
+  return { ok: auto ? `Włączone: newsletter wyjdzie sam co tydzień — ${dayName(dow)}, ${hour}:00${code ? `, z kodem ${code}` : ''}.` : 'Newsletter co tydzień wyłączony.' };
+}
+
+export async function sendWeeklyTest(_prev: MailState, formData: FormData): Promise<MailState> {
+  const { user } = await requireAdmin();
+  const p = await promoFrom(formData);
+  if ('error' in p) return { error: p.error };
+  const mail = weeklyHtml({ email: user.email!, token: 'podglad' }, weekKey(), await loadWeeklyCases(), p.promo);
+  if (!mail) return { error: 'Brak opublikowanych spraw.' };
+  const ok = await sendEmail(user.email!, '[TEST] ' + mail.subject, mail.html);
+  return ok ? { ok: `Wysłano próbny newsletter tego tygodnia na ${user.email}.` } : { error: 'Nie udało się wysłać — sprawdź RESEND_API_KEY i EMAIL_FROM.' };
+}
+
+export async function sendWeeklyNow(_prev: MailState, formData: FormData): Promise<MailState> {
+  await requireAdmin();
+  const p = await promoFrom(formData);
+  if ('error' in p) return { error: p.error };
+  const r = await sendWeekly({ key: weekKey(), code: p.code, limit: 60 });
+  revalidatePath('/admin/maile');
+  if (!r.ready) return { error: 'Najpierw uruchom w Supabase plik supabase/kampania-newsletter.sql.' };
+  if (!r.sent && !r.failed) return { ok: 'Wszyscy subskrybenci dostali już newsletter z tego tygodnia.' };
+  const more = r.left ? ` Zostało jeszcze ${r.left} — kliknij ponownie.` : '';
+  return r.failed ? { error: `Wysłano ${r.sent}, nie udało się ${r.failed}.${more}` } : { ok: `Wysłano ${r.sent} maili.${more}` };
 }

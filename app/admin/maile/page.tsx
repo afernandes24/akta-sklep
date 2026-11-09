@@ -2,7 +2,8 @@ import { requireAdmin } from '@/lib/auth';
 import { getCampaignSends, getSubscribers } from '@/lib/campaign';
 import { formatDate } from '@/lib/format';
 import { getBuyers, getFollowupSettings } from '@/lib/followup';
-import { AutoForm, CampaignForm, MailForms } from './MailForms';
+import { AutoForm, CampaignForm, MailForms, WeeklyForm } from './MailForms';
+import { getWeeklySettings, loadWeeklyCases, weekKey } from '@/lib/weekly';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +11,16 @@ const preview = (typ: string, e: string) => `/admin/maile/podglad?typ=${typ}&e=$
 
 export default async function AdminMailsPage() {
   await requireAdmin();
-  const [{ buyers, ready }, settings, subs, { sends }] = await Promise.all([getBuyers(), getFollowupSettings(), getSubscribers(), getCampaignSends()]);
+  const [{ buyers, ready }, settings, subs, { sends }, weekly, wCases] = await Promise.all([
+    getBuyers(),
+    getFollowupSettings(),
+    getSubscribers(),
+    getCampaignSends(),
+    getWeeklySettings(),
+    loadWeeklyCases(),
+  ]);
+  const week = weekKey();
+  const featured = wCases.length ? wCases[(Number(week.slice(-2)) || 0) % wCases.length].title : null;
   const pending = buyers.filter((b) => b.pendingOrderIds.length);
   const sentBuyers = buyers.filter((b) => b.sentAt).sort((a, b) => (b.sentAt ?? '').localeCompare(a.sentAt ?? ''));
   const withConsent = pending.filter((b) => b.consentToken).length;
@@ -83,6 +93,18 @@ export default async function AdminMailsPage() {
         )}
       </section>
 
+      <WeeklyForm
+        auto={weekly.auto}
+        code={weekly.code}
+        dow={weekly.dow}
+        hour={weekly.hour}
+        ready={weekly.ready}
+        subscribers={subs.length}
+        sentThisWeek={sends.filter((x) => x.campaign === week).length}
+        week={week}
+        featured={featured}
+      />
+
       <CampaignForm subscribers={subs.length} sent={campaignSent} />
 
       {sends.length > 0 && (
@@ -94,7 +116,7 @@ export default async function AdminMailsPage() {
                 <span className="text-paper-100">{s.email}</span>
                 <span className="text-muted">
                   <span className="font-mono">{s.campaign}</span> · {formatDate(s.sent_at)} ·{' '}
-                  <a href={`${preview('newsletter', s.email)}&kod=${s.campaign}`} target="_blank" className="text-brass-300 hover:underline">
+                  <a href={s.campaign.startsWith('TYDZIEN-') ? `${preview('tydzien', s.email)}&w=${s.campaign}` : `${preview('newsletter', s.email)}&kod=${s.campaign}`} target="_blank" className="text-brass-300 hover:underline">
                     podgląd
                   </a>
                 </span>

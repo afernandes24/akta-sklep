@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BundlesSection } from '@/components/cart/BundlesSection';
 import { CatalogBrowser } from '@/components/case/CatalogBrowser';
+import { StarterPicks } from '@/components/case/StarterPicks';
+import { getBestsellers } from '@/lib/promo';
 import { FreeCaseCta } from '@/components/newsletter/FreeCaseCta';
 import { JsonLd } from '@/components/ui/JsonLd';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -19,6 +21,7 @@ export const metadata: Metadata = {
 
 export default async function CasesPage() {
   const [cases, ratings] = await Promise.all([getPublishedCases(), getCaseRatings()]);
+  const starters = cases.length > 3 ? await getBestsellers(cases, 3) : [];
 
   return (
     <>
@@ -42,6 +45,8 @@ export default async function CasesPage() {
           <p className="text-muted">Brak opublikowanych spraw.</p>
         ) : (
           <>
+            <StarterPicks cases={starters} ratings={ratings} />
+            <h2 className="mb-5 text-2xl font-bold sm:text-3xl">Wszystkie sprawy</h2>
             <CatalogBrowser cases={cases} ratings={ratings} />
             <div className="mt-20">
               <BundlesSection cases={cases} />

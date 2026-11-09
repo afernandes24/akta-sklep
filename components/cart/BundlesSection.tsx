@@ -9,14 +9,14 @@ export function BundlesSection({ cases, heading = true }: { cases: CaseRecord[];
     items: b.caseSlugs
       .map((slug) => cases.find((c) => c.slug === slug))
       .filter((c): c is CaseRecord => Boolean(c))
-      .map((c) => ({ id: c.id, slug: c.slug, title: c.title, caseNumber: c.case_number, priceGrosze: c.price_grosze })),
+      .map((c) => ({ id: c.id, slug: c.slug, title: c.title, caseNumber: c.case_number, priceGrosze: c.price_grosze, coverPath: c.cover_path })),
   })).filter((b) => b.items.length === b.caseSlugs.length);
 
   if (bundles.length === 0) return null;
   const tiers = [...VOLUME_TIERS].reverse();
 
   return (
-    <section aria-labelledby="pakiety" className="mb-12">
+    <section id="pakiety-sekcja" aria-labelledby="pakiety" className="mb-12 scroll-mt-24">
       {heading && (
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>

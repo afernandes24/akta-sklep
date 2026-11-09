@@ -18,14 +18,19 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 export interface Subscriber {
   email: string;
   token: string;
+  confirmed_at?: string | null;
 }
 
-export async function getSubscribers(): Promise<Subscriber[]> {
+export async function getSubscribers(withDates = false): Promise<Subscriber[]> {
   const [{ data }, admins] = await Promise.all([
-    createAdminClient().from('newsletter_subscribers').select('email, token').eq('status', 'confirmed').limit(50000),
+    createAdminClient()
+      .from('newsletter_subscribers')
+      .select(withDates ? 'email, token, confirmed_at' : 'email, token')
+      .eq('status', 'confirmed')
+      .limit(50000),
     getAdmins(),
   ]);
-  return ((data ?? []) as Subscriber[]).filter((s) => !admins.emails.has(s.email.toLowerCase()));
+  return ((data ?? []) as unknown as Subscriber[]).filter((s) => !admins.emails.has(s.email.toLowerCase()));
 }
 
 export async function getCampaignSends(campaign?: string) {

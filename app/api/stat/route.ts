@@ -7,6 +7,7 @@ import { getUser } from '@/lib/auth';
 import { isAdminUser } from '@/lib/online';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { maybeRunAutoFollowups } from '@/lib/followup';
+import { maybeRunWeekly } from '@/lib/weekly';
 import { BOT_UA, excludedCountries, visitorHash } from '@/lib/visitor';
 
 export const runtime = 'nodejs';
@@ -78,6 +79,7 @@ export async function POST(req: Request) {
   if (error) await db.from('page_views').insert(row);
   // Przy okazji ruchu: automatyczne maile po zakupie (najwyżej raz na 30 min)
   maybeRunAutoFollowups();
+  maybeRunWeekly();
   // Raz na jakiś czas sprzątamy dane starsze niż 13 miesięcy (tak mówi polityka prywatności)
   if (Math.random() < 0.01) await db.from('page_views').delete().lt('at', new Date(Date.now() - 400 * 864e5).toISOString());
   return ok();
