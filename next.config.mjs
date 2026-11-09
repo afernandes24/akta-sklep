@@ -22,6 +22,8 @@ const nextConfig = {
       'czlowiek-za-burta': '/sprawy/cisza-po-sezonie',
       anonimy: '/sprawy',
       'morderstwo-w-hotelu': '/sprawy',
+      zasypani: '/sprawy',
+      'zaginiona-z-laboratorium': '/sprawy',
     };
     return Object.entries(stare).map(([slug, destination]) => ({ source: `/sprawy/${slug}`, destination, statusCode: 301 }));
   },
