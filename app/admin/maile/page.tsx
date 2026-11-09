@@ -2,7 +2,7 @@ import { requireAdmin } from '@/lib/auth';
 import { getCampaignSends, getSubscribers } from '@/lib/campaign';
 import { formatDate } from '@/lib/format';
 import { getBuyers, getFollowupSettings } from '@/lib/followup';
-import { AutoForm, CampaignForm, MailForms, WeeklyForm } from './MailForms';
+import { AutoForm, MailForms, WeeklyForm } from './MailForms';
 import { getWeeklySettings, loadWeeklyCases, weekKey } from '@/lib/weekly';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +24,6 @@ export default async function AdminMailsPage() {
   const pending = buyers.filter((b) => b.pendingOrderIds.length);
   const sentBuyers = buyers.filter((b) => b.sentAt).sort((a, b) => (b.sentAt ?? '').localeCompare(a.sentAt ?? ''));
   const withConsent = pending.filter((b) => b.consentToken).length;
-  const campaignSent = sends.filter((s) => s.campaign === 'DRUGAGRATIS').length;
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -107,11 +106,10 @@ export default async function AdminMailsPage() {
         min={weekly.min}
       />
 
-      <CampaignForm subscribers={subs.length} sent={campaignSent} />
 
       {sends.length > 0 && (
         <section className="card p-5">
-          <h2 className="font-serif text-lg font-semibold">Wysłane kampanie newslettera ({sends.length})</h2>
+          <h2 className="font-serif text-lg font-semibold">Wysłane newslettery ({sends.length})</h2>
           <ul className="mt-3 divide-y divide-ink-800 text-sm">
             {sends.map((s) => (
               <li key={s.campaign + s.email} className="flex flex-wrap items-center justify-between gap-2 py-2">
