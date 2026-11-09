@@ -75,10 +75,15 @@ export async function loadPromo(code: string): Promise<Promo | null> {
   if (!code) return null;
   const { data } = await createAdminClient().from('discount_codes').select('*').eq('code', code.toUpperCase()).maybeSingle();
   if (!data?.is_active || (data.valid_until && new Date(data.valid_until) < new Date())) return null;
+  const min = (data.min_items as number | null) ?? 1;
   const label = data.second_percent_off
-    ? `druga sprawa −${data.second_percent_off}%`
+    ? data.second_percent_off >= 100
+      ? 'druga sprawa za 0 zł'
+      : `druga sprawa −${data.second_percent_off}%`
     : data.percent_off
-      ? `${data.percent_off}% taniej`
+      ? min > 1
+        ? `−${data.percent_off}% przy ${min} sprawach`
+        : `${data.percent_off}% taniej`
       : `${formatPrice(data.amount_off_grosze ?? 0)} taniej`;
   const until = data.valid_until
     ? new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'long', timeZone: 'Europe/Warsaw' }).format(new Date(data.valid_until))
@@ -150,7 +155,7 @@ export function followupHtml(b: Buyer, promo: Promo | null, recs: Rec[]): { subj
     ${P(`Mam jedną prośbę: jeśli już ${one ? 'rozwiązałeś(-aś) sprawę' : 'coś rozwiązałeś(-aś)'}, napisz mi, jak było. Każda opinia pomaga mi pisać lepsze sprawy, a innym graczom wybrać tę właściwą.`)}
     <div style="margin:6px 0 22px;padding:20px;background:#ffffff;border:1px solid #e9e1cd;border-radius:10px;text-align:center">
       <p style="font-size:18px;font-weight:bold;margin:0 0 4px">Jak ${one ? 'oceniasz sprawę' : 'oceniasz moje sprawy'}?</p>
-      <p style="font-family:Arial,sans-serif;font-size:13px;color:#777;margin:0 0 8px">Kliknij gwiazdkę — zajmie to minutę, bez logowania.</p>
+      <p style="font-family:Arial,sans-serif;font-size:13px;color:#777;margin:0 0 8px">Kliknij gwiazdkę — zajmie to minutę, bez logowania. W podziękowaniu za opinię (każdą, także krytyczną) wyślę ci kod −20% na kolejną sprawę.</p>
       <div>${stars}</div>
       <p style="margin:12px 0 0"><a href="${reviewUrl(b.email, main ? `&s=${main.slug}` : '')}" style="font-family:Arial,sans-serif;font-size:14px;color:#8a6d33">Napisz kilka słów →</a></p>
     </div>

@@ -19,6 +19,7 @@ export function Footer() {
           links={[
             ['/sprawy', 'Wszystkie sprawy'],
             ['/darmowa-sprawa', 'Darmowa sprawa'],
+            ['/karta-podarunkowa', 'Karta podarunkowa'],
             ['/#jak-to-dziala', 'Jak to działa'],
             ['/koszyk', 'Koszyk'],
           ]}

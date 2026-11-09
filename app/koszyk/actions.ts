@@ -15,6 +15,7 @@ import { getPaymentProvider, getPaymentProviderId } from '@/lib/payments';
 import { channelOf, parseTouch, type Touch } from '@/lib/attribution';
 import { visitorHash } from '@/lib/visitor';
 import { hasImpossibleTld, suggestEmail } from '@/lib/email-typo';
+import { parseGift } from '@/lib/gift-form';
 
 export type CheckoutState = { error?: string };
 
@@ -51,6 +52,8 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
   }
 
   const caseIds = formData.getAll('caseId').map(String);
+  const gift = parseGift(formData);
+  if (gift && 'error' in gift) return { error: gift.error };
 
   let redirectTo: string;
   let orderIdForCleanup: string | null = null;
@@ -64,6 +67,7 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
       provider: getPaymentProviderId(),
       couponCode,
       expectedTotal: Number.isFinite(expectedRaw) ? expectedRaw : null,
+      forGift: Boolean(gift),
     });
     if (result.kind === 'empty') return { error: 'Koszyk jest pusty albo wybrane sprawy nie są już dostępne.' };
     if (result.kind === 'coupon_invalid') return { error: `Kod rabatowy: ${result.error} Usuń kod, aby kontynuować.` };
@@ -73,6 +77,14 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
       // Baza bez kolumny access_token (nie uruchomiono supabase/zakup-bez-konta.sql)
       await markOrderStatus(result.order.id, 'failed');
       return { error: 'Zakup bez konta jest chwilowo niedostępny — zaloguj się albo załóż konto.' };
+    }
+    if (result.kind === 'created' && gift) {
+      // Zakup jako prezent: dane obdarowanego zapisujemy przed płatnością (prezent wyjdzie po opłaceniu, w wybranym dniu)
+      const { error: giftError } = await createAdminClient().from('orders').update({ ...gift, gift_kind: 'case' }).eq('id', result.order.id);
+      if (giftError) {
+        await markOrderStatus(result.order.id, 'failed');
+        return { error: 'Zakup jako prezent jest chwilowo niedostępny — odznacz „To prezent” albo spróbuj później.' };
+      }
     }
     if (result.kind === 'already_owned') {
       redirectTo = '/konto/sprawy?info=posiadane';

@@ -10,12 +10,17 @@ export async function findValidCoupon(rawCode: string, userId?: string | null, e
   if (!/^[A-Z0-9_-]{3,32}$/.test(code)) return { ok: false, error: 'Nieprawidłowy kod rabatowy.' };
   const db = createAdminClient();
   const COLS = 'code, percent_off, amount_off_grosze, min_items, valid_until, max_uses, used_count, one_per_user, is_active';
-  let res = await db.from('discount_codes').select(`${COLS}, second_percent_off`).eq('code', code).maybeSingle();
+  let res = await db.from('discount_codes').select(`${COLS}, second_percent_off, is_gift, gift_balance_grosze, referrer_email`).eq('code', code).maybeSingle();
+  if (res.error) res = (await db.from('discount_codes').select(`${COLS}, second_percent_off`).eq('code', code).maybeSingle()) as typeof res;
   // Baza bez kolumny second_percent_off (nie uruchomiono supabase/rabat-druga-sprawa.sql) — działamy po staremu
   if (res.error) res = (await db.from('discount_codes').select(COLS).eq('code', code).maybeSingle()) as typeof res;
   const { data: c, error } = res;
   if (error || !c || !c.is_active) return { ok: false, error: 'Taki kod nie istnieje albo jest nieaktywny.' };
   if (c.valid_until && new Date(c.valid_until as string) < new Date()) return { ok: false, error: 'Ten kod wygasł.' };
+  const extra = c as { is_gift?: boolean; gift_balance_grosze?: number | null; referrer_email?: string | null };
+  if (extra.is_gift && !(extra.gift_balance_grosze ?? 0)) return { ok: false, error: 'Saldo tej karty podarunkowej zostało już wykorzystane.' };
+  if (extra.referrer_email && email && extra.referrer_email.toLowerCase() === email.toLowerCase())
+    return { ok: false, error: 'To twój własny kod polecający — podaj go znajomym, a dostaniesz nagrodę, gdy z niego skorzystają.' };
   if (c.max_uses) {
     // Liczymy też trwające płatności innych klientów z ostatniej godziny — żeby limit nie „przeciekał” przy równoległych zakupach.
     let pending = db
@@ -46,6 +51,7 @@ export async function findValidCoupon(rawCode: string, userId?: string | null, e
       percent_off: (c.percent_off as number | null) ?? null,
       amount_off_grosze: (c.amount_off_grosze as number | null) ?? null,
       second_percent_off: ((c as { second_percent_off?: number | null }).second_percent_off as number | null) ?? null,
+      gift_balance: extra.is_gift ? (extra.gift_balance_grosze ?? 0) : null,
       min_items: c.min_items as number,
     },
   };

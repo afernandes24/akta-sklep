@@ -12,6 +12,7 @@ import { formatDate, formatPrice } from '@/lib/format';
 import { getOrderByToken, getOrderLibrary } from '@/lib/guest';
 import { getProviderById } from '@/lib/payments';
 import { claimOrder } from './actions';
+import { GiftStatus, PostPurchase, getGiftInfo } from '@/components/order/PostPurchase';
 
 export const metadata: Metadata = { title: 'Twoje akta', robots: { index: false, follow: false } };
 export const dynamic = 'force-dynamic';
@@ -44,6 +45,7 @@ export default async function AccessPage({
   const cartKeys = (order.order_items ?? []).filter((i) => i.case_id).map((i) => `${i.case_id}:${i.format ?? 'pdf'}`);
   const claimedByMe = Boolean(user && order.user_id === user.id);
   const back = `/dostep/${token}`;
+  const gift = await getGiftInfo(order.id);
 
   return (
     <section className="container-page max-w-4xl py-12 sm:py-16">
@@ -68,7 +70,7 @@ export default async function AccessPage({
       </div>
 
       <div className="mt-10 space-y-4">
-        {paid && (
+        {paid && !gift && (
           <Notice>
             Ten link wysłaliśmy też na <strong>{order.email}</strong>. Działa bez logowania — zachowaj go, żeby pobrać pliki ponownie. Nie udostępniaj go innym.
           </Notice>
@@ -90,6 +92,15 @@ export default async function AccessPage({
         )}
       </div>
 
+      {paid && gift && (
+        <div className="mt-6 space-y-4">
+          {!gift.gift_sent_at && <GiftStatus gift={gift} />}
+          <Notice>
+            To prezent 🎁 — link do akt działa bez logowania. Zachowaj maila, żeby pobrać pliki ponownie, i nie udostępniaj go innym.
+          </Notice>
+        </div>
+      )}
+
       <div className="card mt-8 p-6">
         <h2 className="font-serif text-xl font-semibold">Podsumowanie zamówienia</h2>
         <ul className="mt-4 divide-y divide-ink-800 text-sm">
@@ -105,6 +116,12 @@ export default async function AccessPage({
           <span>{formatPrice(order.total_grosze)}</span>
         </div>
       </div>
+
+      {paid && (
+        <div className="mt-10">
+          <PostPurchase email={order.email} isGift={Boolean(gift)} />
+        </div>
+      )}
 
       {paid && (
         <div className="mt-10 space-y-6">

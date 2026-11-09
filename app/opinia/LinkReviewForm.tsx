@@ -28,6 +28,7 @@ export function LinkReviewForm({
         <p className="text-4xl">🔍</p>
         <p className="mt-2 font-serif text-2xl font-bold text-paper-50">Dziękujemy!</p>
         <p className="mt-2 text-paper-200">Opinia o „{title}” pojawi się na stronie po sprawdzeniu (zwykle w ciągu 1–2 dni).</p>
+        <p className="mt-2 text-sm text-brass-300">W podziękowaniu wysłaliśmy ci mailem kod rabatowy na kolejną sprawę.</p>
         <Link href="/sprawy" className="btn-secondary mt-5">
           Zobacz inne sprawy
         </Link>

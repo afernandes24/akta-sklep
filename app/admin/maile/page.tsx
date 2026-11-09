@@ -103,6 +103,8 @@ export default async function AdminMailsPage() {
         sentThisWeek={sends.filter((x) => x.campaign === week).length}
         week={week}
         featured={featured}
+        percent={weekly.percent}
+        min={weekly.min}
       />
 
       <CampaignForm subscribers={subs.length} sent={campaignSent} />

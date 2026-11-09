@@ -16,6 +16,8 @@ export interface CouponRule {
   amount_off_grosze: number | null;
   /** „Druga sprawa taniej”: co druga sprawa (tańsza z pary) −X%. */
   second_percent_off?: number | null;
+  /** Karta podarunkowa: pozostałe saldo (łączy się z rabatem ilościowym — to „pieniądze”, nie promocja). */
+  gift_balance?: number | null;
   min_items: number;
 }
 
@@ -59,6 +61,15 @@ export function priceCart(prices: number[], coupon?: CouponRule | null): PriceBr
   const subtotal = prices.reduce((s, p) => s + p, 0);
   const count = prices.length;
   const vol = volumeDiscount(subtotal, count);
+  if (coupon?.gift_balance != null) {
+    // Karta podarunkowa = płatność saldem: najpierw rabat ilościowy, potem saldo karty
+    const v = vol?.amount ?? 0;
+    const g = Math.min(coupon.gift_balance, subtotal - v);
+    let discount = v + g;
+    if (subtotal - discount > 0 && subtotal - discount < MIN_PAYMENT_GROSZE && subtotal >= MIN_PAYMENT_GROSZE) discount = subtotal - MIN_PAYMENT_GROSZE;
+    const label = [vol?.label, g > 0 ? `Karta podarunkowa ${coupon.code} (−${(Math.min(g, discount - v) / 100).toFixed(2).replace('.', ',')} zł)` : null].filter(Boolean).join(' + ');
+    return { subtotal, discount, total: subtotal - discount, label: label || null, source: g > 0 ? 'coupon' : vol ? 'volume' : null };
+  }
   const cp = coupon ? couponDiscount(prices, coupon) : null;
 
   let best: { amount: number; label: string; source: 'volume' | 'coupon' } | null = null;

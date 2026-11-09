@@ -3,7 +3,7 @@ import { getUser } from '@/lib/auth';
 import { campaignHtml, getSubscribers, loadCases } from '@/lib/campaign';
 import { followupHtml, getBuyers, getFollowupSettings, loadPromo, recommendationsFor } from '@/lib/followup';
 import { isAdminUser } from '@/lib/online';
-import { getWeeklySettings, loadWeeklyCases, weekKey, weeklyHtml } from '@/lib/weekly';
+import { getWeeklySettings, loadWeeklyCases, weekKey, weeklyHtml, weeklyPromo } from '@/lib/weekly';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
   let html = '<p>Brak danych.</p>';
   if (sp.get('typ') === 'tydzien') {
     const w = /^TYDZIEN-\d{4}-\d{2}$/.test(sp.get('w') ?? '') ? sp.get('w')! : weekKey();
-    const promo = await loadPromo(sp.get('kod') || (await getWeeklySettings()).code);
+    const promo = await weeklyPromo(w, await getWeeklySettings(), false);
     const sub = (await getSubscribers()).find((s) => s.email.toLowerCase() === email) ?? { email, token: 'podglad' };
     html = weeklyHtml(sub, w, await loadWeeklyCases(), promo)?.html ?? html;
   } else if (sp.get('typ') === 'newsletter') {

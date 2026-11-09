@@ -11,6 +11,7 @@ import { DIGITAL_CONSENT_TEXT } from '@/lib/legal/documents';
 import { type CouponRule, priceCart, VOLUME_TIERS } from '@/lib/pricing';
 import { cartKey } from '@/lib/types';
 import { TOUCH_KEY } from '@/lib/attribution';
+import { GiftFields } from '@/components/cart/GiftFields';
 import { type CheckoutState, checkCoupon, startCheckout, freshCartPrices } from './actions';
 
 interface Props {
@@ -19,10 +20,11 @@ interface Props {
   paymentsReady: boolean;
   testMode: boolean;
   providerLabel: string;
+  suggestions: { id: string; slug: string; title: string; caseNumber: string; priceGrosze: number; coverPath: string | null }[];
 }
 
-export function CartView({ loggedIn, email, paymentsReady, testMode, providerLabel }: Props) {
-  const { items, ready, remove, sync } = useCart();
+export function CartView({ loggedIn, email, paymentsReady, testMode, providerLabel, suggestions }: Props) {
+  const { items, ready, remove, sync, add } = useCart();
   const [synced, setSynced] = useState(false);
 
   // Ceny z serwera — koszyk w przeglądarce mógł zapamiętać starą cenę
@@ -45,12 +47,15 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
   const [codeInput, setCodeInput] = useState('');
   const [codeError, setCodeError] = useState<string | null>(null);
   const [checking, startChecking] = useTransition();
+  const [isGift, setIsGift] = useState(false);
 
   const price = priceCart(
     items.map((i) => i.priceGrosze),
     coupon,
   );
   const nextTier = [...VOLUME_TIERS].reverse().find((t) => t.minItems > items.length);
+  const inCart = new Set(items.map((i) => i.id));
+  const extra = suggestions.filter((c) => !inCart.has(c.id)).slice(0, 2);
 
   const applyCode = (raw?: string) =>
     startChecking(async () => {
@@ -143,13 +148,33 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
           </div>
         </dl>
         {nextTier && (
-          <p className="mt-3 rounded-md border border-brass-500/30 bg-brass-500/10 px-3 py-2 text-xs text-brass-300">
-            Dodaj jeszcze {nextTier.minItems - items.length} {nextTier.minItems - items.length === 1 ? 'sprawę' : 'sprawy'}, a zapłacisz o {nextTier.percent}%
-            mniej.{' '}
-            <Link href="/sprawy" className="underline underline-offset-2">
-              Wybierz sprawę
-            </Link>
-          </p>
+          <div className="mt-4 rounded-md border border-brass-500/30 bg-brass-500/10 p-3">
+            <p className="text-sm text-paper-100">
+              Dodaj jeszcze <strong>{nextTier.minItems - items.length}</strong> {nextTier.minItems - items.length === 1 ? 'sprawę' : 'sprawy'}, a zapłacisz{' '}
+              <strong className="text-emerald-300">−{nextTier.percent}%</strong> za wszystkie.
+            </p>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink-800" aria-hidden>
+              <div className="h-full rounded-full bg-brass-400 transition-all" style={{ width: `${(items.length / VOLUME_TIERS[0].minItems) * 100}%` }} />
+            </div>
+            {extra.length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {extra.map((c) => (
+                  <li key={c.id} className="flex items-center gap-3">
+                    <CaseCover caseNumber={c.caseNumber} title={c.title} coverPath={c.coverPath} size="xs" className="w-9 shrink-0" />
+                    <span className="min-w-0 flex-1 truncate text-sm text-paper-100">{c.title}</span>
+                    <span className="text-xs text-paper-200">{formatPrice(c.priceGrosze)}</span>
+                    <button
+                      type="button"
+                      onClick={() => add({ id: c.id, slug: c.slug, title: c.title, caseNumber: c.caseNumber, priceGrosze: c.priceGrosze })}
+                      className="rounded-full border border-brass-400/60 px-2.5 py-1 text-xs font-semibold text-brass-300 hover:bg-brass-400/10"
+                    >
+                      + Dodaj
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
 
         <div className="mt-4">
@@ -236,6 +261,11 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
                 )}
               </div>
             )}
+            <label className="flex items-center gap-3 text-sm text-paper-100">
+              <input type="checkbox" name="gift" checked={isGift} onChange={(e) => setIsGift(e.target.checked)} className="h-4 w-4 shrink-0 accent-brass-400" />
+              <span>🎁 To prezent — wyślij akta mailem innej osobie</span>
+            </label>
+            {isGift && <GiftFields idPrefix="cart-gift" />}
             <label className="flex gap-3 text-sm leading-relaxed text-paper-200">
               <input type="checkbox" name="terms" required className="mt-1 h-4 w-4 shrink-0 accent-brass-400" />
               <span>

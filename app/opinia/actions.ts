@@ -4,6 +4,7 @@ import { checkReviewToken } from '@/lib/followup';
 import { isUuid } from '@/lib/orders';
 import { allow } from '@/lib/rate-limit';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { sendReviewReward } from '@/lib/gifts';
 import { telegram } from '@/lib/telegram';
 
 export type GuestReviewState = { error?: string; ok?: boolean };
@@ -53,5 +54,7 @@ export async function submitLinkReview(_prev: GuestReviewState, formData: FormDa
   }
   const { data: c } = await db.from('cases').select('title').eq('id', caseId).maybeSingle();
   await telegram(`⭐ Nowa opinia ${rating}/5 — ${c?.title ?? 'sprawa'}`, [`„${body.slice(0, 300)}” — ${author}`, 'Zaakceptuj: Admin → Opinie']);
+  // Kod rabatowy za opinię — za każdą, niezależnie od oceny (regulamin §14)
+  await sendReviewReward(email).catch((e) => console.error('[reviews] nagroda', e));
   return { ok: true };
 }

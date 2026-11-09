@@ -7,7 +7,7 @@ export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const cases = await getPublishedCases();
-  const staticPages = ['', '/sprawy', '/darmowa-sprawa', '/o-nas', '/faq', '/kontakt', '/regulamin', '/zwroty-i-reklamacje', '/polityka-prywatnosci', '/polityka-cookies', '/nota-prawna'];
+  const staticPages = ['', '/sprawy', '/karta-podarunkowa', '/darmowa-sprawa', '/o-nas', '/faq', '/kontakt', '/regulamin', '/zwroty-i-reklamacje', '/polityka-prywatnosci', '/polityka-cookies', '/nota-prawna'];
   return [
     ...staticPages.map((p) => ({
       url: `${siteConfig.url}${p}`,

@@ -14,6 +14,7 @@ import { isUuid } from '@/lib/orders';
 import { getProviderById } from '@/lib/payments';
 import { createClient } from '@/lib/supabase/server';
 import type { Order } from '@/lib/types';
+import { GiftStatus, PostPurchase, getGiftInfo } from '@/components/order/PostPurchase';
 
 export const metadata: Metadata = { title: 'Zamówienie', robots: { index: false } };
 export const dynamic = 'force-dynamic';
@@ -57,6 +58,7 @@ export default async function OrderPage({
   const cartKeys = items.map((i) => `${i.case_id}:${i.format ?? 'pdf'}`);
   const paid = order.status === 'paid';
   const library = paid && order.user_id === user.id ? await getUserLibrary(user.id, caseIds) : [];
+  const gift = paid ? await getGiftInfo(order.id) : null;
 
   return (
     <section className="container-page max-w-4xl py-12 sm:py-16">
@@ -112,6 +114,13 @@ export default async function OrderPage({
           <span>{formatPrice(order.total_grosze)}</span>
         </div>
       </div>
+
+      {paid && (
+        <div className="mt-10 space-y-4">
+          {gift && <GiftStatus gift={gift} />}
+          <PostPurchase email={order.email} isGift={false} />
+        </div>
+      )}
 
       {paid && (
         <div className="mt-10 space-y-6">

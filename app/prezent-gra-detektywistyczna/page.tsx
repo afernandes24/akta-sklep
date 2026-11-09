@@ -46,6 +46,17 @@ export default async function GiftPage() {
         </p>
       </GuideSection>
 
+      <GuideSection title="Wyślemy prezent mailem w wybranym dniu">
+        <p>
+          Dodaj sprawę do koszyka i zaznacz <strong className="text-paper-50">„To prezent”</strong> — podasz e-mail obdarowanego, liścik i datę (np. 24 grudnia
+          rano), a my wyślemy elegancki mail z linkiem do akt. Nie wiesz, którą sprawę wybrać? Podaruj{' '}
+          <Link href="/karta-podarunkowa" className={guideLink}>
+            kartę podarunkową
+          </Link>{' '}
+          — obdarowany wybierze sam.
+        </p>
+      </GuideSection>
+
       <GuideSection title="Dlaczego PDF to dobry prezent?">
         <ul className="space-y-2">
           {[

@@ -40,8 +40,9 @@ export const stripeProvider: PaymentProvider = {
       expires_at: Math.floor(Date.now() / 1000) + 60 * 60,
       custom_text: {
         submit: {
-          message:
-            `Kupujesz treść cyfrową (${items.some((i) => i.format === 'online') ? (items.some((i) => i.format !== 'online') ? 'PDF i wersja online' : 'wersja online') : 'PDF'}). Zgodnie ze złożonym oświadczeniem dostęp otrzymasz natychmiast po płatności, a prawo odstąpienia od umowy wygaśnie.`,
+          message: items.every((i) => !i.case_id)
+            ? 'Kupujesz kartę podarunkową Akta Detektywa. Kod wyślemy e-mailem (tobie albo obdarowanemu we wskazanym dniu). Niewykorzystaną kartę możesz zwrócić w ciągu 14 dni od zakupu.'
+            : `Kupujesz treść cyfrową (${items.some((i) => i.format === 'online') ? (items.some((i) => i.format !== 'online') ? 'PDF i wersja online' : 'wersja online') : 'PDF'}). Zgodnie ze złożonym oświadczeniem dostęp otrzymasz natychmiast po płatności, a prawo odstąpienia od umowy wygaśnie.`,
         },
       },
       // Faktury z panelu Stripe (opcjonalnie — Stripe pobiera za to dodatkową opłatę)

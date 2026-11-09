@@ -22,20 +22,32 @@ export const dayName = (d: number) => DAYS[d] ?? '';
 
 export interface WeeklySettings {
   auto: boolean;
+  /** Stały kod z Admin → Rabaty; pusty = co tydzień nowy kod tygodnia (percent % od min spraw, do niedzieli). */
   code: string;
   dow: number; // 1 = poniedziałek … 7 = niedziela
   hour: number;
+  percent: number;
+  min: number;
 }
-const DEFAULTS: WeeklySettings = { auto: false, code: '', dow: 4, hour: 18 };
+const DEFAULTS: WeeklySettings = { auto: false, code: '', dow: 4, hour: 18, percent: 25, min: 2 };
 
 export async function getWeeklySettings(): Promise<WeeklySettings & { ready: boolean }> {
-  const { data, error } = await createAdminClient().from('site_settings').select('weekly_auto, weekly_code, weekly_dow, weekly_hour').eq('id', 1).maybeSingle();
-  if (error || !data) return { ...DEFAULTS, ready: !error };
+  const db = createAdminClient();
+  let res: { data: Record<string, unknown> | null; error: unknown } = await db
+    .from('site_settings')
+    .select('weekly_auto, weekly_code, weekly_dow, weekly_hour, weekly_percent, weekly_min')
+    .eq('id', 1)
+    .maybeSingle();
+  if (res.error) res = await db.from('site_settings').select('weekly_auto, weekly_code, weekly_dow, weekly_hour').eq('id', 1).maybeSingle();
+  const data = res.data;
+  if (res.error || !data) return { ...DEFAULTS, ready: !res.error };
   return {
     auto: Boolean(data.weekly_auto),
     code: String(data.weekly_code ?? ''),
     dow: Number(data.weekly_dow ?? DEFAULTS.dow),
     hour: Number(data.weekly_hour ?? DEFAULTS.hour),
+    percent: Number(data.weekly_percent ?? DEFAULTS.percent),
+    min: Number(data.weekly_min ?? DEFAULTS.min),
     ready: true,
   };
 }
@@ -59,6 +71,54 @@ export const weekKey = (at = new Date()) => {
   const w = warsawNow(at);
   return `TYDZIEN-${w.year}-${String(w.week).padStart(2, '0')}`;
 };
+
+/** Niedziela 23:59 bieżącego tygodnia (czas polski). */
+function sundayEnd(at = new Date()): Date {
+  const w = warsawNow(at);
+  const sunday = new Date(at.getTime() + (7 - w.dow) * 864e5);
+  const ymd = sunday.toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' });
+  const off = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Warsaw', timeZoneName: 'longOffset' }).formatToParts(sunday).find((p) => p.type === 'timeZoneName')?.value;
+  return new Date(`${ymd}T23:59:59${(off ?? 'GMT+01:00').replace('GMT', '') || '+00:00'}`);
+}
+
+/** Kod tygodnia, np. TYDZIEN46: −25% od 2 spraw, ważny do niedzieli. */
+export function weeklyAutoPromo(key: string, s: { percent: number; min: number }): Promo & { validUntil: Date } {
+  const until = sundayEnd();
+  const day = new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'long', timeZone: 'Europe/Warsaw' }).format(until);
+  return {
+    code: `TYDZIEN${key.slice(-2)}`,
+    label: s.min > 1 ? `−${s.percent}% przy ${s.min} sprawach` : `${s.percent}% taniej`,
+    until: `niedzieli (${day})`,
+    validUntil: until,
+  };
+}
+
+/** Kod do newslettera: stały z ustawień albo (gdy pusty) automatyczny kod tygodnia — tworzony w bazie przy wysyłce. */
+export async function weeklyPromo(key: string, s: WeeklySettings, create: boolean): Promise<Promo | null> {
+  if (s.code) return loadPromo(s.code);
+  const auto = weeklyAutoPromo(key, s);
+  if (create) {
+    const { error } = await createAdminClient()
+      .from('discount_codes')
+      .upsert(
+        {
+          code: auto.code,
+          percent_off: Math.min(90, Math.max(5, s.percent)),
+          min_items: Math.max(1, s.min),
+          valid_until: auto.validUntil.toISOString(),
+          one_per_user: true,
+          is_active: true,
+          note: `Newsletter — kod tygodnia ${key}`,
+        },
+        { onConflict: 'code' },
+      );
+    if (error) {
+      console.error('[newsletter] kod tygodnia', error.message);
+      return null;
+    }
+  }
+  return { code: auto.code, label: auto.label, until: auto.until };
+}
 
 type WeeklyCase = {
   slug: string;
@@ -122,10 +182,11 @@ export function weeklyHtml(sub: Subscriber, key: string, cases: WeeklyCase[], pr
 
   const offer = promo
     ? `<div style="margin:24px 0;padding:22px;background:#1c1a17;border-radius:10px;text-align:center;color:#f4efe3">
-        <p style="font-family:'Courier New',monospace;letter-spacing:3px;font-size:11px;color:#d4b06a;margin:0;text-transform:uppercase">Tylko dla subskrybentów${promo.until ? ` · do ${esc(promo.until)}` : ''}</p>
+        <p style="font-family:'Courier New',monospace;letter-spacing:3px;font-size:11px;color:#d4b06a;margin:0;text-transform:uppercase">Kod tygodnia dla subskrybentów${promo.until ? ` · do ${esc(promo.until)}` : ''}</p>
         <p style="font-size:24px;font-weight:bold;margin:8px 0 12px">${esc(promo.label.charAt(0).toUpperCase() + promo.label.slice(1))}</p>
         <div style="display:inline-block;border:2px dashed #d4b06a;padding:8px 20px;font-family:'Courier New',monospace;font-size:22px;letter-spacing:4px;color:#d4b06a;font-weight:bold">${esc(promo.code)}</div>
-        <p style="font-family:Arial,sans-serif;font-size:12px;color:#a89f8d;margin:12px 0 0">Kod wpisze się sam, jeśli wejdziesz przez link z tego maila.</p>
+        <p style="font-family:Arial,sans-serif;font-size:12px;color:#a89f8d;margin:12px 0 0">Kod wpisze się sam, jeśli wejdziesz przez link z tego maila. Działa też na pakiety.</p>
+        <p style="margin:16px 0 0"><a href="${siteConfig.url}/sprawy${q}#pakiety-sekcja" style="background:#d4b06a;color:#1c1a17;padding:11px 22px;border-radius:6px;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;display:inline-block">Wybierz sprawy</a></p>
       </div>`
     : `<p style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;background:#f3ecdc;border-radius:8px;padding:14px 16px;margin:22px 0;text-align:center">💡 Kupujesz ${top.minItems} sprawy? Rabat <strong>−${top.percent}%</strong> nalicza się sam w koszyku.</p>`;
 
@@ -177,12 +238,12 @@ export function weeklyHtml(sub: Subscriber, key: string, cases: WeeklyCase[], pr
 }
 
 /** Wysyła newsletter tygodnia tym, którzy go jeszcze nie dostali. */
-export async function sendWeekly(opts: { key: string; code: string; limit: number; confirmedBefore?: number }) {
+export async function sendWeekly(opts: { key: string; settings: WeeklySettings; limit: number; confirmedBefore?: number }) {
   const db = createAdminClient();
   const [subs, cases, promo, sent] = await Promise.all([
     getSubscribers(true),
     loadWeeklyCases(),
-    opts.code ? loadPromo(opts.code) : Promise.resolve(null),
+    weeklyPromo(opts.key, opts.settings, true),
     db.from('newsletter_sends').select('email').eq('campaign', opts.key).limit(50000),
   ]);
   if (sent.error) return { ready: false, sent: 0, failed: 0, left: 0 };
@@ -218,7 +279,7 @@ export function maybeRunWeekly() {
       if (!s.ready || !s.auto) return;
       const now = warsawNow();
       if (now.dow * 24 + now.hour < s.dow * 24 + s.hour) return; // jeszcze nie pora w tym tygodniu
-      const r = await sendWeekly({ key: weekKey(), code: s.code, limit: 40, confirmedBefore: Date.now() - 2 * 864e5 });
+      const r = await sendWeekly({ key: weekKey(), settings: s, limit: 40, confirmedBefore: Date.now() - 2 * 864e5 });
       if (r.sent || r.failed) console.log('[newsletter] tydzień', r);
     } catch (e) {
       console.error('[newsletter] tydzień', e);

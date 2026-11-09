@@ -7,7 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { campaignHtml, loadCases, sendCampaign } from '@/lib/campaign';
 import { sendEmail } from '@/lib/email';
 import { getBuyers, loadPromo, sendDueFollowups, sendFollowup, type Rec } from '@/lib/followup';
-import { dayName, loadWeeklyCases, sendWeekly, weekKey, weeklyHtml } from '@/lib/weekly';
+import { dayName, getWeeklySettings, loadWeeklyCases, sendWeekly, weekKey, weeklyHtml, weeklyPromo } from '@/lib/weekly';
 
 export type MailState = { error?: string; ok?: string };
 
@@ -92,31 +92,34 @@ export async function saveWeeklySettings(_prev: MailState, formData: FormData): 
   const code = String(formData.get('code') ?? '').trim().toUpperCase();
   const dow = Math.min(7, Math.max(1, parseInt(String(formData.get('dow') ?? '4'), 10) || 4));
   const hour = Math.min(23, Math.max(0, parseInt(String(formData.get('hour') ?? '18'), 10) || 0));
+  const percent = Math.min(90, Math.max(5, parseInt(String(formData.get('percent') ?? '25'), 10) || 25));
+  const min = Math.min(6, Math.max(1, parseInt(String(formData.get('min') ?? '2'), 10) || 2));
   if (code && !(await loadPromo(code))) return { error: `Kod ${code} nie istnieje, jest wyłączony albo wygasł.` };
-  const { error } = await createAdminClient()
+  const db = createAdminClient();
+  let { error } = await db
     .from('site_settings')
-    .update({ weekly_auto: auto, weekly_code: code || null, weekly_dow: dow, weekly_hour: hour })
+    .update({ weekly_auto: auto, weekly_code: code || null, weekly_dow: dow, weekly_hour: hour, weekly_percent: percent, weekly_min: min })
     .eq('id', 1);
-  if (error) return { error: 'Najpierw uruchom w Supabase plik supabase/newsletter-co-tydzien.sql.' };
+  if (error) ({ error } = await db.from('site_settings').update({ weekly_auto: auto, weekly_code: code || null, weekly_dow: dow, weekly_hour: hour }).eq('id', 1));
+  if (error) return { error: 'Najpierw uruchom w Supabase pliki supabase/newsletter-co-tydzien.sql i supabase/prezenty-polecenia.sql.' };
   revalidatePath('/admin/maile');
-  return { ok: auto ? `Włączone: newsletter wyjdzie sam co tydzień — ${dayName(dow)}, ${hour}:00${code ? `, z kodem ${code}` : ''}.` : 'Newsletter co tydzień wyłączony.' };
+  const what = code ? `z kodem ${code}` : `z kodem tygodnia: −${percent}%${min > 1 ? ` od ${min} spraw` : ''}, do niedzieli`;
+  return { ok: auto ? `Włączone: newsletter wyjdzie sam co tydzień — ${dayName(dow)}, ${hour}:00, ${what}.` : 'Newsletter co tydzień wyłączony.' };
 }
 
-export async function sendWeeklyTest(_prev: MailState, formData: FormData): Promise<MailState> {
+export async function sendWeeklyTest(): Promise<MailState> {
   const { user } = await requireAdmin();
-  const p = await promoFrom(formData);
-  if ('error' in p) return { error: p.error };
-  const mail = weeklyHtml({ email: user.email!, token: 'podglad' }, weekKey(), await loadWeeklyCases(), p.promo);
+  const key = weekKey();
+  const promo = await weeklyPromo(key, await getWeeklySettings(), false);
+  const mail = weeklyHtml({ email: user.email!, token: 'podglad' }, key, await loadWeeklyCases(), promo);
   if (!mail) return { error: 'Brak opublikowanych spraw.' };
   const ok = await sendEmail(user.email!, '[TEST] ' + mail.subject, mail.html);
-  return ok ? { ok: `Wysłano próbny newsletter tego tygodnia na ${user.email}.` } : { error: 'Nie udało się wysłać — sprawdź RESEND_API_KEY i EMAIL_FROM.' };
+  return ok ? { ok: `Wysłano próbny newsletter tego tygodnia na ${user.email} (zapisane ustawienia).` } : { error: 'Nie udało się wysłać — sprawdź RESEND_API_KEY i EMAIL_FROM.' };
 }
 
-export async function sendWeeklyNow(_prev: MailState, formData: FormData): Promise<MailState> {
+export async function sendWeeklyNow(): Promise<MailState> {
   await requireAdmin();
-  const p = await promoFrom(formData);
-  if ('error' in p) return { error: p.error };
-  const r = await sendWeekly({ key: weekKey(), code: p.code, limit: 60 });
+  const r = await sendWeekly({ key: weekKey(), settings: await getWeeklySettings(), limit: 60 });
   revalidatePath('/admin/maile');
   if (!r.ready) return { error: 'Najpierw uruchom w Supabase plik supabase/kampania-newsletter.sql.' };
   if (!r.sent && !r.failed) return { ok: 'Wszyscy subskrybenci dostali już newsletter z tego tygodnia.' };

@@ -22,7 +22,12 @@ type Code = {
 export default async function AdminDiscountsPage() {
   await requireAdmin(); // każda strona panelu sprawdza uprawnienia sama (layout nie zawsze się wykonuje)
   const { data, error } = await createAdminClient().from('discount_codes').select('*').order('created_at', { ascending: false });
-  const codes = (data ?? []) as Code[];
+  const all = (data ?? []) as (Code & { is_gift?: boolean; gift_balance_grosze?: number | null; referrer_email?: string | null })[];
+  // Kody tworzone automatycznie (polecenia, nagrody, karty podarunkowe) — tylko podsumowanie, żeby lista się nie zapchała
+  const auto = all.filter((c) => /^(POLEC|NAGRODA|KARTA)-/.test(c.code));
+  const codes = all.filter((c) => !/^(POLEC|NAGRODA|KARTA)-/.test(c.code)) as Code[];
+  const sum = (p: string) => auto.filter((c) => c.code.startsWith(p));
+  const cards = sum('KARTA-');
 
   return (
     <div className="space-y-8">
@@ -36,6 +41,24 @@ export default async function AdminDiscountsPage() {
       </div>
 
       <DiscountCodeForm />
+
+      {auto.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-3">
+          {[
+            ['Kody polecające (POLEC-)', `${sum('POLEC-').length} · użyte ${sum('POLEC-').reduce((n, c) => n + c.used_count, 0)}×`],
+            ['Nagrody za polecenia (NAGRODA-)', `${sum('NAGRODA-').length} · wykorzystane ${sum('NAGRODA-').filter((c) => c.used_count > 0).length}`],
+            [
+              'Karty podarunkowe (KARTA-)',
+              `${cards.length} · saldo ${(cards.reduce((n, c) => n + (c.is_active ? (c.gift_balance_grosze ?? 0) : 0), 0) / 100).toFixed(2).replace('.', ',')} zł`,
+            ],
+          ].map(([l, v]) => (
+            <div key={l} className="card p-4">
+              <p className="font-mono text-[11px] uppercase tracking-widest text-muted">{l}</p>
+              <p className="mt-1 text-lg font-semibold text-paper-50">{v}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {error && <p className="text-sm text-stamp-500">Błąd: {error.message} — czy uruchomiono aktualny supabase/schema.sql?</p>}
       <div className="card overflow-x-auto">

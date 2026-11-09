@@ -36,7 +36,7 @@ export function ReviewForm({ caseId, existing, defaultAuthor }: { caseId: string
         <input type="hidden" name="caseId" value={caseId} />
         <input type="hidden" name="rating" value={rating || ''} />
         {state.error && <Notice tone="error">{state.error}</Notice>}
-        {state.ok && <Notice tone="success">Dziękujemy! Opinia pojawi się na stronie po sprawdzeniu (zwykle w ciągu 1–2 dni).</Notice>}
+        {state.ok && <Notice tone="success">Dziękujemy! Opinia pojawi się na stronie po sprawdzeniu (zwykle w ciągu 1–2 dni). Kod rabatowy na kolejną sprawę wysłaliśmy ci mailem.</Notice>}
         <fieldset>
           <legend className="label">Ocena</legend>
           <div className="flex gap-1" role="radiogroup" aria-label="Ocena w gwiazdkach">

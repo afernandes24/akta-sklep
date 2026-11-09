@@ -125,7 +125,11 @@ export function WeeklyForm({
   sentThisWeek,
   week,
   featured,
+  percent,
+  min,
 }: {
+  percent: number;
+  min: number;
   auto: boolean;
   code: string;
   dow: number;
@@ -137,15 +141,16 @@ export function WeeklyForm({
   featured: string | null;
 }) {
   const [s, sAction, sBusy] = useActionState<MailState, FormData>(saveWeeklySettings, {});
-  const [t, tAction, tBusy] = useActionState<MailState, FormData>(sendWeeklyTest, {});
-  const [n, nAction, nBusy] = useActionState<MailState, FormData>(sendWeeklyNow, {});
+  const [t, tAction, tBusy] = useActionState<MailState, FormData>(() => sendWeeklyTest(), {});
+  const [n, nAction, nBusy] = useActionState<MailState, FormData>(() => sendWeeklyNow(), {});
   const left = Math.max(0, subscribers - sentThisWeek);
   return (
     <form className="card space-y-4 p-6">
       <h2 className="font-serif text-xl font-semibold">Newsletter co tydzień: „Sprawa tygodnia”</h2>
       <p className="text-sm text-muted">
-        Co tydzień inna sprawa na pierwszym planie, porada detektywa i pozostałe sprawy. Bez kodu mail przypomina o rabacie za 3 sprawy. Świeżo zapisani (2 dni)
-        dostają go od kolejnego tygodnia.
+        Co tydzień inna sprawa na pierwszym planie, porada detektywa i pozostałe sprawy — plus <strong>kod tygodnia</strong> (np. TYDZIEN46: −{percent}% od {min}{' '}
+        spraw, do niedzieli), który zachęca do większego koszyka. Kod tworzy się sam przy wysyłce. Świeżo zapisani (2 dni) dostają newsletter od kolejnego tygodnia.
+        Zmiany zapisz przed wysłaniem próbnego.
       </p>
       {!ready && <p className="text-sm text-stamp-500">Najpierw uruchom w Supabase plik supabase/newsletter-co-tydzien.sql.</p>}
       <p className="text-sm text-paper-200">
@@ -171,8 +176,16 @@ export function WeeklyForm({
           <input name="hour" type="number" min={0} max={23} defaultValue={hour} className="input w-24" />
         </label>
         <label>
-          <span className="label">Kod rabatowy (opcjonalnie)</span>
-          <input name="code" defaultValue={code} placeholder="bez kodu" className="input w-48 font-mono uppercase" />
+          <span className="label">Kod tygodnia: rabat %</span>
+          <input name="percent" type="number" min={5} max={90} defaultValue={percent} className="input w-24" />
+        </label>
+        <label>
+          <span className="label">od ilu spraw</span>
+          <input name="min" type="number" min={1} max={6} defaultValue={min} className="input w-24" />
+        </label>
+        <label>
+          <span className="label">albo stały kod (zamiast kodu tygodnia)</span>
+          <input name="code" defaultValue={code} placeholder="puste = kod tygodnia" className="input w-52 font-mono uppercase" />
         </label>
       </div>
       <Msg s={s} />

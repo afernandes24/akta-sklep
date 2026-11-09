@@ -1,5 +1,6 @@
 import 'server-only';
 import { findValidCoupon } from './discounts';
+import { afterOrderPaid } from './gifts';
 import { notifyOwner, sendOrderConfirmation } from './email';
 import { recordLedger } from './ledger';
 import { telegram } from './telegram';
@@ -30,6 +31,8 @@ export async function createOrder(params: {
   couponCode?: string | null;
   /** Kwota, którą klient widział na przycisku — jeśli się różni, nie tworzymy zamówienia. */
   expectedTotal?: number | null;
+  /** Prezent: kupujący może mieć już te sprawy — i tak je kupuje (dla kogoś). */
+  forGift?: boolean;
 }): Promise<CreateOrderResult> {
   // Pozycje w formacie "id:format" (starsze koszyki: samo id = PDF)
   const wanted = Array.from(
@@ -50,7 +53,7 @@ export async function createOrder(params: {
 
   const [{ data: cases, error: casesError }, { data: owned }] = await Promise.all([
     db.from('cases').select('id, title, case_number, price_grosze, currency, online_enabled, online_price_grosze').in('id', ids).eq('is_published', true),
-    params.userId
+    params.userId && !params.forGift
       ? db.from('entitlements').select('case_id, format').eq('user_id', params.userId).in('case_id', ids)
       : Promise.resolve({ data: [] as { case_id: string; format: string | null }[] }),
   ]);
@@ -171,6 +174,8 @@ export async function fulfillOrder(
     if (newlyPaid && order.discount_code) {
       await db.rpc('use_discount_code', { p_code: order.discount_code }).then(({ error: e }) => e && console.error('[orders] kod', e.message));
     }
+    // Karty podarunkowe, polecenia, prezenty (lib/gifts.ts) — przed mailem z potwierdzeniem, żeby był w nim kod polecający
+    if (newlyPaid) await afterOrderPaid(orderId).catch((e) => console.error('[orders] prezenty/polecenia', e));
   }
 
   if (!order.user_id) {
