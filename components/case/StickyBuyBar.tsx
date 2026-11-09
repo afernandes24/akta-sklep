@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react';
 import { AddToCartButtons } from '../cart/AddToCartButtons';
 import type { CartItem } from '@/lib/types';
 
-/** Pasek „Kup” przyklejony do dołu ekranu na telefonach, gdy główny przycisk zniknie z widoku. */
+/** Pasek „Kup” przyklejony do dołu ekranu na telefonach, gdy główny przycisk nie jest widoczny (powyżej albo poniżej). */
 export function StickyBuyBar({ item, priceLabel }: { item: CartItem; priceLabel: string }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const target = document.getElementById('kup');
     if (!target) return;
-    const observer = new IntersectionObserver(([entry]) => setVisible(!entry.isIntersecting && entry.boundingClientRect.top < 0), {
+    const observer = new IntersectionObserver(([entry]) => setVisible(!entry.isIntersecting), {
       threshold: 0,
     });
     observer.observe(target);

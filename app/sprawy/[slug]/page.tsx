@@ -56,6 +56,9 @@ export default async function CasePage({ params }: Params) {
 
   const [images, reviews, ratings] = await Promise.all([getCaseImages(c.id), getApprovedReviews(c.id), getCaseRatings()]);
   const rating = ratings[c.id] ?? null;
+  const paragraphs = c.description.split(/\n{2,}/).filter(Boolean);
+  // Najlepsza opinia (najwyższa ocena, potem najdłuższa) — krótko pod przyciskiem kupna
+  const topReview = [...reviews].sort((a, b) => b.rating - a.rating || b.body.length - a.body.length)[0] ?? null;
   const cartItem = { id: c.id, slug: c.slug, title: c.title, caseNumber: c.case_number, priceGrosze: c.price_grosze, format: 'pdf' as const };
   const online = c.online_enabled ? { priceGrosze: c.online_price_grosze ?? c.price_grosze } : null;
   const fromPrice = online ? Math.min(online.priceGrosze, c.price_grosze) : c.price_grosze;
@@ -141,11 +144,11 @@ export default async function CasePage({ params }: Params) {
       </div>
 
       {/* NAGŁÓWEK PRODUKTU */}
-      <section className="container-page grid gap-10 pb-16 pt-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16">
-        <div className="mx-auto w-full max-w-md lg:sticky lg:top-24 lg:self-start">
+      <section className="container-page grid gap-6 pb-16 pt-6 sm:gap-10 sm:pt-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16">
+        <div className="mx-auto w-full max-w-[220px] sm:max-w-sm lg:sticky lg:top-24 lg:max-w-md lg:self-start">
           <CaseCover caseNumber={c.case_number} title={c.title} coverPath={c.cover_path} size="lg" priority />
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="eyebrow">Akta #{c.case_number}</p>
           <h1 className="mt-2 text-4xl font-bold leading-tight sm:text-5xl">
             {c.title}
@@ -159,11 +162,7 @@ export default async function CasePage({ params }: Params) {
           <p className="mt-4 text-lg leading-relaxed text-paper-200">{c.tagline}</p>
           <CaseBadges c={c} className="mt-4" />
 
-          <div className="mt-8">
-            <CaseStats layout="grid" difficulty={c.difficulty} minutes={c.play_time_minutes} suspects={c.suspect_count} pages={c.page_count} />
-          </div>
-
-          <div id="kup" className="card mt-8 p-6">
+          <div id="kup" className="card mt-6 scroll-mt-24 p-6 sm:mt-8">
             <div className="flex items-baseline justify-between gap-4">
               <p className="font-serif text-4xl font-bold text-paper-50">
                 {online && <span className="mr-2 text-lg font-normal text-muted">od</span>}
@@ -183,13 +182,67 @@ export default async function CasePage({ params }: Params) {
             </p>
           </div>
 
+          {topReview && (
+            <a href="#opinie" className="mt-4 block rounded-lg border border-ink-700 bg-ink-900/60 p-4 hover:border-brass-500/50">
+              <p className="text-sm text-brass-300" aria-label={`${topReview.rating} na 5`}>
+                {'★'.repeat(topReview.rating)}
+                <span className="text-ink-600">{'★'.repeat(5 - topReview.rating)}</span>
+              </p>
+              <p className="mt-1 line-clamp-3 text-sm italic text-paper-100">„{topReview.body}”</p>
+              <p className="mt-1 text-xs text-muted">
+                — {topReview.author_name} · zweryfikowany zakup{reviews.length > 1 ? ` · zobacz wszystkie opinie (${reviews.length})` : ''}
+              </p>
+            </a>
+          )}
+
+          {images.length > 0 && (
+            <div className="mt-6 lg:hidden">
+              <div className="flex items-baseline justify-between">
+                <p className="eyebrow">Zajrzyj do teczki</p>
+                {c.excerpts.length > 0 && (
+                  <a href="#materialy" className="text-xs text-brass-300">
+                    fragmenty akt ↓
+                  </a>
+                )}
+              </div>
+              <div className="-mx-4 mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2">
+                {images.map((img) => (
+                  <figure key={img.id} className="w-[62%] shrink-0 snap-start overflow-hidden rounded-lg border border-ink-700 bg-ink-950">
+                    <Image
+                      src={publicStorageUrl('previews', img.path)!}
+                      alt={img.caption || `Przykładowa strona akt — ${c.title}`}
+                      width={1240}
+                      height={1754}
+                      sizes="62vw"
+                      loading="lazy"
+                      className="h-auto w-full"
+                    />
+                    {img.caption && <figcaption className="px-3 py-2 text-xs text-muted">{img.caption}</figcaption>}
+                  </figure>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-8">
+            <CaseStats layout="grid" difficulty={c.difficulty} minutes={c.play_time_minutes} suspects={c.suspect_count} pages={c.page_count} />
+          </div>
+
           {/* OPIS */}
           <div className="mt-12">
             <h2 className="text-3xl font-bold">Opis sprawy</h2>
             <div className="prose-akta mt-4 text-lg">
-              {c.description.split(/\n{2,}/).map((p, i) => (
+              {paragraphs.slice(0, 1).map((p, i) => (
                 <p key={i}>{p}</p>
               ))}
+              {paragraphs.length > 1 && (
+                <details className="group">
+                  <summary className="cursor-pointer list-none text-base font-semibold text-brass-300 group-open:hidden">Czytaj dalej ↓</summary>
+                  {paragraphs.slice(1).map((p, i) => (
+                    <p key={i}>{p}</p>
+                  ))}
+                </details>
+              )}
             </div>
           </div>
 
@@ -231,7 +284,7 @@ export default async function CasePage({ params }: Params) {
 
       {/* PRZYKŁADOWE MATERIAŁY */}
       {(c.excerpts.length > 0 || images.length > 0) && (
-        <section className="border-y border-ink-800 bg-ink-900/60 py-20">
+        <section id="materialy" className={`scroll-mt-20 border-y border-ink-800 bg-ink-900/60 py-14 sm:py-20 ${c.excerpts.length ? '' : 'hidden lg:block'}`}>
           <div className="container-page">
             <div className="max-w-2xl">
               <p className="eyebrow">Zajrzyj do teczki</p>
@@ -240,7 +293,7 @@ export default async function CasePage({ params }: Params) {
             </div>
 
             {images.length > 0 && (
-              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-10 hidden gap-6 lg:grid lg:grid-cols-4">
                 {images.map((img) => (
                   <figure key={img.id} className="overflow-hidden rounded-lg border border-ink-700 bg-ink-950">
                     <Image
