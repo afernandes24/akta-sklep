@@ -139,6 +139,19 @@ const top = (m: Map<string, number>, n = 10): Row[] =>
 const inc = (m: Map<string, number>, k: string, by = 1) => m.set(k, (m.get(k) ?? 0) + by);
 const COUNTRY: Record<string, string> = { PL: 'Polska', DE: 'Niemcy', GB: 'Wielka Brytania', IE: 'Irlandia', NL: 'Holandia', US: 'USA', NO: 'Norwegia', UA: 'Ukraina', CZ: 'Czechy', FR: 'Francja' };
 const PLACEMENT: Record<string, string> = { fb: 'Facebook', ig: 'Instagram', msg: 'Messenger', an: 'Audience Network', th: 'Threads' };
+/** Nazwa reklamy z Meta bywa zakodowana podwójnie („A+%E2%80%93+policja+2”) — sprowadzamy do „A – policja 2”. */
+const adName = (raw: string | null | undefined) => {
+  if (!raw) return null;
+  let v = raw;
+  for (let i = 0; i < 2 && /%[0-9A-F]{2}|\+/i.test(v); i++) {
+    try {
+      v = decodeURIComponent(v.replace(/\+/g, ' '));
+    } catch {
+      break;
+    }
+  }
+  return v.trim();
+};
 const isChannel = (c: unknown): c is Channel => typeof c === 'string' && (CHANNELS as readonly string[]).includes(c);
 const maskEmail = (e: string) => {
   const [u, d] = e.split('@');
@@ -213,7 +226,7 @@ export async function getStats(days: number): Promise<Stats> {
     if (ch === 'Wyszukiwarka' && /android\.gm|outlook/.test(o.src_source ?? '')) ch = 'Mail';
     return ch;
   };
-  const orderAd = (o: Ord) => o.src_content ?? (o.visitor ? firstByVisitor.get(o.visitor)?.utm_content : null) ?? null;
+  const orderAd = (o: Ord) => adName(o.src_content ?? (o.visitor ? firstByVisitor.get(o.visitor)?.utm_content : null));
   const orderPlacement = (o: Ord) => {
     const s = o.src_source ?? (o.visitor ? firstByVisitor.get(o.visitor)?.utm_source : null);
     return s ? (PLACEMENT[s] ?? s) : null;
@@ -262,7 +275,7 @@ export async function getStats(days: number): Promise<Stats> {
     if (c !== 'Meta Ads') continue;
     const v = firstByVisitor.get(vis)!;
     meta.visitors += 1;
-    const r = ad(v.utm_content ?? 'bez nazwy reklamy');
+    const r = ad(adName(v.utm_content) ?? 'bez nazwy reklamy');
     r.visitors += 1;
     if (sawCart(vis)) {
       meta.carts += 1;
