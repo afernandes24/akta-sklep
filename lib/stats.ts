@@ -168,8 +168,27 @@ export async function getStats(days: number): Promise<Stats> {
   const sinceIso = since.toISOString();
 
   // Nowe kolumny dochodzą z plików SQL (panel-admina.sql, statystyki-zrodla.sql) — bez nich zapytania idą w uboższej wersji
-  const pvQuery = (cols: string) => db.from('page_views').select(cols).gte('at', sinceIso).order('at').limit(100000);
-  const ordQuery = (cols: string) => db.from('orders').select(cols).gte('created_at', sinceIso).limit(10000);
+  // Supabase zwraca najwyżej 1000 wierszy na zapytanie — pobieramy stronami, inaczej statystyki „stają” po 1000 wejściach
+  const pvQuery = async (cols: string): Promise<{ data: unknown[] | null; error: unknown }> => {
+    const all: unknown[] = [];
+    for (let from = 0; from < 200000; from += 1000) {
+      const { data, error } = await db.from('page_views').select(cols).gte('at', sinceIso).order('at').order('id').range(from, from + 999);
+      if (error) return { data: null, error };
+      all.push(...(data ?? []));
+      if (!data || data.length < 1000) break;
+    }
+    return { data: all, error: null };
+  };
+  const ordQuery = async (cols: string): Promise<{ data: unknown[] | null; error: unknown }> => {
+    const all: unknown[] = [];
+    for (let from = 0; from < 50000; from += 1000) {
+      const { data, error } = await db.from('orders').select(cols).gte('created_at', sinceIso).order('created_at').range(from, from + 999);
+      if (error) return { data: null, error };
+      all.push(...(data ?? []));
+      if (!data || data.length < 1000) break;
+    }
+    return { data: all, error: null };
+  };
   const PV = 'at, path, visitor, source, referrer_host, utm_source, utm_medium, utm_campaign, device, country, region, city';
   const ORD = 'id, user_id, email, status, total_grosze, paid_at, created_at, discount_code, geo_country, geo_region, geo_city, order_items(case_id, title)';
   const SRC = ', src_channel, src_source, src_medium, src_campaign, src_content, visitor';
