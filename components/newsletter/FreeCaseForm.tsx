@@ -2,12 +2,18 @@
 
 import { EmailTypoHint } from '@/components/ui/EmailTypoHint';
 import Link from 'next/link';
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
+import { trackLead } from '@/lib/analytics';
 import { type SubscribeState, subscribe } from '@/app/darmowa-sprawa/actions';
 import { Notice } from '@/components/ui/PageHeader';
 
 export function FreeCaseForm({ source = 'darmowa-sprawa', consentText, compact = false }: { source?: string; consentText: string; compact?: boolean }) {
   const [state, action, pending] = useActionState<SubscribeState, FormData>(subscribe, {});
+
+  // Zdarzenie „Lead” dla reklam Meta (tylko przy zgodzie na cookies marketingowe)
+  useEffect(() => {
+    if (state.ok) trackLead(source);
+  }, [state.ok, source]);
 
   if (state.ok) {
     return (

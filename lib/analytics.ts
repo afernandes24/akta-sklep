@@ -44,3 +44,15 @@ export function trackPurchase(order: { id: string; totalGrosze: number; items: {
   });
   fbq()?.('track', 'Purchase', { currency: 'PLN', value, content_ids: order.items.map((i) => i.id), content_type: 'product' }, { eventID: order.id });
 }
+
+/** Zapis po darmową sprawę (newsletter) — „Lead” dla reklam Meta i „generate_lead” dla GA. Raz na kartę przeglądarki. */
+export function trackLead(source: string) {
+  try {
+    if (window.sessionStorage.getItem('akta-lead')) return;
+    window.sessionStorage.setItem('akta-lead', '1');
+  } catch {
+    /* ignoruj */
+  }
+  gtag()?.('event', 'generate_lead', { source });
+  fbq()?.('track', 'Lead', { content_name: 'darmowa-sprawa', source });
+}
