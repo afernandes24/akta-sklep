@@ -99,7 +99,7 @@ export function regulamin(): LegalDoc {
             ordered: true,
             list: [
               'Informacje o Produktach w Sklepie stanowią zaproszenie do zawarcia umowy.',
-              'Aby złożyć zamówienie, Klient dodaje Produkt do koszyka, loguje się na Konto albo podaje adres e-mail (zakup bez Konta), akceptuje Regulamin, składa oświadczenie, o którym mowa w §9 ust. 2, i klika przycisk „Zamawiam i płacę”, co oznacza obowiązek zapłaty.',
+              'Aby złożyć zamówienie, Klient dodaje Produkt do koszyka, loguje się na Konto albo podaje adres e-mail (zakup bez Konta), akceptuje Regulamin (co potwierdza kliknięciem przycisku „Zamawiam i płacę”, pod którym znajduje się link do Regulaminu), składa oświadczenie, o którym mowa w §9 ust. 2, i klika przycisk „Zamawiam i płacę”, co oznacza obowiązek zapłaty.',
               'Umowa sprzedaży treści cyfrowej zostaje zawarta z chwilą złożenia zamówienia. Po zaksięgowaniu płatności Sprzedawca wysyła na adres e-mail Klienta potwierdzenie zawarcia umowy wraz z treścią Regulaminu i potwierdzeniem złożonego oświadczenia (trwały nośnik).',
             ],
           },

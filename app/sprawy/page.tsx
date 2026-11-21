@@ -38,7 +38,10 @@ export default async function CasesPage() {
         }}
       />
       <PageHeader eyebrow="Archiwum" title="Gry kryminalne i detektywistyczne do druku">
-        Każda sprawa to kompletna, zamknięta historia: od pierwszego raportu po końcową dedukcję. Kupujesz raz — pobierasz, kiedy chcesz.
+        <span className="hidden sm:inline">
+          Każda sprawa to kompletna, zamknięta historia: od pierwszego raportu po końcową dedukcję. Kupujesz raz — pobierasz, kiedy chcesz.
+        </span>
+        <span className="sm:hidden">PDF do druku · pliki od razu po płatności.</span>
       </PageHeader>
       <section className="container-page">
         {cases.length === 0 ? (

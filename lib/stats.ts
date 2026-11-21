@@ -209,7 +209,11 @@ export async function getStats(days: number): Promise<Stats> {
   // Boty: kraje wykluczone (domyślnie USA) nie są liczone — także w danych zapisanych wcześniej
   const blocked = excludedCountries();
   const allViews = ((pv.data ?? []) as unknown as View[]).map((v) => ({ ...v, city: fixText(v.city) }));
-  const views = allViews.filter((v) => !v.country || !blocked.has(v.country));
+  // Kroki w koszyku (/_e/email, /_e/zamawiam…) to nie strony — liczone osobno, do lejka
+  const isStep = (p: string) => p.startsWith('/_e/');
+  const counted = allViews.filter((v) => !v.country || !blocked.has(v.country));
+  const views = counted.filter((v) => !isStep(v.path));
+  const stepVisitors = (step: string) => new Set(counted.filter((v) => v.path === `/_e/${step}`).map((v) => v.visitor)).size;
   const botsFiltered = new Set(allViews.filter((v) => v.country && blocked.has(v.country)).map((v) => v.visitor)).size;
 
   // Zamówienia z kont adminów (testy) nie są liczone
@@ -463,6 +467,9 @@ export async function getStats(days: number): Promise<Stats> {
       { label: 'Odwiedzili sklep', value: visitors },
       { label: 'Obejrzeli sprawę', value: sawCase },
       { label: 'Weszli do koszyka', value: sawCartN },
+      { label: 'Wpisali e-mail (od 22.11)', value: stepVisitors('email') },
+      { label: 'Kliknęli „Zamawiam” (od 22.11)', value: stepVisitors('zamawiam') },
+      { label: 'Błąd w formularzu (od 22.11)', value: stepVisitors('blad') },
       { label: 'Rozpoczęli płatność', value: ords.length },
       { label: 'Zapłacili', value: paid.length },
     ],

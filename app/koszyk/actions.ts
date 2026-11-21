@@ -39,8 +39,9 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
     if (!allow(`guest-checkout:${await clientIp()}`, 10, 60 * 60 * 1000)) return { error: 'Zbyt wiele prób. Spróbuj ponownie za chwilę.' };
   }
 
-  if (formData.get('terms') !== 'on' || formData.get('digital_consent') !== 'on') {
-    return { error: 'Aby kontynuować, zaakceptuj regulamin i wyraź zgodę na natychmiastowe dostarczenie plików.' };
+  // Regulamin akceptuje się kliknięciem „Zamawiam i płacę” (informacja pod przyciskiem); zgoda na treść cyfrową musi być zaznaczona
+  if (formData.get('digital_consent') !== 'on') {
+    return { error: 'Zaznacz zgodę na natychmiastowe dostarczenie plików — bez niej nie możemy wysłać akt od razu po płatności.' };
   }
 
   const provider = getPaymentProvider();

@@ -49,6 +49,8 @@ function Chip({ active, onClick, title, children }: { active: boolean; onClick: 
 
 export function CatalogBrowser({ cases, ratings }: { cases: CaseRecord[]; ratings: Record<string, CaseRating> }) {
   const [f, setF] = useState<Filters>(EMPTY);
+  // Telefon: filtry zwinięte, żeby sprawy było widać od razu
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Filtry w adresie (?temat=katastrofa) — można podlinkować wynik; strona statyczna pokazuje wszystko dla SEO.
   useEffect(() => {
@@ -97,7 +99,26 @@ export function CatalogBrowser({ cases, ratings }: { cases: CaseRecord[]; rating
 
   return (
     <>
-      <div className="card mb-8 space-y-4 p-5" role="search" aria-label="Filtry spraw">
+      <div className="mb-5 flex items-center justify-between gap-3 sm:hidden">
+        <p className="text-sm text-paper-200" aria-live="polite">
+          {visible.length} {plural(visible.length, 'sprawa', 'sprawy', 'spraw')}
+          {active && (
+            <button type="button" onClick={() => update({ ...EMPTY, sort: f.sort })} className="ml-3 text-brass-300 underline underline-offset-2">
+              Wyczyść
+            </button>
+          )}
+        </p>
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((o) => !o)}
+          aria-expanded={filtersOpen}
+          aria-controls="filtry-spraw"
+          className="rounded-full border border-ink-700 px-4 py-2 text-sm text-paper-100 hover:border-brass-500/60"
+        >
+          {filtersOpen ? 'Ukryj filtry ▲' : `Filtry i sortowanie${active || f.sort ? ' •' : ''} ▼`}
+        </button>
+      </div>
+      <div id="filtry-spraw" className={`card mb-8 space-y-4 p-5 ${filtersOpen ? '' : 'hidden'} sm:block`} role="search" aria-label="Filtry spraw">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
           <span className="w-20 shrink-0 pt-2 text-xs uppercase tracking-widest text-muted">Dział</span>
           <div className="flex flex-wrap gap-2">

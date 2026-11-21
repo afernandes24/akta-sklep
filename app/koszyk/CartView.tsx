@@ -2,7 +2,8 @@
 
 import { EmailTypoHint } from '@/components/ui/EmailTypoHint';
 import Link from 'next/link';
-import { useActionState, useState, useTransition, useEffect } from 'react';
+import { useActionState, useState, useTransition, useEffect, useRef } from 'react';
+import { trackStep } from '@/lib/track-step';
 import { useCart } from '@/components/cart/CartProvider';
 import { CaseCover } from '@/components/case/CaseCover';
 import { Notice } from '@/components/ui/PageHeader';
@@ -48,6 +49,19 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
   const [codeError, setCodeError] = useState<string | null>(null);
   const [checking, startChecking] = useTransition();
   const [isGift, setIsGift] = useState(false);
+  // Telefon: pasek „Do kasy” na dole ekranu, dopóki formularz zamówienia nie jest widoczny
+  const formRef = useRef<HTMLFormElement>(null);
+  const [formVisible, setFormVisible] = useState(true);
+  useEffect(() => {
+    const el = formRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(([e]) => setFormVisible(e.isIntersecting), { rootMargin: '0px 0px -30% 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ready, items.length]);
+  useEffect(() => {
+    if (state.error) trackStep('blad');
+  }, [state.error]);
 
   const price = priceCart(
     items.map((i) => i.priceGrosze),
@@ -140,7 +154,7 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
           )}
           <div className="flex justify-between text-paper-200">
             <dt>Dostawa</dt>
-            <dd>0,00 zł · pobranie</dd>
+            <dd>0,00 zł · od razu po płatności</dd>
           </div>
           <div className="flex justify-between border-t border-ink-700 pt-3 text-lg font-semibold text-paper-50">
             <dt>Razem</dt>
@@ -219,7 +233,7 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
         <p className="mt-2 text-xs text-muted">Cenę sprawdzamy jeszcze raz przed płatnością — jeśli się zmieni, zobaczysz komunikat, zanim zapłacisz.</p>
 
         {
-          <form action={action} className="mt-6 space-y-4">
+          <form id="zamowienie" ref={formRef} action={action} onSubmit={() => trackStep('zamawiam')} className="mt-6 scroll-mt-24 space-y-4">
             {items.map((i) => (
               <input key={cartKey(i)} type="hidden" name="caseId" value={cartKey(i)} />
             ))}
@@ -246,6 +260,7 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
                   placeholder="np. jan@gmail.com"
                   className="input"
                   maxLength={200}
+                  onBlur={(e) => EMAIL_OK.test(e.currentTarget.value.trim()) && trackStep('email')}
                 />
                 <EmailTypoHint inputId="checkout-email" />
                 <p className="mt-1.5 text-xs text-muted">
@@ -267,26 +282,53 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
             </label>
             {isGift && <GiftFields idPrefix="cart-gift" />}
             <label className="flex gap-3 text-sm leading-relaxed text-paper-200">
-              <input type="checkbox" name="terms" required className="mt-1 h-4 w-4 shrink-0 accent-brass-400" />
-              <span>
-                Akceptuję{' '}
-                <Link href="/regulamin" target="_blank" className="text-brass-300 underline">
-                  regulamin
-                </Link>{' '}
-                sklepu.
-              </span>
-            </label>
-            <label className="flex gap-3 text-sm leading-relaxed text-paper-200">
               <input type="checkbox" name="digital_consent" required className="mt-1 h-4 w-4 shrink-0 accent-brass-400" />
               <span>{DIGITAL_CONSENT_TEXT}</span>
             </label>
             <button type="submit" className="btn-primary w-full text-base" disabled={pending || !paymentsReady}>
               {pending ? 'Przekierowuję do płatności…' : `Zamawiam i płacę ${formatPrice(price.total)}`}
             </button>
-            <p className="text-center text-xs text-muted">Płatność obsługuje: {providerLabel}</p>
+            <p className="text-center text-xs text-muted">
+              Klikając „Zamawiam i płacę”, akceptujesz{' '}
+              <Link href="/regulamin" target="_blank" className="text-brass-300 underline">
+                regulamin
+              </Link>{' '}
+              sklepu.
+            </p>
+            <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5 rounded-md border border-ink-800 bg-ink-900/60 p-3 text-xs text-paper-200">
+              <li>⚡ Pliki od razu po płatności</li>
+              <li>✉️ Link także na e-mail</li>
+              <li>💳 BLIK, karta, Apple Pay, Google Pay</li>
+              <li>🔒 Bezpieczna płatność: {providerLabel}</li>
+            </ul>
           </form>
         }
       </aside>
+
+      {!formVisible && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-brass-500/30 bg-ink-950/95 px-4 py-3 backdrop-blur lg:hidden">
+          <div className="mx-auto flex max-w-xl items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-muted">
+                Razem ({items.length} {items.length === 1 ? 'sprawa' : items.length < 5 ? 'sprawy' : 'spraw'})
+              </p>
+              <p className="font-serif text-xl font-bold text-paper-50">{formatPrice(price.total)}</p>
+            </div>
+            <button
+              type="button"
+              className="btn-primary shrink-0"
+              onClick={() => {
+                formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                window.setTimeout(() => document.getElementById('checkout-email')?.focus({ preventScroll: true }), 450);
+              }}
+            >
+              Do kasy ↓
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+const EMAIL_OK = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
