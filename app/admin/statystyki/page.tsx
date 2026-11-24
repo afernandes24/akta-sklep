@@ -367,6 +367,29 @@ export default async function AdminStatsPage({ searchParams }: { searchParams: P
         <PolandMap {...s.map} />
         <Bars title="Skąd przychodzą (strony / utm_source)" rows={s.sources} />
         <Bars title="Lejek zakupowy" rows={s.funnel} total={s.funnel[0]?.value} />
+        {s.freeCase?.ready && (
+          <section className="card p-5">
+            <h2 className="font-serif text-lg font-semibold">Darmowa sprawa → zakupy</h2>
+            <p className="mt-1 text-xs text-muted">Osoby zapisane w tym okresie (reklama „darmowa sprawa”, formularze) i ile z nich potem kupiło.</p>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                ['Zapisali się', String(s.freeCase.signups)],
+                ['Potwierdzili e-mail', `${s.freeCase.confirmed}${s.freeCase.signups ? ` · ${Math.round((s.freeCase.confirmed / s.freeCase.signups) * 100)}%` : ''}`],
+                ['Kupili później', `${s.freeCase.buyers}${s.freeCase.confirmed ? ` · ${((s.freeCase.buyers / s.freeCase.confirmed) * 100).toFixed(1).replace('.', ',')}%` : ''}`],
+                ['Przychód od nich', formatPrice(s.freeCase.revenue)],
+              ].map(([k, v]) => (
+                <div key={k} className="rounded-md border border-ink-800 p-3">
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-muted">{k}</p>
+                  <p className="mt-1 font-serif text-xl font-bold text-paper-50">{v}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-muted">
+              Zamówienia z kodem z serii powitalnej (START…): <strong className="text-paper-100">{s.freeCase.startOrders}</strong> ·{' '}
+              {formatPrice(s.freeCase.startRevenue)}. Seria: mail 1 po 2 dniach (kod −30% na 72 h), mail 2 dzień przed końcem kodu.
+            </p>
+          </section>
+        )}
         <section className="card p-5">
           <h2 className="font-serif text-lg font-semibold">Sprawy: oglądali → kupili</h2>
           {s.cases.length === 0 ? (

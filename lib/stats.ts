@@ -87,6 +87,8 @@ export interface Stats {
   devices: Row[];
   countries: Row[];
   funnel: Row[];
+  /** Zapisy po darmową sprawę → ilu potem kupiło (seria powitalna, kody START…) */
+  freeCase: { ready: boolean; signups: number; confirmed: number; buyers: number; revenue: number; startOrders: number; startRevenue: number };
   coupons: Row[];
   campaigns: Row[];
   map: MapData;
@@ -192,11 +194,12 @@ export async function getStats(days: number): Promise<Stats> {
   const PV = 'at, path, visitor, source, referrer_host, utm_source, utm_medium, utm_campaign, device, country, region, city';
   const ORD = 'id, user_id, email, status, total_grosze, paid_at, created_at, discount_code, geo_country, geo_region, geo_city, order_items(case_id, title)';
   const SRC = ', src_channel, src_source, src_medium, src_campaign, src_content, visitor';
-  const [pvFull, ordFull, casesRes, admins] = await Promise.all([
+  const [pvFull, ordFull, casesRes, admins, subsRes] = await Promise.all([
     pvQuery(PV + ', lat, lon, utm_content, click_id'),
     ordQuery(ORD + ', geo_lat, geo_lon' + SRC),
     db.from('cases').select('id, slug, title'),
     getAdmins(),
+    db.from('newsletter_subscribers').select('email, confirmed_at').gte('created_at', sinceIso).limit(50000),
   ]);
   let pv = pvFull;
   if (pv.error) pv = await pvQuery(PV + ', lat, lon');
@@ -437,9 +440,34 @@ export async function getStats(days: number): Promise<Stats> {
   const cityVisitors = cityAgg([...firstByVisitor.values()].filter((v) => !v.country || v.country === 'PL'));
   const cityBuyers = cityAgg(paid.filter((o) => !o.geo_country || o.geo_country === 'PL').map((o) => ({ city: o.geo_city, lat: o.geo_lat, lon: o.geo_lon, amount: o.total_grosze })));
 
+  // Darmowa sprawa → zakup: zapisani w tym okresie, którzy potem zapłacili za zamówienie
+  const subs = ((subsRes.data ?? []) as { email: string; confirmed_at: string | null }[]).filter((x) => !admins.emails.has(x.email.toLowerCase()));
+  const confirmedAt = new Map(subs.filter((x) => x.confirmed_at).map((x) => [x.email.toLowerCase(), x.confirmed_at as string]));
+  const subBuyers = new Set<string>();
+  let subRevenue = 0;
+  for (const o of paid) {
+    const e = String(o.email ?? '').toLowerCase();
+    const c = confirmedAt.get(e);
+    if (c && (o.paid_at ?? o.created_at) >= c) {
+      subBuyers.add(e);
+      subRevenue += o.total_grosze;
+    }
+  }
+  const startPaid = paid.filter((o) => String(o.discount_code ?? '').toUpperCase().startsWith('START'));
+  const freeCase = {
+    ready: !subsRes.error,
+    signups: subs.length,
+    confirmed: confirmedAt.size,
+    buyers: subBuyers.size,
+    revenue: subRevenue,
+    startOrders: startPaid.length,
+    startRevenue: startPaid.reduce((a, o) => a + o.total_grosze, 0),
+  };
+
   return {
     days,
     ready: !pv.error,
+    freeCase,
     sourcesReady,
     views: views.length,
     visitors,

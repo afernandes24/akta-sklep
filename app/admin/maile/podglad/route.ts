@@ -3,11 +3,12 @@ import { getUser } from '@/lib/auth';
 import { campaignHtml, getSubscribers, loadCases } from '@/lib/campaign';
 import { followupHtml, getBuyers, getFollowupSettings, loadPromo, recommendationsFor } from '@/lib/followup';
 import { isAdminUser } from '@/lib/online';
+import { welcomeHtml } from '@/lib/welcome';
 import { getWeeklySettings, loadWeeklyCases, weekKey, weeklyHtml, weeklyPromo } from '@/lib/weekly';
 
 export const dynamic = 'force-dynamic';
 
-/** Podgląd maila wysłanego do konkretnej osoby (tylko admin). ?typ=zakup|newsletter&e=adres[&kod=…] */
+/** Podgląd maila wysłanego do konkretnej osoby (tylko admin). ?typ=zakup|newsletter|tydzien|seria1|seria2&e=adres[&kod=…] */
 export async function GET(req: Request) {
   const user = await getUser();
   if (!user || !(await isAdminUser(user.id))) return new NextResponse('Nie znaleziono', { status: 404 });
@@ -15,7 +16,10 @@ export async function GET(req: Request) {
   const email = String(sp.get('e') ?? '').toLowerCase();
   const cases = await loadCases();
   let html = '<p>Brak danych.</p>';
-  if (sp.get('typ') === 'tydzien') {
+  if (sp.get('typ') === 'seria1' || sp.get('typ') === 'seria2') {
+    const sub = (await getSubscribers()).find((s) => s.email.toLowerCase() === email) ?? { email: email || 'podglad@example.com', token: 'podglad' };
+    html = welcomeHtml(sp.get('typ') === 'seria1' ? 1 : 2, sub, await loadWeeklyCases(), '27 listopada, 18:00')?.html ?? html;
+  } else if (sp.get('typ') === 'tydzien') {
     const w = /^TYDZIEN-\d{4}-\d{2}$/.test(sp.get('w') ?? '') ? sp.get('w')! : weekKey();
     const promo = await weeklyPromo(w, await getWeeklySettings(), false);
     const sub = (await getSubscribers()).find((s) => s.email.toLowerCase() === email) ?? { email, token: 'podglad' };
