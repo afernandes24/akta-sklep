@@ -4,6 +4,7 @@ import { EmailTypoHint } from '@/components/ui/EmailTypoHint';
 import Link from 'next/link';
 import { useActionState, useState, useTransition, useEffect, useRef } from 'react';
 import { trackStep } from '@/lib/track-step';
+import { EmailConfirm } from '@/components/ui/EmailConfirm';
 import { useCart } from '@/components/cart/CartProvider';
 import { CaseCover } from '@/components/case/CaseCover';
 import { Notice } from '@/components/ui/PageHeader';
@@ -263,6 +264,7 @@ export function CartView({ loggedIn, email, paymentsReady, testMode, providerLab
                   onBlur={(e) => EMAIL_OK.test(e.currentTarget.value.trim()) && trackStep('email')}
                 />
                 <EmailTypoHint inputId="checkout-email" />
+                <EmailConfirm inputId="checkout-email" />
                 <p className="mt-1.5 text-xs text-muted">
                   Bez zakładania konta. Po płatności od razu pobierzesz pliki, a link do nich wyślemy też na ten adres.{' '}
                   <Link href="/logowanie?next=/koszyk" className="text-brass-300 underline underline-offset-2">

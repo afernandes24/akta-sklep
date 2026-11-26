@@ -1,5 +1,6 @@
 'use client';
 
+import { EmailConfirm } from '@/components/ui/EmailConfirm';
 import { EmailTypoHint } from '@/components/ui/EmailTypoHint';
 import Link from 'next/link';
 import { useActionState } from 'react';
@@ -64,6 +65,7 @@ export function RegisterForm({ next }: { next: string }) {
         </label>
         <input id="email" name="email" type="email" required autoComplete="email" className="input" />
         <EmailTypoHint inputId="email" />
+        <EmailConfirm inputId="email" />
       </div>
       <div>
         <label htmlFor="password" className="label">

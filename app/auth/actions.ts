@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { isSupabaseConfigured, siteConfig } from '@/lib/config';
 import { safeNext } from '@/lib/safe-redirect';
 import { createClient } from '@/lib/supabase/server';
+import { emailsMatch } from '@/lib/email-match';
 
 export type AuthState = { error?: string; info?: string };
 
@@ -44,6 +45,7 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
   const fullName = String(formData.get('full_name') ?? '').trim().slice(0, 120);
   const next = safeNext(formData.get('next'));
 
+  if (!emailsMatch(email, formData.get('email_confirm'))) return { error: 'Adresy e-mail się różnią — wpisz ten sam adres w obu polach.' };
   if (password.length < 8) return { error: 'Hasło musi mieć co najmniej 8 znaków.' };
 
   const supabase = await createClient();

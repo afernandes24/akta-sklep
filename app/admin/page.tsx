@@ -109,7 +109,9 @@ export default async function AdminDashboard() {
               <li key={m.id} className="rounded-lg border border-ink-700 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <p className="font-semibold text-paper-50">{m.subject || 'Bez tematu'}</p>
+                    <Link href={`/admin/wiadomosci/${m.id}`} className="font-semibold text-paper-50 hover:text-brass-300 hover:underline">
+                      {m.subject || 'Bez tematu'} → odpowiedz
+                    </Link>
                     <p className="text-xs text-muted">
                       {m.name} ·{' '}
                       <a href={`mailto:${m.email}`} className="text-brass-300 hover:underline">

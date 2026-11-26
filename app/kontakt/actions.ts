@@ -3,9 +3,10 @@
 import { isServiceRoleConfigured } from '@/lib/config';
 import { notifyOwner } from '@/lib/email';
 import { allow, clientIp } from '@/lib/rate-limit';
+import { adminThreadUrl, threadUrl } from '@/lib/messages';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-export type ContactState = { ok?: boolean; error?: string };
+export type ContactState = { ok?: boolean; error?: string; link?: string };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** Polityka prywatności: wiadomości z formularza trzymamy do 12 miesięcy. */
@@ -32,18 +33,27 @@ export async function sendContactMessage(_prev: ContactState, formData: FormData
   }
 
   const db = createAdminClient();
-  const { error } = await db.from('contact_messages').insert({ name, email, subject: subject || null, message });
+  const { data: saved, error } = await db.from('contact_messages').insert({ name, email: email.toLowerCase(), subject: subject || null, message }).select('*').single();
   if (error) return { error: 'Nie udało się wysłać wiadomości. Spróbuj ponownie za chwilę.' };
+  const row = saved as { id: string; token?: string };
 
   // Powiadomienie dla sprzedawcy — reklamację trzeba rozpatrzyć w 14 dni (inaczej uznaje się ją za przyjętą).
   await notifyOwner(
     `Nowa wiadomość: ${subject || 'bez tematu'}`,
-    [`Od: ${name} <${email}>`, `Temat: ${subject || '—'}`, message, 'Odpowiedz na tego maila, a odpowiedź trafi do klienta.'],
+    [
+      `Od: ${name} <${email}>`,
+      `Temat: ${subject || '—'}`,
+      message,
+      row.token ? `Odpowiedz w panelu (klient dostanie maila i odpisze na stronie): ${adminThreadUrl(row.id)}` : 'Odpowiedz na tego maila, a odpowiedź trafi do klienta.',
+    ],
     email,
   );
 
   // Sprzątanie wiadomości starszych niż 12 miesięcy (obietnica z polityki prywatności).
-  await db.from('contact_messages').delete().lt('created_at', new Date(Date.now() - RETENTION_MS).toISOString());
+  // (liczone od ostatniej wiadomości w rozmowie; bez tabel rozmów — od daty pierwszej wiadomości)
+  const cutoff = new Date(Date.now() - RETENTION_MS).toISOString();
+  const del = await db.from('contact_messages').delete().lt('last_activity_at', cutoff);
+  if (del.error) await db.from('contact_messages').delete().lt('created_at', cutoff);
 
-  return { ok: true };
+  return { ok: true, link: row.token ? threadUrl(row.token) : undefined };
 }

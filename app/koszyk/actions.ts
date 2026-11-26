@@ -16,6 +16,7 @@ import { channelOf, parseTouch, type Touch } from '@/lib/attribution';
 import { visitorHash } from '@/lib/visitor';
 import { hasImpossibleTld, suggestEmail } from '@/lib/email-typo';
 import { parseGift } from '@/lib/gift-form';
+import { emailsMatch } from '@/lib/email-match';
 
 export type CheckoutState = { error?: string };
 
@@ -32,6 +33,7 @@ export async function startCheckout(_prev: CheckoutState, formData: FormData): P
   const buyerEmail = user?.email ?? guestEmail;
   if (!user) {
     if (!EMAIL_RE.test(guestEmail)) return { error: 'Podaj poprawny adres e-mail — wyślemy na niego link do plików.' };
+    if (!emailsMatch(guestEmail, formData.get('email_confirm'))) return { error: 'Adresy e-mail się różnią — wpisz ten sam adres w obu polach.' };
     if (hasImpossibleTld(guestEmail)) {
       const fix = suggestEmail(guestEmail);
       return { error: `Adres e-mail ma literówkę na końcu${fix ? ` — chodziło o ${fix}?` : '.'} Popraw go, żeby link do plików na pewno doszedł.` };

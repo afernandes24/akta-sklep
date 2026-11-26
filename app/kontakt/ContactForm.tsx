@@ -9,7 +9,19 @@ export function ContactForm() {
   const [state, action, pending] = useActionState<ContactState, FormData>(sendContactMessage, {});
 
   if (state.ok) {
-    return <Notice tone="success">Dziękujemy! Wiadomość dotarła do nas. Odpowiemy najszybciej, jak to możliwe.</Notice>;
+    return (
+      <Notice tone="success">
+        Dziękujemy! Wiadomość dotarła do nas. Odpowiedź przyjdzie na Twój e-mail — z linkiem, pod którym możesz dalej pisać.
+        {state.link && (
+          <>
+            {' '}
+            <a href={state.link} className="underline">
+              Zobacz rozmowę
+            </a>
+          </>
+        )}
+      </Notice>
+    );
   }
 
   return (
