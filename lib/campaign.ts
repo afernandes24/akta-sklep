@@ -6,6 +6,7 @@ import { formatPrice } from './format';
 import { type Promo, type Rec } from './followup';
 import { sellerIdentity } from './legal/seller';
 import { createAdminClient } from './supabase/admin';
+import { marketingAllowance } from './email-budget';
 
 /**
  * KAMPANIA DO NEWSLETTERA — tylko osoby z potwierdzonym zapisem (zgoda marketingowa).
@@ -101,12 +102,14 @@ export async function sendCampaign(promo: Promo, limit = 60) {
   const todo = subs.filter((s) => !done.has(s.email.toLowerCase()));
   const db = createAdminClient();
   let sent = 0, failed = 0;
-  for (const s of todo.slice(0, limit)) {
+  let budget = Math.min(limit, await marketingAllowance());
+  for (const s of todo) {
+    if (budget-- <= 0) break;
     // najpierw rezerwacja (unikalna para kampania+email), potem wysyłka
     const { error } = await db.from('newsletter_sends').insert({ campaign: promo.code, email: s.email.toLowerCase() });
     if (error) continue; // ktoś już wysłał
     const { subject, html } = campaignHtml(s, promo, cases);
-    const ok = await sendEmail(s.email, subject, html).catch(() => false);
+    const ok = await sendEmail(s.email, subject, html, undefined, 'marketing').catch(() => false);
     if (ok) sent++;
     else {
       failed++;
@@ -114,5 +117,5 @@ export async function sendCampaign(promo: Promo, limit = 60) {
     }
     await new Promise((r) => setTimeout(r, 600));
   }
-  return { ready, sent, failed, left: Math.max(0, todo.length - limit) };
+  return { ready, sent, failed, left: Math.max(0, todo.length - sent) };
 }

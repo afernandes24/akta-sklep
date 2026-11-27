@@ -5,24 +5,55 @@ import { type Block, DIGITAL_CONSENT_TEXT, regulamin } from './legal/documents';
 import { seller, sellerIdentity } from './legal/seller';
 import { createAdminClient } from './supabase/admin';
 import { telegram } from './telegram';
+import { canSend, type EmailKind, logSend } from './email-budget';
 
 /**
  * Wysyłka e-maili przez Resend (https://resend.com) — bez dodatkowych bibliotek.
  * Wymaga RESEND_API_KEY i EMAIL_FROM. Bez nich e-mail jest tylko logowany.
  */
-export async function sendEmail(to: string, subject: string, html: string, replyTo?: string): Promise<boolean> {
+/** Powód ostatniej nieudanej wysyłki (do powiadomień na Telegram). */
+export let lastEmailError = '';
+
+export async function sendEmail(to: string, subject: string, html: string, replyTo?: string, kind: EmailKind = 'system'): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
   if (!key || !from) {
+    lastEmailError = 'brak RESEND_API_KEY / EMAIL_FROM';
     console.warn(`[email] Pominięto wysyłkę „${subject}” do ${to} — brak RESEND_API_KEY / EMAIL_FROM`);
     return false;
   }
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to, subject, html, reply_to: replyTo ?? (seller.email.startsWith('[') ? undefined : seller.email) }),
-  });
-  if (!res.ok) console.error('[email] Resend', res.status, await res.text().catch(() => ''));
+  // Limit Resend: marketing i maile systemowe zostawiają rezerwę na zakupy (lib/email-budget.ts)
+  if (!(await canSend(kind).catch(() => true))) {
+    lastEmailError = `limit maili na dziś (rodzaj: ${kind})`;
+    console.warn(`[email] Wstrzymano „${subject}” do ${to} — ${lastEmailError}`);
+    return false;
+  }
+  let res: Response;
+  try {
+    res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from,
+        to,
+        subject,
+        html,
+        reply_to: replyTo ?? (seller.email.startsWith('[') ? undefined : seller.email),
+        tags: [{ name: 'kind', value: kind }],
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+  } catch (e) {
+    lastEmailError = `brak połączenia z Resend (${e instanceof Error ? e.message : 'błąd'})`;
+    await logSend(kind, false).catch(() => undefined);
+    return false;
+  }
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    lastEmailError = res.status === 429 ? 'Resend: wyczerpany limit maili (429)' : `Resend ${res.status}: ${txt.slice(0, 160)}`;
+    console.error('[email] Resend', res.status, txt);
+  }
+  await logSend(kind, res.ok, res.status).catch(() => undefined);
   return res.ok;
 }
 
@@ -38,7 +69,8 @@ export async function notifyOwner(subject: string, lines: string[], replyTo?: st
   if (!to || to.startsWith('[')) return false;
   const body = lines.map((l) => `<p style="margin:0 0 8px;white-space:pre-wrap">${esc(l)}</p>`).join('');
   const html = `<!doctype html><html lang="pl"><body style="font-family:Arial,sans-serif;font-size:14px;color:#1c1a17">${body}<p style="margin-top:16px;color:#777;font-size:12px">${esc(siteConfig.name)} · ${esc(siteConfig.url)}/admin</p></body></html>`;
-  return sendEmail(to, `[${siteConfig.name}] ${subject}`, html, replyTo).catch(() => false);
+  // Powiadomienia dla Ciebie: gdy działa Telegram, mail idzie tylko jeśli nie zjada rezerwy (rodzaj „system”)
+  return sendEmail(to, `[${siteConfig.name}] ${subject}`, html, replyTo, 'system').catch(() => false);
 }
 
 function blockHtml(b: Block): string {
@@ -126,5 +158,22 @@ export async function sendOrderConfirmation(orderId: string): Promise<void> {
   </div>
 </div></body></html>`;
 
-  await sendEmail(order.email, isCard ? `Karta podarunkowa — zamówienie nr ${order.order_number}` : `Twoje akta są gotowe — zamówienie nr ${order.order_number}`, html);
+  const subject = isCard ? `Karta podarunkowa — zamówienie nr ${order.order_number}` : `Twoje akta są gotowe — zamówienie nr ${order.order_number}`;
+  let ok = await sendEmail(order.email, subject, html, undefined, 'order').catch(() => false);
+  if (!ok) {
+    // druga próba po chwili (chwilowy błąd sieci / Resend)
+    await new Promise((r) => setTimeout(r, 3000));
+    ok = await sendEmail(order.email, subject, html, undefined, 'order').catch(() => false);
+  }
+  if (!ok) await alertOrderMailFailed({ number: order.order_number, email: order.email, total: order.total_grosze, link: accessUrl, reason: lastEmailError });
+}
+
+/** ❗ Telegram: klient zapłacił, a mail z plikami nie wyszedł / nie dotarł. */
+export async function alertOrderMailFailed(o: { number: string | number | null; email: string; total?: number | null; link?: string; reason: string }) {
+  await telegram('❗ Mail z plikami NIE dotarł do klienta', [
+    `Zamówienie nr ${o.number ?? '—'} · ${o.email}${o.total ? ` · ${formatPrice(o.total)}` : ''}`,
+    `Powód: ${o.reason || 'nieznany'}`,
+    o.link ? `Link do plików dla klienta: ${o.link}` : `Zamówienia: ${siteConfig.url}/admin/zamowienia`,
+    'Wyślij mu go ręcznie: Admin → Wiadomości → Napisz do klienta (albo z Gmaila).',
+  ]).catch(() => undefined);
 }

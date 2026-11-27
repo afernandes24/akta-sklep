@@ -6,6 +6,7 @@ import { sendEmail } from './email';
 import { formatPrice } from './format';
 import { sellerIdentity } from './legal/seller';
 import { createAdminClient } from './supabase/admin';
+import { marketingAllowance } from './email-budget';
 
 /**
  * MAIL PO ZAKUPIE: podziękowanie + prośba o opinię (link bez logowania)
@@ -185,12 +186,13 @@ export async function sendFollowup(b: Buyer, promo: Promo | null, all: Rec[], to
   const recs = recommendationsFor(b, all);
   const { subject, html } = followupHtml(b, promo, recs);
   if (to) return sendEmail(to, subject, html);
+  if ((await marketingAllowance()) <= 0) return false; // limit Resend — spróbujemy przy kolejnym uruchomieniu
   if (!b.pendingOrderIds.length) return false;
   const db = createAdminClient();
   const now = new Date().toISOString();
   const { data: claimed } = await db.from('orders').update({ followup_sent_at: now }).in('id', b.pendingOrderIds).is('followup_sent_at', null).select('id');
   if (!claimed?.length) return false; // ktoś inny już wysłał
-  const ok = await sendEmail(b.email, subject, html).catch(() => false);
+  const ok = await sendEmail(b.email, subject, html, undefined, 'marketing').catch(() => false);
   if (!ok) await db.from('orders').update({ followup_sent_at: null }).in('id', claimed.map((c) => c.id as string));
   return ok;
 }

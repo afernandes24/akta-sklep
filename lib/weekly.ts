@@ -7,6 +7,7 @@ import { loadPromo, type Promo } from './followup';
 import { sellerIdentity } from './legal/seller';
 import { VOLUME_TIERS } from './pricing';
 import { createAdminClient } from './supabase/admin';
+import { marketingAllowance } from './email-budget';
 
 /**
  * NEWSLETTER CO TYDZIEŃ — „Sprawa tygodnia”.
@@ -253,19 +254,25 @@ export async function sendWeekly(opts: { key: string; settings: WeeklySettings; 
     (s) => !done.has(s.email.toLowerCase()) && !(opts.confirmedBefore && s.confirmed_at && new Date(s.confirmed_at).getTime() > opts.confirmedBefore),
   );
   let ok = 0, failed = 0;
-  for (const s of todo.slice(0, opts.limit)) {
+  // Limit Resend: najwyżej tyle, ile pozwala budżet marketingu (reszta pójdzie przy kolejnych uruchomieniach)
+  let budget = Math.min(opts.limit, await marketingAllowance());
+  const startBudget = budget;
+  for (const s of todo) {
+    if (budget <= 0) break;
     const mail = weeklyHtml(s, opts.key, cases, promo);
     if (!mail) break;
     const { error } = await db.from('newsletter_sends').insert({ campaign: opts.key, email: s.email.toLowerCase() });
     if (error) continue;
-    if (await sendEmail(s.email, mail.subject, mail.html).catch(() => false)) ok++;
+    budget--;
+    if (await sendEmail(s.email, mail.subject, mail.html, undefined, 'marketing').catch(() => false)) ok++;
     else {
       failed++;
       await db.from('newsletter_sends').delete().eq('campaign', opts.key).eq('email', s.email.toLowerCase());
+      if (failed >= 3 && !ok) break; // Resend nie przyjmuje — nie męczymy dalej
     }
     await new Promise((r) => setTimeout(r, 600));
   }
-  return { ready: true, sent: ok, failed, left: Math.max(0, todo.length - opts.limit) };
+  return { ready: true, sent: ok, failed, left: Math.max(0, todo.length - ok), budgetHit: startBudget < opts.limit };
 }
 
 let lastRun = 0;

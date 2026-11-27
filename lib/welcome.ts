@@ -7,6 +7,7 @@ import { formatPrice } from './format';
 import { sellerIdentity } from './legal/seller';
 import { createAdminClient } from './supabase/admin';
 import { loadWeeklyCases } from './weekly';
+import { marketingAllowance } from './email-budget';
 
 /**
  * SERIA POWITALNA — dla osób, które zapisały się po darmową sprawę i jeszcze nic nie kupiły.
@@ -146,7 +147,9 @@ export async function sendWelcomeSeries(limit = 30) {
     if (r.campaign === 'SERIA-1') s1.set(e, new Date(r.sent_at as string).getTime());
     else s2.add(e);
   }
-  let sent1 = 0, sent2 = 0, budget = limit;
+  let sent1 = 0, sent2 = 0;
+  // Limit Resend: równomiernie, z rezerwą na zakupy (lib/email-budget.ts)
+  let budget = Math.min(limit, await marketingAllowance());
 
   for (const s of subs) {
     if (budget <= 0) break;
@@ -179,7 +182,7 @@ export async function sendWelcomeSeries(limit = 30) {
       const { error } = await db.from('newsletter_sends').insert({ campaign: 'SERIA-1', email });
       if (error) continue;
       budget--;
-      if (await sendEmail(s.email, mail.subject, mail.html).catch(() => false)) sent1++;
+      if (await sendEmail(s.email, mail.subject, mail.html, undefined, 'marketing').catch(() => false)) sent1++;
       else await db.from('newsletter_sends').delete().eq('campaign', 'SERIA-1').eq('email', email);
       await new Promise((r) => setTimeout(r, 600));
       continue;
@@ -193,7 +196,7 @@ export async function sendWelcomeSeries(limit = 30) {
       const { error } = await db.from('newsletter_sends').insert({ campaign: 'SERIA-2', email });
       if (error) continue;
       budget--;
-      if (await sendEmail(s.email, mail.subject, mail.html).catch(() => false)) sent2++;
+      if (await sendEmail(s.email, mail.subject, mail.html, undefined, 'marketing').catch(() => false)) sent2++;
       else await db.from('newsletter_sends').delete().eq('campaign', 'SERIA-2').eq('email', email);
       await new Promise((r) => setTimeout(r, 600));
     }

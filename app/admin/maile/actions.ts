@@ -79,8 +79,9 @@ export async function sendCampaignAll(_prev: MailState, formData: FormData): Pro
   const r = await sendCampaign(p.promo, 60);
   revalidatePath('/admin/maile');
   if (!r.ready) return { error: 'Najpierw uruchom w Supabase plik supabase/kampania-newsletter.sql.' };
+  if (!r.sent && !r.failed && r.left) return { error: `Limit maili na tę godzinę wykorzystany (rezerwa na zakupy). Czeka ${r.left} — spróbuj później.` };
   if (!r.sent && !r.failed) return { ok: 'Wszyscy subskrybenci dostali już tę kampanię.' };
-  const more = r.left ? ` Zostało jeszcze ${r.left} — kliknij ponownie.` : '';
+  const more = r.left ? ` Zostało jeszcze ${r.left} — limit maili pozwala wysyłać równomiernie (ok. kilka na godzinę), kliknij ponownie później.` : '';
   return r.failed ? { error: `Wysłano ${r.sent}, nie udało się ${r.failed}. Kliknij ponownie.${more}` } : { ok: `Wysłano ${r.sent} maili.${more}` };
 }
 
@@ -122,7 +123,8 @@ export async function sendWeeklyNow(): Promise<MailState> {
   const r = await sendWeekly({ key: weekKey(), settings: await getWeeklySettings(), limit: 60 });
   revalidatePath('/admin/maile');
   if (!r.ready) return { error: 'Najpierw uruchom w Supabase plik supabase/kampania-newsletter.sql.' };
+  if (!r.sent && !r.failed && r.left) return { error: `Limit maili na tę godzinę wykorzystany (rezerwa na zakupy). Czeka ${r.left} — pójdą automatycznie.` };
   if (!r.sent && !r.failed) return { ok: 'Wszyscy subskrybenci dostali już newsletter z tego tygodnia.' };
-  const more = r.left ? ` Zostało jeszcze ${r.left} — kliknij ponownie.` : '';
+  const more = r.left ? ` Zostało jeszcze ${r.left} — dojdą automatycznie, równomiernie w ramach limitu maili (jeśli wysyłka automatyczna jest włączona).` : '';
   return r.failed ? { error: `Wysłano ${r.sent}, nie udało się ${r.failed}.${more}` } : { ok: `Wysłano ${r.sent} maili.${more}` };
 }

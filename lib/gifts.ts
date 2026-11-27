@@ -238,7 +238,7 @@ export async function sendDueGifts(onlyOrderId?: string) {
     const { data: claimed } = await db.from('orders').update({ gift_sent_at: new Date().toISOString() }).eq('id', o.id).is('gift_sent_at', null).select('id');
     if (!claimed?.length) continue;
     const { subject, html } = giftEmailHtml(o);
-    const ok = await sendEmail(o.gift_to_email, subject, html, o.email).catch(() => false);
+    const ok = await sendEmail(o.gift_to_email, subject, html, o.email, 'order').catch(() => false);
     if (ok) {
       sent++;
       await sendEmail(

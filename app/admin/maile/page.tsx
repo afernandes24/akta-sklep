@@ -4,6 +4,7 @@ import { formatDate } from '@/lib/format';
 import { getBuyers, getFollowupSettings } from '@/lib/followup';
 import { AutoForm, MailForms, WeeklyForm } from './MailForms';
 import { getWeeklySettings, loadWeeklyCases, weekKey } from '@/lib/weekly';
+import { getUsage, LIMITS, marketingAllowance } from '@/lib/email-budget';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,13 +12,15 @@ const preview = (typ: string, e: string) => `/admin/maile/podglad?typ=${typ}&e=$
 
 export default async function AdminMailsPage() {
   await requireAdmin();
-  const [{ buyers, ready }, settings, subs, { sends }, weekly, wCases] = await Promise.all([
+  const [{ buyers, ready }, settings, subs, { sends }, weekly, wCases, usage, allowance] = await Promise.all([
     getBuyers(),
     getFollowupSettings(),
     getSubscribers(),
     getCampaignSends(),
     getWeeklySettings(),
     loadWeeklyCases(),
+    getUsage(),
+    marketingAllowance(),
   ]);
   const week = weekKey();
   const featured = wCases.length ? wCases[(Number(week.slice(-2)) || 0) % wCases.length].title : null;
@@ -35,6 +38,31 @@ export default async function AdminMailsPage() {
         </p>
       </div>
       {!ready && <p className="text-sm text-stamp-500">Najpierw uruchom w Supabase plik supabase/maile-po-zakupie.sql.</p>}
+      <section className="card p-5">
+        <h2 className="font-serif text-lg font-semibold">Limit Resend</h2>
+        {usage.ready ? (
+          <>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              {[
+                ['Ostatnie 24 h', `${usage.day} / ${LIMITS.daily}`],
+                ['Ten miesiąc', `${usage.month} / ${LIMITS.monthly}`],
+                ['Marketing teraz', allowance > 0 ? `można ${allowance}` : 'czeka'],
+              ].map(([k, v]) => (
+                <div key={k} className="rounded-md border border-ink-800 p-3">
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-muted">{k}</p>
+                  <p className="mt-1 font-serif text-xl font-bold text-paper-50">{v}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-muted">
+              Newsletter, seria powitalna i maile po zakupie idą równomiernie — najwyżej {LIMITS.perHour} na godzinę. Zawsze zostaje {LIMITS.reserve} maili na
+              zakupy (pliki dochodzą nawet przy wyczerpanym marketingu). Gdy mail z plikami nie wyjdzie — dostajesz alert na Telegram.
+            </p>
+          </>
+        ) : (
+          <p className="mt-2 text-sm text-stamp-500">Licznik nie działa — uruchom w Supabase plik supabase/limit-maili.sql.</p>
+        )}
+      </section>
       <div className="grid gap-4 sm:grid-cols-4">
         {[
           ['Kupujących', buyers.length],
